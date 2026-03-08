@@ -1,0 +1,148 @@
+import { useState, useMemo } from 'react';
+import { useProjectStore } from '@/stores/projectStore';
+import { useEditorStore } from '@/stores/editorStore';
+import { ComponentCard } from './ComponentCard';
+import type { ComponentCategory } from '@/types/domain';
+
+const CATEGORIES: ComponentCategory[] = ['UI', 'Logic', 'System', 'GameObject'];
+
+export function ComponentPicker() {
+  const targetActorId = useEditorStore((s) => s.componentPickerTarget);
+  const closeComponentPicker = useEditorStore((s) => s.closeComponentPicker);
+  const project = useProjectStore((s) => s.project);
+  const setActorComponents = useProjectStore((s) => s.setActorComponents);
+
+  const [searchQuery, setSearchQuery] = useState('');
+  const [categoryFilter, setCategoryFilter] = useState<ComponentCategory | null>(null);
+
+  const activeScene = project.activeSceneId
+    ? project.scenes[project.activeSceneId]
+    : null;
+  const actor = activeScene && targetActorId
+    ? activeScene.actors[targetActorId]
+    : null;
+
+  const allComponents = useMemo(() => Object.values(project.components), [project.components]);
+
+  const filteredComponents = useMemo(() => {
+    return allComponents.filter((comp) => {
+      if (categoryFilter && comp.category !== categoryFilter) return false;
+      if (searchQuery) {
+        const q = searchQuery.toLowerCase();
+        return (
+          comp.name.toLowerCase().includes(q) ||
+          comp.domain.toLowerCase().includes(q)
+        );
+      }
+      return true;
+    });
+  }, [allComponents, categoryFilter, searchQuery]);
+
+  const handleToggle = (componentId: string) => {
+    if (!activeScene || !actor) return;
+    const currentIds = actor.components;
+    const newIds = currentIds.includes(componentId)
+      ? currentIds.filter((id) => id !== componentId)
+      : [...currentIds, componentId];
+    setActorComponents(activeScene.id, actor.id, newIds);
+  };
+
+  // Check for unresolved dependencies
+  const getDependencyWarnings = (componentId: string): string[] => {
+    if (!actor) return [];
+    const comp = project.components[componentId];
+    if (!comp) return [];
+    return comp.dependencies.filter(
+      (depId) => !actor.components.includes(depId) && depId !== componentId,
+    ).map((depId) => {
+      const dep = project.components[depId];
+      return dep ? dep.name : depId;
+    });
+  };
+
+  if (!targetActorId || !actor) return null;
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+      <div className="bg-zinc-900 border border-zinc-700 rounded-xl shadow-2xl w-[480px] max-h-[600px] flex flex-col">
+        {/* Header */}
+        <div className="flex items-center justify-between px-4 py-3 border-b border-zinc-700">
+          <div>
+            <h3 className="text-white font-semibold">Component Picker</h3>
+            <p className="text-xs text-zinc-400">Actor: {actor.name}</p>
+          </div>
+          <button
+            onClick={closeComponentPicker}
+            className="text-zinc-400 hover:text-white text-lg"
+          >
+            ✕
+          </button>
+        </div>
+
+        {/* Search & Filter */}
+        <div className="px-4 py-2 space-y-2 border-b border-zinc-700">
+          <input
+            className="w-full bg-zinc-800 text-white text-sm px-3 py-1.5 rounded border border-zinc-600 outline-none focus:border-blue-500"
+            placeholder="Search components..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
+          <div className="flex gap-1">
+            <button
+              className={`text-xs px-2 py-1 rounded transition-colors ${
+                categoryFilter === null
+                  ? 'bg-blue-600 text-white'
+                  : 'bg-zinc-800 text-zinc-400 hover:bg-zinc-700'
+              }`}
+              onClick={() => setCategoryFilter(null)}
+            >
+              All
+            </button>
+            {CATEGORIES.map((cat) => (
+              <button
+                key={cat}
+                className={`text-xs px-2 py-1 rounded transition-colors ${
+                  categoryFilter === cat
+                    ? 'bg-blue-600 text-white'
+                    : 'bg-zinc-800 text-zinc-400 hover:bg-zinc-700'
+                }`}
+                onClick={() => setCategoryFilter(cat)}
+              >
+                {cat}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Component list */}
+        <div className="flex-1 overflow-y-auto p-3 space-y-2">
+          {filteredComponents.length === 0 ? (
+            <p className="text-zinc-500 text-sm text-center py-4">
+              {allComponents.length === 0
+                ? 'No components defined yet. Create one in the Component Editor.'
+                : 'No matching components'}
+            </p>
+          ) : (
+            filteredComponents.map((comp) => {
+              const warnings = getDependencyWarnings(comp.id);
+              return (
+                <div key={comp.id}>
+                  <ComponentCard
+                    component={comp}
+                    isAttached={actor.components.includes(comp.id)}
+                    onToggle={() => handleToggle(comp.id)}
+                  />
+                  {warnings.length > 0 && actor.components.includes(comp.id) && (
+                    <div className="ml-8 mt-1 text-xs text-amber-400">
+                      ⚠ Missing dependencies: {warnings.join(', ')}
+                    </div>
+                  )}
+                </div>
+              );
+            })
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
