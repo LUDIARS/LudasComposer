@@ -554,12 +554,151 @@ interface EditorState {
 
 ---
 
-## 11. 次のアクション
+## 11. モジュールレジストリ設計 (GitHub連携)
+
+### 11.1 概要
+
+GitHubリポジトリをソースとしてLudusモジュール定義ファイル（Markdown）をクローン・パースし、
+プロジェクトのコンポーネントとしてアクターにアタッチできる仕組み。
+
+```
+┌────────────────────────────────────────────────────┐
+│  GitHub Repository (モジュール定義ソース)            │
+│  ├── modules/scene-manager.md                      │
+│  ├── modules/node-editor.md                        │
+│  └── modules/component-picker.md                   │
+└──────────────┬─────────────────────────────────────┘
+               │ git clone / pull
+               ▼
+┌────────────────────────────────────────────────────┐
+│  Rust Backend (Tauri Commands)                     │
+│  ├── GitCloneService    … リポジトリのclone/pull   │
+│  ├── ModuleParser       … Markdownの構造化パース    │
+│  └── ModuleRegistry     … ソース・モジュール管理    │
+├────────────────────────────────────────────────────┤
+│  ローカルキャッシュ                                  │
+│  ~/.ludas-composer/module-cache/                    │
+│  ├── github.com/user/repo/  (クローン済みリポ)     │
+│  └── registry.json          (レジストリ設定)       │
+└──────────────┬─────────────────────────────────────┘
+               │ Tauri invoke
+               ▼
+┌────────────────────────────────────────────────────┐
+│  React Frontend                                    │
+│  ├── moduleRegistryStore (Zustand)                 │
+│  │   ├── sources[]        … 登録済みリポジトリ     │
+│  │   ├── modules[]        … パース済みモジュール   │
+│  │   ├── addSource()      … ソース追加             │
+│  │   ├── syncSource()     … 同期実行               │
+│  │   └── filteredModules()… 検索・フィルタ         │
+│  ├── ModuleRegistryPanel  … ソース管理UI           │
+│  └── ComponentPicker      … モジュール→アクター    │
+│      └── moduleToComponent() でインポート          │
+└────────────────────────────────────────────────────┘
+```
+
+### 11.2 Markdownパースフォーマット
+
+plan.md セクション8のモジュール定義書フォーマットをそのまま解析対象とする:
+
+```markdown
+### {モジュール名} [モジュール定義]
+
+#### 概要
+{概要テキスト}
+
+#### カテゴリ
+{UI | Logic | System | GameObject}
+
+#### 所属ドメイン
+{ドメイン名}
+
+#### 必要なデータ
+- {データ項目1}
+- {データ項目2}
+
+#### 変数
+- {変数名}: {説明}
+- {変数名} ({型}): {説明}
+
+#### 依存
+- {依存先名1}
+- {依存先名2}
+
+#### 作業
+##### 入力
+- {入力ポート説明}
+
+##### 出力
+- {出力ポート説明}
+
+##### タスク
+- {タスク名}: {処理内容の説明}
+
+#### テスト
+- {テストケースの説明}
+```
+
+### 11.3 Tauri Commands (API)
+
+| コマンド | パラメータ | 返り値 | 説明 |
+|---------|-----------|--------|------|
+| `add_registry_source` | name, repo_url, definition_glob? | ModuleRegistrySource | GitHubリポジトリをソース登録 |
+| `remove_registry_source` | source_id | void | ソース削除 |
+| `sync_registry_source` | source_id | ModuleDefinition[] | clone/pull + パース実行 |
+| `sync_all_sources` | - | ModuleDefinition[] | 全ソース同期 |
+| `get_all_modules` | - | ModuleDefinition[] | 全モジュール取得 |
+| `get_modules_by_category` | category | ModuleDefinition[] | カテゴリフィルタ |
+| `search_modules` | query | ModuleDefinition[] | 名前・概要・ドメイン検索 |
+| `get_registry_sources` | - | ModuleRegistrySource[] | 全ソース取得 |
+| `get_module_by_id` | module_id | ModuleDefinition | ID指定取得 |
+
+### 11.4 アクターへのアタッチフロー
+
+1. **ソース登録**: ユーザーがGitHubリポジトリURLを入力し、`addSource()` でレジストリに登録
+2. **同期**: `syncSource()` でリポジトリをclone/pullし、Markdown定義ファイルをパース
+3. **モジュール選択**: ComponentPickerにレジストリのモジュール一覧が表示される
+4. **インポート**: 選択したモジュールを `moduleToComponent()` でComponentに変換
+5. **アタッチ**: 変換されたComponentをアクターの `components[]` に追加
+
+### 11.5 ファイル構成
+
+```
+src-tauri/src/
+├── models/
+│   ├── module_definition.rs   # ModuleDefinition, ModuleRegistry等
+│   └── mod.rs
+├── services/
+│   ├── git_clone.rs           # GitCloneService (git2ベース)
+│   ├── module_parser.rs       # Markdownパーサー (regexベース)
+│   ├── module_registry.rs     # ModuleRegistryService (統合管理)
+│   └── mod.rs
+├── commands/
+│   ├── module_registry.rs     # Tauriコマンド定義
+│   └── mod.rs
+├── lib.rs                     # Tauriアプリ起動・コマンド登録
+└── main.rs
+
+src/
+├── types/
+│   ├── domain.ts              # Actor, Component, moduleToComponent()
+│   ├── module-registry.ts     # ModuleDefinition, ModuleRegistrySource
+│   └── index.ts
+├── services/
+│   └── module-registry-api.ts # Tauri invoke ラッパー
+└── stores/
+    └── moduleRegistryStore.ts # Zustandストア
+```
+
+---
+
+## 12. 次のアクション
 
 この設計書の承認後、以下の順序で実装を進める：
 
 1. **Phase 0**: `create-tauri-app` でプロジェクト雛形を生成し、依存パッケージをインストール
 2. **types/domain.ts**: ドメインモデル型定義を最初に確定
 3. **stores/**: Zustandストアを先行実装 (UIなしでテスト可能)
-4. **Phase 1-4**: 各フェーズを順次実装
-5. 各フェーズ完了時にモジュール定義書のテスト項目でセルフチェック
+4. **モジュールレジストリ**: GitHubリポジトリからのモジュール定義読み込み機能（実装済み）
+5. **Phase 1-4**: 各フェーズを順次実装
+6. 各フェーズ完了時にモジュール定義書のテスト項目でセルフチェック
