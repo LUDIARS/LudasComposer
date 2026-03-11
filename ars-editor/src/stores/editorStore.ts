@@ -19,6 +19,8 @@ interface EditorState {
   isDirty: boolean;
   lastSavedAt: number | null;
   projectPath: string | null;
+  mobileSceneMenuOpen: boolean;
+  mobileBottomSheetOpen: boolean;
 
   setSelectedNodes: (ids: string[]) => void;
   openContextMenu: (pos: { x: number; y: number }) => void;
@@ -37,6 +39,8 @@ interface EditorState {
   markDirty: () => void;
   markSaved: (path?: string) => void;
   setProjectPath: (path: string | null) => void;
+  setMobileSceneMenu: (open: boolean) => void;
+  setMobileBottomSheet: (open: boolean) => void;
 }
 
 export const useEditorStore = create<EditorState>()((set) => ({
@@ -57,6 +61,8 @@ export const useEditorStore = create<EditorState>()((set) => ({
   isDirty: false,
   lastSavedAt: null,
   projectPath: null,
+  mobileSceneMenuOpen: false,
+  mobileBottomSheetOpen: false,
 
   setSelectedNodes: (ids) => set({ selectedNodeIds: ids }),
   openContextMenu: (pos) => set({ contextMenu: pos }),
@@ -67,6 +73,7 @@ export const useEditorStore = create<EditorState>()((set) => ({
     set({
       componentEditorTarget: componentId,
       panelVisibility: { sceneManager: true, componentEditor: true, componentList: false, preview: false, prefabList: false },
+      mobileBottomSheetOpen: true,
     }),
   closeComponentEditor: () =>
     set((s) => ({
@@ -94,4 +101,6 @@ export const useEditorStore = create<EditorState>()((set) => ({
       projectPath: path ?? s.projectPath,
     })),
   setProjectPath: (path) => set({ projectPath: path }),
+  setMobileSceneMenu: (open) => set({ mobileSceneMenuOpen: open }),
+  setMobileBottomSheet: (open) => set({ mobileBottomSheetOpen: open }),
 }));

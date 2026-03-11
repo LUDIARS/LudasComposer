@@ -2,6 +2,7 @@ import { useState, useCallback } from 'react';
 import { useProjectStore } from '@/stores/projectStore';
 import { useEditorStore } from '@/stores/editorStore';
 import { canUndo, canRedo, undo, redo } from '@/stores/historyMiddleware';
+import { useIsMobile } from '@/hooks/useIsMobile';
 import * as backend from '@/lib/backend';
 
 export function Toolbar() {
@@ -15,7 +16,12 @@ export function Toolbar() {
   const setProjectPath = useEditorStore((s) => s.setProjectPath);
   const togglePanel = useEditorStore((s) => s.togglePanel);
   const panelVisibility = useEditorStore((s) => s.panelVisibility);
+  const setMobileSceneMenu = useEditorStore((s) => s.setMobileSceneMenu);
+  const mobileBottomSheetOpen = useEditorStore((s) => s.mobileBottomSheetOpen);
+  const setMobileBottomSheet = useEditorStore((s) => s.setMobileBottomSheet);
   const [status, setStatus] = useState<string>('');
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const isMobile = useIsMobile();
 
   const showStatus = (msg: string) => {
     setStatus(msg);
@@ -98,6 +104,143 @@ export function Toolbar() {
     ? `Last saved: ${new Date(lastSavedAt).toLocaleTimeString()}`
     : '';
 
+  // --- Mobile Toolbar ---
+  if (isMobile) {
+    return (
+      <div className="flex items-center gap-1 px-2 py-1 bg-zinc-800 border-b border-zinc-700 text-xs relative">
+        {/* Hamburger - open scene drawer */}
+        <button
+          onClick={() => setMobileSceneMenu(true)}
+          className="px-2 py-1 text-zinc-300 hover:bg-zinc-700 rounded transition-colors text-base"
+          title="Scenes"
+        >
+          ☰
+        </button>
+
+        {/* Save */}
+        <button
+          onClick={handleSave}
+          className="px-2 py-1 text-zinc-300 hover:bg-zinc-700 rounded transition-colors"
+          title="Save"
+        >
+          Save{isDirty ? ' *' : ''}
+        </button>
+
+        {/* Undo/Redo */}
+        <button
+          onClick={() => { undo(); markDirty(); }}
+          disabled={!canUndo()}
+          className="px-2 py-1 text-zinc-300 hover:bg-zinc-700 rounded transition-colors disabled:opacity-30"
+          title="Undo"
+        >
+          ↩
+        </button>
+        <button
+          onClick={() => { redo(); markDirty(); }}
+          disabled={!canRedo()}
+          className="px-2 py-1 text-zinc-300 hover:bg-zinc-700 rounded transition-colors disabled:opacity-30"
+          title="Redo"
+        >
+          ↪
+        </button>
+
+        {/* Bottom sheet toggle */}
+        <button
+          onClick={() => setMobileBottomSheet(!mobileBottomSheetOpen)}
+          className={`px-2 py-1 rounded transition-colors ${
+            mobileBottomSheetOpen
+              ? 'bg-blue-600 text-white'
+              : 'text-zinc-300 hover:bg-zinc-700'
+          }`}
+          title="Toggle Panel"
+        >
+          ▤
+        </button>
+
+        <div className="flex-1" />
+
+        {/* More menu */}
+        <button
+          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+          className="px-2 py-1 text-zinc-300 hover:bg-zinc-700 rounded transition-colors"
+        >
+          ⋯
+        </button>
+
+        {status && (
+          <span className="text-green-400 ml-1">{status}</span>
+        )}
+
+        {/* Dropdown menu */}
+        {mobileMenuOpen && (
+          <>
+            <div
+              className="fixed inset-0 z-40"
+              onClick={() => setMobileMenuOpen(false)}
+            />
+            <div className="absolute right-2 top-full mt-1 bg-zinc-800 border border-zinc-600 rounded-lg shadow-xl z-50 py-1 min-w-[160px]">
+              <button
+                onClick={() => { handleNew(); setMobileMenuOpen(false); }}
+                className="w-full text-left px-3 py-2 text-zinc-300 hover:bg-zinc-700 transition-colors"
+              >
+                New Project
+              </button>
+              <button
+                onClick={() => { handleLoad(); setMobileMenuOpen(false); }}
+                className="w-full text-left px-3 py-2 text-zinc-300 hover:bg-zinc-700 transition-colors"
+              >
+                Open Project
+              </button>
+              <div className="h-px bg-zinc-700 my-1" />
+              <button
+                onClick={() => {
+                  togglePanel('componentList');
+                  setMobileBottomSheet(true);
+                  setMobileMenuOpen(false);
+                }}
+                className={`w-full text-left px-3 py-2 transition-colors ${
+                  panelVisibility.componentList ? 'text-blue-400' : 'text-zinc-300 hover:bg-zinc-700'
+                }`}
+              >
+                Components
+              </button>
+              <button
+                onClick={() => {
+                  togglePanel('prefabList');
+                  setMobileBottomSheet(true);
+                  setMobileMenuOpen(false);
+                }}
+                className={`w-full text-left px-3 py-2 transition-colors ${
+                  panelVisibility.prefabList ? 'text-purple-400' : 'text-zinc-300 hover:bg-zinc-700'
+                }`}
+              >
+                Prefabs
+              </button>
+              <button
+                onClick={() => {
+                  togglePanel('preview');
+                  setMobileBottomSheet(true);
+                  setMobileMenuOpen(false);
+                }}
+                className={`w-full text-left px-3 py-2 transition-colors ${
+                  panelVisibility.preview ? 'text-blue-400' : 'text-zinc-300 hover:bg-zinc-700'
+                }`}
+              >
+                Preview
+              </button>
+              <div className="h-px bg-zinc-700 my-1" />
+              <div className="px-3 py-2 text-zinc-500 truncate">
+                {project.name}
+                {isDirty && <span className="text-amber-400 ml-1">*</span>}
+              </div>
+            </div>
+          </>
+        )}
+      </div>
+    );
+  }
+
+  // --- Desktop Toolbar ---
   return (
     <div className="flex items-center gap-1 px-2 py-1 bg-zinc-800 border-b border-zinc-700 text-xs">
       {/* File operations */}

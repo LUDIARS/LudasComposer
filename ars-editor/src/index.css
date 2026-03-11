@@ -26,3 +26,80 @@ body {
 .react-flow__attribution {
   display: none;
 }
+
+/* ===== Mobile Layout ===== */
+
+/* Overlay backdrop for scene drawer */
+.mobile-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 40;
+}
+
+/* Scene drawer - slides in from left */
+.mobile-scene-drawer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  width: 280px;
+  max-width: 80vw;
+  background: #1e1e22;
+  border-right: 1px solid #3f3f46;
+  z-index: 50;
+  display: flex;
+  flex-direction: column;
+  transform: translateX(-100%);
+  transition: transform 0.25s ease-out;
+}
+
+.mobile-scene-drawer.open {
+  transform: translateX(0);
+}
+
+/* Bottom sheet for data input */
+.mobile-bottom-sheet {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 55vh;
+  max-height: 55vh;
+  background: #1e1e22;
+  border-top: 1px solid #3f3f46;
+  border-radius: 12px 12px 0 0;
+  z-index: 30;
+  display: flex;
+  flex-direction: column;
+  transform: translateY(calc(100% - 36px));
+  transition: transform 0.3s ease-out;
+}
+
+.mobile-bottom-sheet.open {
+  transform: translateY(0);
+}
+
+/* Drag handle area */
+.mobile-bottom-sheet-handle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 0 6px;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.mobile-bottom-sheet-bar {
+  width: 40px;
+  height: 4px;
+  border-radius: 2px;
+  background: #52525b;
+}
+
+/* Mobile toolbar adjustments */
+@media (max-width: 767px) {
+  .toolbar-desktop-only {
+    display: none;
+  }
+}

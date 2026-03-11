@@ -14,6 +14,7 @@ import { useEditorStore } from './stores/editorStore';
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
 import { useProjectStore } from './stores/projectStore';
 import { generateId } from './lib/utils';
+import { useIsMobile } from './hooks/useIsMobile';
 import * as backend from './lib/backend';
 
 function AppInner() {
@@ -28,9 +29,14 @@ function AppInner() {
   const selectedNodeIds = useEditorStore((s) => s.selectedNodeIds);
   const copyToClipboard = useEditorStore((s) => s.copyToClipboard);
   const clipboard = useEditorStore((s) => s.clipboard);
+  const mobileSceneMenuOpen = useEditorStore((s) => s.mobileSceneMenuOpen);
+  const setMobileSceneMenu = useEditorStore((s) => s.setMobileSceneMenu);
+  const mobileBottomSheetOpen = useEditorStore((s) => s.mobileBottomSheetOpen);
+  const setMobileBottomSheet = useEditorStore((s) => s.setMobileBottomSheet);
   const project = useProjectStore((s) => s.project);
   const addActor = useProjectStore((s) => s.addActor);
   const duplicateActor = useProjectStore((s) => s.duplicateActor);
+  const isMobile = useIsMobile();
 
   // Track project changes to mark dirty
   const isFirstRender = useRef(true);
@@ -107,6 +113,99 @@ function AppInner() {
     onDuplicate: handleDuplicate,
   });
 
+  // --- Mobile Layout ---
+  if (isMobile) {
+    return (
+      <div className="flex flex-col h-screen w-screen bg-zinc-900 text-zinc-200">
+        <Toolbar />
+
+        {/* Fullscreen Node Editor */}
+        <div className="flex-1 flex flex-col overflow-hidden relative">
+          <NodeCanvas />
+
+          {/* Mobile Scene Menu Overlay */}
+          {mobileSceneMenuOpen && (
+            <div
+              className="mobile-overlay"
+              onClick={() => setMobileSceneMenu(false)}
+            />
+          )}
+          <div
+            className={`mobile-scene-drawer ${mobileSceneMenuOpen ? 'open' : ''}`}
+          >
+            <div className="flex items-center justify-between px-4 py-2 border-b border-zinc-700">
+              <h2 className="text-sm font-semibold text-white">Scenes</h2>
+              <button
+                onClick={() => setMobileSceneMenu(false)}
+                className="text-zinc-400 hover:text-white text-lg"
+              >
+                ✕
+              </button>
+            </div>
+            <div className="flex-1 overflow-hidden">
+              <SceneList />
+            </div>
+            <div className="border-t border-zinc-700 p-2">
+              <button
+                className="w-full text-xs text-blue-400 hover:text-blue-300 hover:bg-zinc-800 py-2 rounded transition-colors"
+                onClick={() => {
+                  openComponentEditor(null);
+                  setMobileSceneMenu(false);
+                  setMobileBottomSheet(true);
+                }}
+              >
+                + New Component
+              </button>
+            </div>
+          </div>
+
+          {/* Mobile Bottom Sheet for data input */}
+          <div
+            className={`mobile-bottom-sheet ${mobileBottomSheetOpen ? 'open' : ''}`}
+          >
+            <div
+              className="mobile-bottom-sheet-handle"
+              onClick={() => setMobileBottomSheet(!mobileBottomSheetOpen)}
+            >
+              <div className="mobile-bottom-sheet-bar" />
+            </div>
+            <div className="flex-1 overflow-y-auto">
+              {panelVisibility.componentEditor && <ComponentEditor />}
+              {panelVisibility.preview && !panelVisibility.componentEditor && (
+                <ScenePreview />
+              )}
+              {panelVisibility.componentList &&
+                !panelVisibility.componentEditor &&
+                !panelVisibility.preview && <ComponentList />}
+              {panelVisibility.prefabList &&
+                !panelVisibility.componentEditor &&
+                !panelVisibility.preview &&
+                !panelVisibility.componentList && <PrefabList />}
+              {!panelVisibility.componentEditor &&
+                !panelVisibility.preview &&
+                !panelVisibility.componentList &&
+                !panelVisibility.prefabList && (
+                  <div className="p-4 text-zinc-500 text-sm text-center">
+                    Toggle panels from the toolbar to view content here.
+                  </div>
+                )}
+            </div>
+          </div>
+        </div>
+
+        {/* Modal - Component Picker */}
+        {componentPickerTarget && <ComponentPicker />}
+
+        {/* Modal - Sequence Editor */}
+        {sequenceEditorTarget && <SequenceEditor />}
+
+        {/* Modal - SubScene Picker */}
+        {subScenePickerTarget && <SubScenePicker />}
+      </div>
+    );
+  }
+
+  // --- Desktop Layout ---
   return (
     <div className="flex flex-col h-screen w-screen bg-zinc-900 text-zinc-200">
       <Toolbar />
