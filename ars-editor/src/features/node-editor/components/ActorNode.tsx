@@ -16,7 +16,17 @@ const CATEGORY_ICONS: Record<string, string> = {
 export const ActorNode = memo(function ActorNode({ data, selected }: NodeProps) {
   const nodeData = data as unknown as ActorNodeData;
   const components = useProjectStore((s) => s.project.components);
+  const scenes = useProjectStore((s) => s.project.scenes);
+  const activeSceneId = useProjectStore((s) => s.project.activeSceneId);
+  const activeScene = activeSceneId ? scenes[activeSceneId] : null;
+  const actor = activeScene?.actors[nodeData.actorId];
   const openComponentPicker = useEditorStore((s) => s.openComponentPicker);
+  const openSequenceEditor = useEditorStore((s) => s.openSequenceEditor);
+  const openSubScenePicker = useEditorStore((s) => s.openSubScenePicker);
+  const copyToClipboard = useEditorStore((s) => s.copyToClipboard);
+  const duplicateActor = useProjectStore((s) => s.duplicateActor);
+  const createPrefab = useProjectStore((s) => s.createPrefab);
+  const prefabs = useProjectStore((s) => s.project.prefabs);
   const colors = ROLE_COLORS[nodeData.role];
 
   const attachedComponents = nodeData.componentIds
@@ -37,6 +47,10 @@ export const ActorNode = memo(function ActorNode({ data, selected }: NodeProps) 
     }
   }
 
+  const subSceneName = actor?.subSceneId ? scenes[actor.subSceneId]?.name : null;
+  const sequenceCount = actor?.sequences?.length ?? 0;
+  const prefabName = actor?.prefabId ? prefabs[actor.prefabId]?.name : null;
+
   return (
     <div
       className={cn(
@@ -49,8 +63,20 @@ export const ActorNode = memo(function ActorNode({ data, selected }: NodeProps) 
       {/* Header */}
       <div className={cn('px-3 py-2 rounded-t-md flex items-center justify-between', colors.header)}>
         <span className="text-white font-semibold text-sm truncate">{nodeData.name}</span>
-        <span className="text-white/70 text-xs ml-2">[{nodeData.role}]</span>
+        <div className="flex items-center gap-1 ml-2">
+          {prefabName && (
+            <span className="text-white/50 text-[10px] bg-white/10 px-1 rounded">P</span>
+          )}
+          <span className="text-white/70 text-xs">[{nodeData.role}]</span>
+        </div>
       </div>
+
+      {/* Prefab indicator */}
+      {prefabName && (
+        <div className="px-3 py-1 border-t border-zinc-700">
+          <div className="text-purple-400 text-[10px]">Prefab: {prefabName}</div>
+        </div>
+      )}
 
       {/* Components */}
       <div className="px-3 py-2 border-t border-zinc-700">
@@ -76,6 +102,91 @@ export const ActorNode = memo(function ActorNode({ data, selected }: NodeProps) 
           }}
         >
           [+ Add]
+        </button>
+      </div>
+
+      {/* Sequences */}
+      <div className="px-3 py-2 border-t border-zinc-700">
+        <div className="flex items-center justify-between">
+          <div className="text-zinc-400 text-xs">
+            Sequences: {sequenceCount > 0 ? `(${sequenceCount})` : ''}
+          </div>
+          <button
+            className="text-xs text-orange-400 hover:text-orange-300 transition-colors"
+            onClick={(e) => {
+              e.stopPropagation();
+              openSequenceEditor(nodeData.actorId);
+            }}
+          >
+            [Edit]
+          </button>
+        </div>
+        {sequenceCount > 0 && actor?.sequences && (
+          <div className="mt-1 space-y-0.5">
+            {actor.sequences.slice(0, 3).map((step) => (
+              <div key={step.id} className="text-[10px] text-zinc-500 truncate">
+                {step.order + 1}. {step.name}
+              </div>
+            ))}
+            {sequenceCount > 3 && (
+              <div className="text-[10px] text-zinc-600">...+{sequenceCount - 3} more</div>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* SubScene */}
+      <div className="px-3 py-1.5 border-t border-zinc-700">
+        <div className="flex items-center justify-between">
+          <div className="text-zinc-400 text-xs">
+            SubScene: {subSceneName ? <span className="text-cyan-400">{subSceneName}</span> : <span className="text-zinc-600 italic">None</span>}
+          </div>
+          <button
+            className="text-xs text-cyan-400 hover:text-cyan-300 transition-colors"
+            onClick={(e) => {
+              e.stopPropagation();
+              openSubScenePicker(nodeData.actorId);
+            }}
+          >
+            [Set]
+          </button>
+        </div>
+      </div>
+
+      {/* Actions: Copy, Duplicate, Save as Prefab */}
+      <div className="px-3 py-1.5 border-t border-zinc-700 flex gap-1 flex-wrap">
+        <button
+          className="text-[10px] text-zinc-400 hover:text-white bg-zinc-800 hover:bg-zinc-700 px-1.5 py-0.5 rounded transition-colors"
+          onClick={(e) => {
+            e.stopPropagation();
+            if (actor) copyToClipboard([actor]);
+          }}
+          title="Copy Actor"
+        >
+          Copy
+        </button>
+        <button
+          className="text-[10px] text-zinc-400 hover:text-white bg-zinc-800 hover:bg-zinc-700 px-1.5 py-0.5 rounded transition-colors"
+          onClick={(e) => {
+            e.stopPropagation();
+            if (activeSceneId) duplicateActor(activeSceneId, nodeData.actorId);
+          }}
+          title="Duplicate Actor"
+        >
+          Duplicate
+        </button>
+        <button
+          className="text-[10px] text-purple-400 hover:text-purple-300 bg-zinc-800 hover:bg-zinc-700 px-1.5 py-0.5 rounded transition-colors"
+          onClick={(e) => {
+            e.stopPropagation();
+            if (activeSceneId) {
+              const name = prompt('Prefab name:', nodeData.name);
+              if (name) createPrefab(name, activeSceneId, nodeData.actorId);
+            }
+          }}
+          title="Save as Prefab"
+        >
+          Save Prefab
         </button>
       </div>
 

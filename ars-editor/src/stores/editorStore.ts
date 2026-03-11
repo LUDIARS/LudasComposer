@@ -1,15 +1,20 @@
 import { create } from 'zustand';
+import type { Actor } from '@/types/domain';
 
 interface EditorState {
   selectedNodeIds: string[];
   contextMenu: { x: number; y: number } | null;
   componentPickerTarget: string | null;
   componentEditorTarget: string | null;
+  sequenceEditorTarget: string | null;
+  subScenePickerTarget: string | null;
+  clipboard: Actor[] | null;
   panelVisibility: {
     sceneManager: boolean;
     componentEditor: boolean;
     componentList: boolean;
     preview: boolean;
+    prefabList: boolean;
   };
   isDirty: boolean;
   lastSavedAt: number | null;
@@ -22,7 +27,13 @@ interface EditorState {
   closeComponentPicker: () => void;
   openComponentEditor: (componentId: string | null) => void;
   closeComponentEditor: () => void;
-  togglePanel: (panel: 'sceneManager' | 'componentEditor' | 'componentList' | 'preview') => void;
+  openSequenceEditor: (actorId: string) => void;
+  closeSequenceEditor: () => void;
+  openSubScenePicker: (actorId: string) => void;
+  closeSubScenePicker: () => void;
+  copyToClipboard: (actors: Actor[]) => void;
+  clearClipboard: () => void;
+  togglePanel: (panel: 'sceneManager' | 'componentEditor' | 'componentList' | 'preview' | 'prefabList') => void;
   markDirty: () => void;
   markSaved: (path?: string) => void;
   setProjectPath: (path: string | null) => void;
@@ -33,11 +44,15 @@ export const useEditorStore = create<EditorState>()((set) => ({
   contextMenu: null,
   componentPickerTarget: null,
   componentEditorTarget: null,
+  sequenceEditorTarget: null,
+  subScenePickerTarget: null,
+  clipboard: null,
   panelVisibility: {
     sceneManager: true,
     componentEditor: false,
     componentList: false,
     preview: false,
+    prefabList: false,
   },
   isDirty: false,
   lastSavedAt: null,
@@ -51,13 +66,19 @@ export const useEditorStore = create<EditorState>()((set) => ({
   openComponentEditor: (componentId) =>
     set({
       componentEditorTarget: componentId,
-      panelVisibility: { sceneManager: true, componentEditor: true },
+      panelVisibility: { sceneManager: true, componentEditor: true, componentList: false, preview: false, prefabList: false },
     }),
   closeComponentEditor: () =>
     set((s) => ({
       componentEditorTarget: null,
       panelVisibility: { ...s.panelVisibility, componentEditor: false },
     })),
+  openSequenceEditor: (actorId) => set({ sequenceEditorTarget: actorId }),
+  closeSequenceEditor: () => set({ sequenceEditorTarget: null }),
+  openSubScenePicker: (actorId) => set({ subScenePickerTarget: actorId }),
+  closeSubScenePicker: () => set({ subScenePickerTarget: null }),
+  copyToClipboard: (actors) => set({ clipboard: JSON.parse(JSON.stringify(actors)) }),
+  clearClipboard: () => set({ clipboard: null }),
   togglePanel: (panel) =>
     set((s) => ({
       panelVisibility: {

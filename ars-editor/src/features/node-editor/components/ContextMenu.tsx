@@ -2,6 +2,7 @@ import { useEditorStore } from '@/stores/editorStore';
 import { useProjectStore } from '@/stores/projectStore';
 import type { ActorRole } from '@/types/domain';
 import { useCallback, useEffect, useRef } from 'react';
+import { generateId } from '@/lib/utils';
 
 interface ContextMenuProps {
   flowPosition: { x: number; y: number } | null;
@@ -10,8 +11,11 @@ interface ContextMenuProps {
 export function ContextMenu({ flowPosition }: ContextMenuProps) {
   const contextMenu = useEditorStore((s) => s.contextMenu);
   const closeContextMenu = useEditorStore((s) => s.closeContextMenu);
+  const clipboard = useEditorStore((s) => s.clipboard);
   const addActor = useProjectStore((s) => s.addActor);
+  const instantiatePrefab = useProjectStore((s) => s.instantiatePrefab);
   const activeSceneId = useProjectStore((s) => s.project.activeSceneId);
+  const prefabs = useProjectStore((s) => s.project.prefabs);
   const menuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -33,10 +37,37 @@ export function ContextMenu({ flowPosition }: ContextMenuProps) {
         components: [],
         children: [],
         position: flowPosition,
+        sequences: [],
+        subSceneId: null,
+        prefabId: null,
       });
       closeContextMenu();
     },
     [activeSceneId, addActor, closeContextMenu, flowPosition],
+  );
+
+  const handlePaste = useCallback(() => {
+    if (!activeSceneId || !flowPosition || !clipboard) return;
+    for (const actor of clipboard) {
+      addActor(activeSceneId, {
+        ...actor,
+        id: generateId(),
+        name: `${actor.name} (Paste)`,
+        position: flowPosition,
+        parentId: null,
+        children: [],
+      });
+    }
+    closeContextMenu();
+  }, [activeSceneId, addActor, clipboard, closeContextMenu, flowPosition]);
+
+  const handleInstantiatePrefab = useCallback(
+    (prefabId: string) => {
+      if (!activeSceneId || !flowPosition) return;
+      instantiatePrefab(prefabId, activeSceneId, flowPosition);
+      closeContextMenu();
+    },
+    [activeSceneId, instantiatePrefab, closeContextMenu, flowPosition],
   );
 
   if (!contextMenu) return null;
@@ -46,10 +77,12 @@ export function ContextMenu({ flowPosition }: ContextMenuProps) {
     { label: 'Add Sequence', role: 'sequence', icon: '🟠' },
   ];
 
+  const prefabList = Object.values(prefabs);
+
   return (
     <div
       ref={menuRef}
-      className="absolute z-50 bg-zinc-800 border border-zinc-600 rounded-lg shadow-xl py-1 min-w-[160px]"
+      className="absolute z-50 bg-zinc-800 border border-zinc-600 rounded-lg shadow-xl py-1 min-w-[180px]"
       style={{ left: contextMenu.x, top: contextMenu.y }}
     >
       <div className="px-3 py-1 text-xs text-zinc-500 uppercase tracking-wider">Add Node</div>
@@ -63,6 +96,38 @@ export function ContextMenu({ flowPosition }: ContextMenuProps) {
           <span>{label}</span>
         </button>
       ))}
+
+      {/* Paste */}
+      {clipboard && clipboard.length > 0 && (
+        <>
+          <div className="h-px bg-zinc-700 my-1" />
+          <button
+            className="w-full flex items-center gap-2 px-3 py-2 text-sm text-zinc-200 hover:bg-zinc-700 transition-colors"
+            onClick={handlePaste}
+          >
+            <span>📋</span>
+            <span>Paste Actor ({clipboard.length})</span>
+          </button>
+        </>
+      )}
+
+      {/* Prefabs */}
+      {prefabList.length > 0 && (
+        <>
+          <div className="h-px bg-zinc-700 my-1" />
+          <div className="px-3 py-1 text-xs text-zinc-500 uppercase tracking-wider">From Prefab</div>
+          {prefabList.map((prefab) => (
+            <button
+              key={prefab.id}
+              className="w-full flex items-center gap-2 px-3 py-2 text-sm text-purple-300 hover:bg-zinc-700 transition-colors"
+              onClick={() => handleInstantiatePrefab(prefab.id)}
+            >
+              <span>🟣</span>
+              <span>{prefab.name}</span>
+            </button>
+          ))}
+        </>
+      )}
     </div>
   );
 }

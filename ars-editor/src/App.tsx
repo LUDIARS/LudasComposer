@@ -6,20 +6,31 @@ import { ComponentPicker } from './features/component-picker';
 import { ComponentEditor } from './features/component-editor';
 import { ComponentList } from './features/component-list';
 import { ScenePreview } from './features/preview';
+import { SequenceEditor } from './features/sequence-editor';
+import { SubScenePicker } from './features/subscene-picker';
+import { PrefabList } from './features/prefab-list';
 import { Toolbar } from './components/Toolbar';
 import { useEditorStore } from './stores/editorStore';
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
 import { useProjectStore } from './stores/projectStore';
+import { generateId } from './lib/utils';
 import * as backend from './lib/backend';
 
 function AppInner() {
   const componentPickerTarget = useEditorStore((s) => s.componentPickerTarget);
+  const sequenceEditorTarget = useEditorStore((s) => s.sequenceEditorTarget);
+  const subScenePickerTarget = useEditorStore((s) => s.subScenePickerTarget);
   const panelVisibility = useEditorStore((s) => s.panelVisibility);
   const openComponentEditor = useEditorStore((s) => s.openComponentEditor);
   const markDirty = useEditorStore((s) => s.markDirty);
   const markSaved = useEditorStore((s) => s.markSaved);
   const projectPath = useEditorStore((s) => s.projectPath);
+  const selectedNodeIds = useEditorStore((s) => s.selectedNodeIds);
+  const copyToClipboard = useEditorStore((s) => s.copyToClipboard);
+  const clipboard = useEditorStore((s) => s.clipboard);
   const project = useProjectStore((s) => s.project);
+  const addActor = useProjectStore((s) => s.addActor);
+  const duplicateActor = useProjectStore((s) => s.duplicateActor);
 
   // Track project changes to mark dirty
   const isFirstRender = useRef(true);
@@ -53,7 +64,48 @@ function AppInner() {
     }
   }, [project, projectPath, markSaved]);
 
-  useKeyboardShortcuts({ onSave: handleSave });
+  const handleCopy = useCallback(() => {
+    if (!project.activeSceneId || selectedNodeIds.length === 0) return;
+    const scene = project.scenes[project.activeSceneId];
+    if (!scene) return;
+    const actors = selectedNodeIds
+      .map((id) => scene.actors[id])
+      .filter(Boolean);
+    if (actors.length > 0) {
+      copyToClipboard(actors);
+    }
+  }, [project, selectedNodeIds, copyToClipboard]);
+
+  const handlePaste = useCallback(() => {
+    if (!project.activeSceneId || !clipboard || clipboard.length === 0) return;
+    for (const actor of clipboard) {
+      addActor(project.activeSceneId, {
+        ...actor,
+        id: generateId(),
+        name: `${actor.name} (Paste)`,
+        position: {
+          x: actor.position.x + 50,
+          y: actor.position.y + 50,
+        },
+        parentId: null,
+        children: [],
+      });
+    }
+  }, [project.activeSceneId, clipboard, addActor]);
+
+  const handleDuplicate = useCallback(() => {
+    if (!project.activeSceneId || selectedNodeIds.length === 0) return;
+    for (const id of selectedNodeIds) {
+      duplicateActor(project.activeSceneId, id);
+    }
+  }, [project.activeSceneId, selectedNodeIds, duplicateActor]);
+
+  useKeyboardShortcuts({
+    onSave: handleSave,
+    onCopy: handleCopy,
+    onPaste: handlePaste,
+    onDuplicate: handleDuplicate,
+  });
 
   return (
     <div className="flex flex-col h-screen w-screen bg-zinc-900 text-zinc-200">
@@ -83,6 +135,13 @@ function AppInner() {
           </div>
         )}
 
+        {/* Prefab List Panel */}
+        {panelVisibility.prefabList && (
+          <div className="w-60 min-w-[240px] bg-zinc-850 border-r border-zinc-700">
+            <PrefabList />
+          </div>
+        )}
+
         {/* Main - Node Editor */}
         <div className="flex-1 flex flex-col overflow-hidden">
           <NodeCanvas />
@@ -104,6 +163,12 @@ function AppInner() {
 
         {/* Modal - Component Picker */}
         {componentPickerTarget && <ComponentPicker />}
+
+        {/* Modal - Sequence Editor */}
+        {sequenceEditorTarget && <SequenceEditor />}
+
+        {/* Modal - SubScene Picker */}
+        {subScenePickerTarget && <SubScenePicker />}
       </div>
     </div>
   );
