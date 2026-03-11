@@ -1,0 +1,95 @@
+name: Update Web Version
+
+on:
+  workflow_dispatch:
+    inputs:
+      bump_type:
+        description: 'Version bump type'
+        required: true
+        type: choice
+        options:
+          - patch
+          - minor
+          - major
+      custom_version:
+        description: 'Custom version (overrides bump_type, e.g. 1.2.3)'
+        required: false
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  update-version:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ars-editor
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Calculate new version
+        id: version
+        run: |
+          CURRENT_VERSION=$(node -p "require('./package.json').version")
+          echo "current=$CURRENT_VERSION" >> "$GITHUB_OUTPUT"
+
+          if [ -n "${{ inputs.custom_version }}" ]; then
+            NEW_VERSION="${{ inputs.custom_version }}"
+          else
+            IFS='.' read -r MAJOR MINOR PATCH <<< "$CURRENT_VERSION"
+            case "${{ inputs.bump_type }}" in
+              major) NEW_VERSION="$((MAJOR + 1)).0.0" ;;
+              minor) NEW_VERSION="$MAJOR.$((MINOR + 1)).0" ;;
+              patch) NEW_VERSION="$MAJOR.$MINOR.$((PATCH + 1))" ;;
+            esac
+          fi
+
+          echo "new=$NEW_VERSION" >> "$GITHUB_OUTPUT"
+          echo "Bumping version: $CURRENT_VERSION -> $NEW_VERSION"
+
+      - name: Update package.json version
+        run: |
+          npm version "${{ steps.version.outputs.new }}" --no-git-tag-version
+
+      - name: Update Cargo.toml version
+        run: |
+          sed -i "0,/^version = /s/^version = \".*\"/version = \"${{ steps.version.outputs.new }}\"/" src-tauri/Cargo.toml
+
+      - name: Update tauri.conf.json version
+        run: |
+          node -e "
+            const fs = require('fs');
+            const conf = JSON.parse(fs.readFileSync('src-tauri/tauri.conf.json', 'utf8'));
+            conf.version = '${{ steps.version.outputs.new }}';
+            fs.writeFileSync('src-tauri/tauri.conf.json', JSON.stringify(conf, null, 2) + '\n');
+          "
+
+      - name: Install frontend dependencies
+        run: npm ci
+
+      - name: Build frontend
+        run: npm run build
+
+      - name: Upload dist artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: web-dist-${{ steps.version.outputs.new }}
+          path: ars-editor/dist/
+
+      - name: Commit version update
+        run: |
+          cd ..
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add ars-editor/package.json ars-editor/src-tauri/Cargo.toml ars-editor/src-tauri/tauri.conf.json
+          git commit -m "chore: bump web version to v${{ steps.version.outputs.new }}"
+          git tag "v${{ steps.version.outputs.new }}"
+          git push origin HEAD --tags
