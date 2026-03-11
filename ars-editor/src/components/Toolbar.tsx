@@ -1,13 +1,26 @@
 import { useState, useCallback } from 'react';
 import { useProjectStore } from '@/stores/projectStore';
+import { useEditorStore } from '@/stores/editorStore';
 import { canUndo, canRedo, undo, redo } from '@/stores/historyMiddleware';
 import * as backend from '@/lib/backend';
 
 export function Toolbar() {
   const project = useProjectStore((s) => s.project);
   const loadProject = useProjectStore((s) => s.loadProject);
-  const [projectPath, setProjectPath] = useState<string | null>(null);
+  const isDirty = useEditorStore((s) => s.isDirty);
+  const lastSavedAt = useEditorStore((s) => s.lastSavedAt);
+  const projectPath = useEditorStore((s) => s.projectPath);
+  const markDirty = useEditorStore((s) => s.markDirty);
+  const markSaved = useEditorStore((s) => s.markSaved);
+  const setProjectPath = useEditorStore((s) => s.setProjectPath);
+  const togglePanel = useEditorStore((s) => s.togglePanel);
+  const panelVisibility = useEditorStore((s) => s.panelVisibility);
   const [status, setStatus] = useState<string>('');
+
+  const showStatus = (msg: string) => {
+    setStatus(msg);
+    setTimeout(() => setStatus(''), 2000);
+  };
 
   const handleSave = useCallback(async () => {
     try {
@@ -17,9 +30,8 @@ export function Toolbar() {
         path = `${defaultDir}/${project.name.replace(/\s+/g, '_')}.json`;
       }
       await backend.saveProject(path, project);
-      setProjectPath(path);
-      setStatus('Saved!');
-      setTimeout(() => setStatus(''), 2000);
+      markSaved(path);
+      showStatus('Saved!');
     } catch {
       const json = JSON.stringify(project, null, 2);
       const blob = new Blob([json], { type: 'application/json' });
@@ -29,10 +41,10 @@ export function Toolbar() {
       a.download = `${project.name.replace(/\s+/g, '_')}.json`;
       a.click();
       URL.revokeObjectURL(url);
-      setStatus('Downloaded!');
-      setTimeout(() => setStatus(''), 2000);
+      markSaved();
+      showStatus('Downloaded!');
     }
-  }, [project, projectPath]);
+  }, [project, projectPath, markSaved]);
 
   const handleLoad = useCallback(async () => {
     if (backend.isTauri()) {
@@ -42,11 +54,10 @@ export function Toolbar() {
         const loaded = await backend.loadProject(input);
         loadProject(loaded);
         setProjectPath(input);
-        setStatus('Loaded!');
-        setTimeout(() => setStatus(''), 2000);
+        markSaved(input);
+        showStatus('Loaded!');
       } catch {
-        setStatus('Load failed');
-        setTimeout(() => setStatus(''), 2000);
+        showStatus('Load failed');
       }
     } else {
       const input = document.createElement('input');
@@ -59,19 +70,18 @@ export function Toolbar() {
         try {
           const parsed = JSON.parse(text);
           loadProject(parsed);
-          setStatus('Loaded!');
-          setTimeout(() => setStatus(''), 2000);
+          markSaved();
+          showStatus('Loaded!');
         } catch {
-          setStatus('Invalid file');
-          setTimeout(() => setStatus(''), 2000);
+          showStatus('Invalid file');
         }
       };
       input.click();
     }
-  }, [loadProject]);
+  }, [loadProject, setProjectPath, markSaved]);
 
   const handleNew = useCallback(() => {
-    if (!confirm('Create a new project? Unsaved changes will be lost.')) return;
+    if (isDirty && !confirm('Create a new project? Unsaved changes will be lost.')) return;
     loadProject({
       name: 'Untitled Project',
       scenes: {},
@@ -79,9 +89,13 @@ export function Toolbar() {
       activeSceneId: null,
     });
     setProjectPath(null);
-    setStatus('New project');
-    setTimeout(() => setStatus(''), 2000);
-  }, [loadProject]);
+    markSaved();
+    showStatus('New project');
+  }, [loadProject, setProjectPath, markSaved, isDirty]);
+
+  const lastSavedLabel = lastSavedAt
+    ? `Last saved: ${new Date(lastSavedAt).toLocaleTimeString()}`
+    : '';
 
   return (
     <div className="flex items-center gap-1 px-2 py-1 bg-zinc-800 border-b border-zinc-700 text-xs">
@@ -105,14 +119,14 @@ export function Toolbar() {
         className="px-2 py-1 text-zinc-300 hover:bg-zinc-700 rounded transition-colors"
         title="Save Project (Ctrl+S)"
       >
-        Save
+        Save{isDirty ? ' *' : ''}
       </button>
 
       <div className="w-px h-4 bg-zinc-600 mx-1" />
 
       {/* Undo/Redo */}
       <button
-        onClick={() => undo()}
+        onClick={() => { undo(); markDirty(); }}
         disabled={!canUndo()}
         className="px-2 py-1 text-zinc-300 hover:bg-zinc-700 rounded transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
         title="Undo (Ctrl+Z)"
@@ -120,7 +134,7 @@ export function Toolbar() {
         Undo
       </button>
       <button
-        onClick={() => redo()}
+        onClick={() => { redo(); markDirty(); }}
         disabled={!canRedo()}
         className="px-2 py-1 text-zinc-300 hover:bg-zinc-700 rounded transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
         title="Redo (Ctrl+Y)"
@@ -128,9 +142,41 @@ export function Toolbar() {
         Redo
       </button>
 
-      {/* Project name */}
+      <div className="w-px h-4 bg-zinc-600 mx-1" />
+
+      {/* View toggles */}
+      <button
+        onClick={() => togglePanel('componentList')}
+        className={`px-2 py-1 rounded transition-colors ${
+          panelVisibility.componentList
+            ? 'bg-blue-600 text-white'
+            : 'text-zinc-300 hover:bg-zinc-700'
+        }`}
+        title="Toggle Component List"
+      >
+        Components
+      </button>
+      <button
+        onClick={() => togglePanel('preview')}
+        className={`px-2 py-1 rounded transition-colors ${
+          panelVisibility.preview
+            ? 'bg-blue-600 text-white'
+            : 'text-zinc-300 hover:bg-zinc-700'
+        }`}
+        title="Toggle Preview"
+      >
+        Preview
+      </button>
+
+      {/* Project name & status */}
       <div className="flex-1" />
-      <span className="text-zinc-500 truncate max-w-[200px]">{project.name}</span>
+      {lastSavedLabel && !status && (
+        <span className="text-zinc-600 mr-2">{lastSavedLabel}</span>
+      )}
+      <span className="text-zinc-500 truncate max-w-[200px]">
+        {project.name}
+        {isDirty && <span className="text-amber-400 ml-1">(unsaved)</span>}
+      </span>
       {status && (
         <span className="text-green-400 ml-2">{status}</span>
       )}

@@ -8,7 +8,12 @@ interface EditorState {
   panelVisibility: {
     sceneManager: boolean;
     componentEditor: boolean;
+    componentList: boolean;
+    preview: boolean;
   };
+  isDirty: boolean;
+  lastSavedAt: number | null;
+  projectPath: string | null;
 
   setSelectedNodes: (ids: string[]) => void;
   openContextMenu: (pos: { x: number; y: number }) => void;
@@ -17,7 +22,10 @@ interface EditorState {
   closeComponentPicker: () => void;
   openComponentEditor: (componentId: string | null) => void;
   closeComponentEditor: () => void;
-  togglePanel: (panel: 'sceneManager' | 'componentEditor') => void;
+  togglePanel: (panel: 'sceneManager' | 'componentEditor' | 'componentList' | 'preview') => void;
+  markDirty: () => void;
+  markSaved: (path?: string) => void;
+  setProjectPath: (path: string | null) => void;
 }
 
 export const useEditorStore = create<EditorState>()((set) => ({
@@ -28,7 +36,12 @@ export const useEditorStore = create<EditorState>()((set) => ({
   panelVisibility: {
     sceneManager: true,
     componentEditor: false,
+    componentList: false,
+    preview: false,
   },
+  isDirty: false,
+  lastSavedAt: null,
+  projectPath: null,
 
   setSelectedNodes: (ids) => set({ selectedNodeIds: ids }),
   openContextMenu: (pos) => set({ contextMenu: pos }),
@@ -52,4 +65,12 @@ export const useEditorStore = create<EditorState>()((set) => ({
         [panel]: !s.panelVisibility[panel],
       },
     })),
+  markDirty: () => set({ isDirty: true }),
+  markSaved: (path) =>
+    set((s) => ({
+      isDirty: false,
+      lastSavedAt: Date.now(),
+      projectPath: path ?? s.projectPath,
+    })),
+  setProjectPath: (path) => set({ projectPath: path }),
 }));

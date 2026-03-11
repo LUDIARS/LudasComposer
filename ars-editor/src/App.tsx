@@ -1,9 +1,11 @@
-import { useCallback } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 import { ReactFlowProvider } from '@xyflow/react';
 import { SceneList } from './features/scene-manager';
 import { NodeCanvas } from './features/node-editor';
 import { ComponentPicker } from './features/component-picker';
 import { ComponentEditor } from './features/component-editor';
+import { ComponentList } from './features/component-list';
+import { ScenePreview } from './features/preview';
 import { Toolbar } from './components/Toolbar';
 import { useEditorStore } from './stores/editorStore';
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
@@ -14,13 +16,30 @@ function AppInner() {
   const componentPickerTarget = useEditorStore((s) => s.componentPickerTarget);
   const panelVisibility = useEditorStore((s) => s.panelVisibility);
   const openComponentEditor = useEditorStore((s) => s.openComponentEditor);
+  const markDirty = useEditorStore((s) => s.markDirty);
+  const markSaved = useEditorStore((s) => s.markSaved);
+  const projectPath = useEditorStore((s) => s.projectPath);
   const project = useProjectStore((s) => s.project);
+
+  // Track project changes to mark dirty
+  const isFirstRender = useRef(true);
+  useEffect(() => {
+    if (isFirstRender.current) {
+      isFirstRender.current = false;
+      return;
+    }
+    markDirty();
+  }, [project, markDirty]);
 
   const handleSave = useCallback(async () => {
     try {
-      const defaultDir = await backend.getDefaultProjectPath();
-      const path = `${defaultDir}/${project.name.replace(/\s+/g, '_')}.json`;
+      let path = projectPath;
+      if (!path) {
+        const defaultDir = await backend.getDefaultProjectPath();
+        path = `${defaultDir}/${project.name.replace(/\s+/g, '_')}.json`;
+      }
       await backend.saveProject(path, project);
+      markSaved(path);
     } catch {
       const json = JSON.stringify(project, null, 2);
       const blob = new Blob([json], { type: 'application/json' });
@@ -30,8 +49,9 @@ function AppInner() {
       a.download = `${project.name.replace(/\s+/g, '_')}.json`;
       a.click();
       URL.revokeObjectURL(url);
+      markSaved();
     }
-  }, [project]);
+  }, [project, projectPath, markSaved]);
 
   useKeyboardShortcuts({ onSave: handleSave });
 
@@ -56,10 +76,24 @@ function AppInner() {
           </div>
         )}
 
+        {/* Component List Panel */}
+        {panelVisibility.componentList && (
+          <div className="w-64 min-w-[256px] bg-zinc-850 border-r border-zinc-700">
+            <ComponentList />
+          </div>
+        )}
+
         {/* Main - Node Editor */}
         <div className="flex-1 flex flex-col overflow-hidden">
           <NodeCanvas />
         </div>
+
+        {/* Preview Panel */}
+        {panelVisibility.preview && (
+          <div className="w-72 min-w-[288px] bg-zinc-850 border-l border-zinc-700">
+            <ScenePreview />
+          </div>
+        )}
 
         {/* Right Panel - Component Editor */}
         {panelVisibility.componentEditor && (
