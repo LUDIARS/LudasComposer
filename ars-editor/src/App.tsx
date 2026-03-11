@@ -8,6 +8,7 @@ import { Toolbar } from './components/Toolbar';
 import { useEditorStore } from './stores/editorStore';
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
 import { useProjectStore } from './stores/projectStore';
+import * as backend from './lib/backend';
 
 function AppInner() {
   const componentPickerTarget = useEditorStore((s) => s.componentPickerTarget);
@@ -17,12 +18,10 @@ function AppInner() {
 
   const handleSave = useCallback(async () => {
     try {
-      const { invoke } = await import('@tauri-apps/api/core');
-      const defaultDir = await invoke<string>('get_default_project_path');
+      const defaultDir = await backend.getDefaultProjectPath();
       const path = `${defaultDir}/${project.name.replace(/\s+/g, '_')}.json`;
-      await invoke('save_project', { path, project });
+      await backend.saveProject(path, project);
     } catch {
-      // Fallback: download as file in browser dev mode
       const json = JSON.stringify(project, null, 2);
       const blob = new Blob([json], { type: 'application/json' });
       const url = URL.createObjectURL(blob);

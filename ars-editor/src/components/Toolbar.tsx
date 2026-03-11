@@ -1,6 +1,7 @@
 import { useState, useCallback } from 'react';
 import { useProjectStore } from '@/stores/projectStore';
 import { canUndo, canRedo, undo, redo } from '@/stores/historyMiddleware';
+import * as backend from '@/lib/backend';
 
 export function Toolbar() {
   const project = useProjectStore((s) => s.project);
@@ -10,18 +11,16 @@ export function Toolbar() {
 
   const handleSave = useCallback(async () => {
     try {
-      const { invoke } = await import('@tauri-apps/api/core');
       let path = projectPath;
       if (!path) {
-        const defaultDir = await invoke<string>('get_default_project_path');
+        const defaultDir = await backend.getDefaultProjectPath();
         path = `${defaultDir}/${project.name.replace(/\s+/g, '_')}.json`;
       }
-      await invoke('save_project', { path, project });
+      await backend.saveProject(path, project);
       setProjectPath(path);
       setStatus('Saved!');
       setTimeout(() => setStatus(''), 2000);
-    } catch (e) {
-      // In dev mode without Tauri, fall back to download
+    } catch {
       const json = JSON.stringify(project, null, 2);
       const blob = new Blob([json], { type: 'application/json' });
       const url = URL.createObjectURL(blob);
@@ -36,18 +35,20 @@ export function Toolbar() {
   }, [project, projectPath]);
 
   const handleLoad = useCallback(async () => {
-    try {
-      const { invoke } = await import('@tauri-apps/api/core');
-      // In Tauri, use a simple prompt for path
-      const input = prompt('Enter project file path:');
-      if (!input) return;
-      const loaded = await invoke<typeof project>('load_project', { path: input });
-      loadProject(loaded);
-      setProjectPath(input);
-      setStatus('Loaded!');
-      setTimeout(() => setStatus(''), 2000);
-    } catch (e) {
-      // In dev mode, use file input
+    if (backend.isTauri()) {
+      try {
+        const input = prompt('Enter project file path:');
+        if (!input) return;
+        const loaded = await backend.loadProject(input);
+        loadProject(loaded);
+        setProjectPath(input);
+        setStatus('Loaded!');
+        setTimeout(() => setStatus(''), 2000);
+      } catch {
+        setStatus('Load failed');
+        setTimeout(() => setStatus(''), 2000);
+      }
+    } else {
       const input = document.createElement('input');
       input.type = 'file';
       input.accept = '.json';

@@ -15,12 +15,30 @@ name = "app_lib"
 crate-type = ["staticlib", "cdylib", "rlib"]
 
 [build-dependencies]
-tauri-build = { version = "2.5.6" }
+tauri-build = { version = "2.5.6", optional = true }
+
+[features]
+default = ["tauri-app"]
+tauri-app = ["dep:tauri", "dep:tauri-plugin-log", "dep:tauri-build"]
+web-server = ["dep:axum", "dep:tokio", "dep:tower-http"]
+
+[[bin]]
+name = "app"
+path = "src/main.rs"
+required-features = ["tauri-app"]
+
+[[bin]]
+name = "ars-web-server"
+path = "src/web_main.rs"
+required-features = ["web-server"]
 
 [dependencies]
 serde_json = "1.0"
 serde = { version = "1.0", features = ["derive"] }
 log = "0.4"
-tauri = { version = "2.10.3" }
-tauri-plugin-log = "2"
+tauri = { version = "2.10.3", optional = true }
+tauri-plugin-log = { version = "2", optional = true }
 dirs-next = "2.0"
+axum = { version = "0.7", optional = true }
+tokio = { version = "1", features = ["full"], optional = true }
+tower-http = { version = "0.5", features = ["cors", "fs"], optional = true }

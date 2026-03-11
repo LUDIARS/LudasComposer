@@ -1,7 +1,9 @@
-mod commands;
-mod models;
+pub mod commands;
+pub mod models;
+#[cfg(feature = "web-server")]
+pub mod web_server;
 
-#[cfg_attr(mobile, tauri::mobile_entry_point)]
+#[cfg(feature = "tauri-app")]
 pub fn run() {
     tauri::Builder::default()
         .setup(|app| {
