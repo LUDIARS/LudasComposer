@@ -5,7 +5,7 @@ async fn main() {
     let port: u16 = env::var("PORT")
         .ok()
         .and_then(|p| p.parse().ok())
-        .unwrap_or(3000);
+        .unwrap_or(5173);
 
     let static_dir = env::args().nth(1);
 
