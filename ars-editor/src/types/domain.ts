@@ -31,6 +31,13 @@ export interface Component {
   dependencies: string[];
 }
 
+export interface SequenceStep {
+  id: string;
+  name: string;
+  description: string;
+  order: number;
+}
+
 export interface Actor {
   id: string;
   name: string;
@@ -39,6 +46,15 @@ export interface Actor {
   children: string[];
   position: { x: number; y: number };
   parentId?: string | null;
+  sequences: SequenceStep[];
+  subSceneId?: string | null;
+  prefabId?: string | null;
+}
+
+export interface Prefab {
+  id: string;
+  name: string;
+  actor: Omit<Actor, 'id' | 'position' | 'parentId' | 'prefabId'>;
 }
 
 export interface Connection {
@@ -61,5 +77,6 @@ export interface Project {
   name: string;
   scenes: Record<string, Scene>;
   components: Record<string, Component>;
+  prefabs: Record<string, Prefab>;
   activeSceneId: string | null;
 }

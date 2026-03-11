@@ -86,6 +86,7 @@ export function Toolbar() {
       name: 'Untitled Project',
       scenes: {},
       components: {},
+      prefabs: {},
       activeSceneId: null,
     });
     setProjectPath(null);
@@ -155,6 +156,17 @@ export function Toolbar() {
         title="Toggle Component List"
       >
         Components
+      </button>
+      <button
+        onClick={() => togglePanel('prefabList')}
+        className={`px-2 py-1 rounded transition-colors ${
+          panelVisibility.prefabList
+            ? 'bg-purple-600 text-white'
+            : 'text-zinc-300 hover:bg-zinc-700'
+        }`}
+        title="Toggle Prefab List"
+      >
+        Prefabs
       </button>
       <button
         onClick={() => togglePanel('preview')}

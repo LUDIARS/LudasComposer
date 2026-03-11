@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import type { Project, Actor, Connection, Component, Scene } from '@/types/domain';
+import type { Project, Actor, Connection, Component, Scene, SequenceStep, Prefab } from '@/types/domain';
 import { generateId } from '@/lib/utils';
 
 interface ProjectActions {
@@ -16,6 +16,22 @@ interface ProjectActions {
   setActorComponents: (sceneId: string, actorId: string, componentIds: string[]) => void;
   setActorParent: (sceneId: string, actorId: string, parentId: string | null) => void;
   renameActor: (sceneId: string, actorId: string, name: string) => void;
+  duplicateActor: (sceneId: string, actorId: string, offset?: { x: number; y: number }) => string | null;
+
+  // Sequence actions
+  setActorSequences: (sceneId: string, actorId: string, sequences: SequenceStep[]) => void;
+  addSequenceStep: (sceneId: string, actorId: string, step: Omit<SequenceStep, 'id'>) => void;
+  removeSequenceStep: (sceneId: string, actorId: string, stepId: string) => void;
+  updateSequenceStep: (sceneId: string, actorId: string, stepId: string, updates: Partial<SequenceStep>) => void;
+
+  // SubScene actions
+  setActorSubScene: (sceneId: string, actorId: string, subSceneId: string | null) => void;
+
+  // Prefab actions
+  createPrefab: (name: string, sceneId: string, actorId: string) => string | null;
+  deletePrefab: (id: string) => void;
+  renamePrefab: (id: string, name: string) => void;
+  instantiatePrefab: (prefabId: string, sceneId: string, position: { x: number; y: number }) => string | null;
 
   // Connection actions
   addConnection: (sceneId: string, connection: Omit<Connection, 'id'>) => void;
@@ -38,6 +54,7 @@ const initialProject: Project = {
   name: 'Untitled Project',
   scenes: {},
   components: {},
+  prefabs: {},
   activeSceneId: null,
 };
 
@@ -54,6 +71,9 @@ export const useProjectStore = create<ProjectState & ProjectActions>()((set, get
       components: [],
       children: [],
       position: { x: 250, y: 50 },
+      sequences: [],
+      subSceneId: null,
+      prefabId: null,
     };
     const scene: Scene = {
       id: sceneId,
@@ -114,7 +134,13 @@ export const useProjectStore = create<ProjectState & ProjectActions>()((set, get
 
   addActor: (sceneId: string, actorData) => {
     const id = actorData.id ?? generateId();
-    const actor: Actor = { ...actorData, id };
+    const actor: Actor = {
+      ...actorData,
+      id,
+      sequences: actorData.sequences ?? [],
+      subSceneId: actorData.subSceneId ?? null,
+      prefabId: actorData.prefabId ?? null,
+    };
     set((state) => {
       const scene = state.project.scenes[sceneId];
       if (!scene) return state;
@@ -139,7 +165,6 @@ export const useProjectStore = create<ProjectState & ProjectActions>()((set, get
       const scene = state.project.scenes[sceneId];
       if (!scene) return state;
       const { [actorId]: _, ...remainingActors } = scene.actors;
-      // Remove children references and connections involving this actor
       const updatedActors = Object.fromEntries(
         Object.entries(remainingActors).map(([k, a]) => [
           k,
@@ -219,7 +244,6 @@ export const useProjectStore = create<ProjectState & ProjectActions>()((set, get
       if (!scene) return state;
       const actor = scene.actors[actorId];
       if (!actor) return state;
-      // Remove from old parent's children
       const updatedActors = { ...scene.actors };
       for (const a of Object.values(updatedActors)) {
         if (a.children.includes(actorId)) {
@@ -229,7 +253,6 @@ export const useProjectStore = create<ProjectState & ProjectActions>()((set, get
           };
         }
       }
-      // Set new parent
       updatedActors[actorId] = { ...actor, parentId };
       if (parentId && updatedActors[parentId]) {
         updatedActors[parentId] = {
@@ -271,6 +294,262 @@ export const useProjectStore = create<ProjectState & ProjectActions>()((set, get
         },
       };
     });
+  },
+
+  duplicateActor: (sceneId, actorId, offset = { x: 50, y: 50 }) => {
+    const { project } = get();
+    const scene = project.scenes[sceneId];
+    if (!scene) return null;
+    const actor = scene.actors[actorId];
+    if (!actor) return null;
+
+    const newId = generateId();
+    const newActor: Actor = {
+      ...JSON.parse(JSON.stringify(actor)),
+      id: newId,
+      name: `${actor.name} (Copy)`,
+      position: {
+        x: actor.position.x + offset.x,
+        y: actor.position.y + offset.y,
+      },
+      parentId: null,
+      children: [],
+      prefabId: actor.prefabId,
+    };
+
+    set((state) => {
+      const s = state.project.scenes[sceneId];
+      if (!s) return state;
+      return {
+        project: {
+          ...state.project,
+          scenes: {
+            ...state.project.scenes,
+            [sceneId]: {
+              ...s,
+              actors: { ...s.actors, [newId]: newActor },
+            },
+          },
+        },
+      };
+    });
+    return newId;
+  },
+
+  // Sequence actions
+  setActorSequences: (sceneId, actorId, sequences) => {
+    set((state) => {
+      const scene = state.project.scenes[sceneId];
+      if (!scene) return state;
+      const actor = scene.actors[actorId];
+      if (!actor) return state;
+      return {
+        project: {
+          ...state.project,
+          scenes: {
+            ...state.project.scenes,
+            [sceneId]: {
+              ...scene,
+              actors: {
+                ...scene.actors,
+                [actorId]: { ...actor, sequences },
+              },
+            },
+          },
+        },
+      };
+    });
+  },
+
+  addSequenceStep: (sceneId, actorId, stepData) => {
+    set((state) => {
+      const scene = state.project.scenes[sceneId];
+      if (!scene) return state;
+      const actor = scene.actors[actorId];
+      if (!actor) return state;
+      const step: SequenceStep = { ...stepData, id: generateId() };
+      return {
+        project: {
+          ...state.project,
+          scenes: {
+            ...state.project.scenes,
+            [sceneId]: {
+              ...scene,
+              actors: {
+                ...scene.actors,
+                [actorId]: { ...actor, sequences: [...actor.sequences, step] },
+              },
+            },
+          },
+        },
+      };
+    });
+  },
+
+  removeSequenceStep: (sceneId, actorId, stepId) => {
+    set((state) => {
+      const scene = state.project.scenes[sceneId];
+      if (!scene) return state;
+      const actor = scene.actors[actorId];
+      if (!actor) return state;
+      return {
+        project: {
+          ...state.project,
+          scenes: {
+            ...state.project.scenes,
+            [sceneId]: {
+              ...scene,
+              actors: {
+                ...scene.actors,
+                [actorId]: {
+                  ...actor,
+                  sequences: actor.sequences.filter((s) => s.id !== stepId),
+                },
+              },
+            },
+          },
+        },
+      };
+    });
+  },
+
+  updateSequenceStep: (sceneId, actorId, stepId, updates) => {
+    set((state) => {
+      const scene = state.project.scenes[sceneId];
+      if (!scene) return state;
+      const actor = scene.actors[actorId];
+      if (!actor) return state;
+      return {
+        project: {
+          ...state.project,
+          scenes: {
+            ...state.project.scenes,
+            [sceneId]: {
+              ...scene,
+              actors: {
+                ...scene.actors,
+                [actorId]: {
+                  ...actor,
+                  sequences: actor.sequences.map((s) =>
+                    s.id === stepId ? { ...s, ...updates } : s,
+                  ),
+                },
+              },
+            },
+          },
+        },
+      };
+    });
+  },
+
+  // SubScene actions
+  setActorSubScene: (sceneId, actorId, subSceneId) => {
+    set((state) => {
+      const scene = state.project.scenes[sceneId];
+      if (!scene) return state;
+      const actor = scene.actors[actorId];
+      if (!actor) return state;
+      return {
+        project: {
+          ...state.project,
+          scenes: {
+            ...state.project.scenes,
+            [sceneId]: {
+              ...scene,
+              actors: {
+                ...scene.actors,
+                [actorId]: { ...actor, subSceneId },
+              },
+            },
+          },
+        },
+      };
+    });
+  },
+
+  // Prefab actions
+  createPrefab: (name, sceneId, actorId) => {
+    const { project } = get();
+    const scene = project.scenes[sceneId];
+    if (!scene) return null;
+    const actor = scene.actors[actorId];
+    if (!actor) return null;
+
+    const prefabId = generateId();
+    const { id: _id, position: _pos, parentId: _pid, prefabId: _pfid, ...actorData } = actor;
+    const prefab: Prefab = {
+      id: prefabId,
+      name,
+      actor: JSON.parse(JSON.stringify(actorData)),
+    };
+
+    set((state) => ({
+      project: {
+        ...state.project,
+        prefabs: { ...state.project.prefabs, [prefabId]: prefab },
+      },
+    }));
+    return prefabId;
+  },
+
+  deletePrefab: (id) => {
+    set((state) => {
+      const { [id]: _, ...remaining } = state.project.prefabs;
+      return {
+        project: { ...state.project, prefabs: remaining },
+      };
+    });
+  },
+
+  renamePrefab: (id, name) => {
+    set((state) => {
+      const prefab = state.project.prefabs[id];
+      if (!prefab) return state;
+      return {
+        project: {
+          ...state.project,
+          prefabs: {
+            ...state.project.prefabs,
+            [id]: { ...prefab, name },
+          },
+        },
+      };
+    });
+  },
+
+  instantiatePrefab: (prefabId, sceneId, position) => {
+    const { project } = get();
+    const prefab = project.prefabs[prefabId];
+    if (!prefab) return null;
+    const scene = project.scenes[sceneId];
+    if (!scene) return null;
+
+    const newId = generateId();
+    const newActor: Actor = {
+      ...JSON.parse(JSON.stringify(prefab.actor)),
+      id: newId,
+      position,
+      parentId: null,
+      prefabId,
+    };
+
+    set((state) => {
+      const s = state.project.scenes[sceneId];
+      if (!s) return state;
+      return {
+        project: {
+          ...state.project,
+          scenes: {
+            ...state.project.scenes,
+            [sceneId]: {
+              ...s,
+              actors: { ...s.actors, [newId]: newActor },
+            },
+          },
+        },
+      };
+    });
+    return newId;
   },
 
   addConnection: (sceneId, connectionData) => {
@@ -333,7 +612,31 @@ export const useProjectStore = create<ProjectState & ProjectActions>()((set, get
     });
   },
 
-  loadProject: (project) => set({ project }),
+  loadProject: (project) => set({
+    project: {
+      ...project,
+      prefabs: project.prefabs ?? {},
+      scenes: Object.fromEntries(
+        Object.entries(project.scenes).map(([k, scene]) => [
+          k,
+          {
+            ...scene,
+            actors: Object.fromEntries(
+              Object.entries(scene.actors).map(([ak, actor]) => [
+                ak,
+                {
+                  ...actor,
+                  sequences: actor.sequences ?? [],
+                  subSceneId: actor.subSceneId ?? null,
+                  prefabId: actor.prefabId ?? null,
+                },
+              ]),
+            ),
+          },
+        ]),
+      ),
+    },
+  }),
 
   getActiveScene: () => {
     const { project } = get();
