@@ -2,7 +2,7 @@ use crate::models::*;
 use regex::Regex;
 use uuid::Uuid;
 
-/// Ludusモジュール定義のMarkdownをパースする
+/// Arsモジュール定義のMarkdownをパースする
 ///
 /// plan.md セクション8のフォーマットに準拠:
 /// ```markdown

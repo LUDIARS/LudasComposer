@@ -8,7 +8,7 @@
 #   export AWS_ACCOUNT_ID="123456789012"
 #   export S3_BUCKET="ars-build-artifacts"
 #   export GITHUB_ORG="LUDIARS"
-#   export GITHUB_REPO="LudasComposer"
+#   export GITHUB_REPO="Ars"
 #   export AWS_REGION="ap-northeast-1"
 #   bash setup-iam.sh
 #
@@ -25,7 +25,7 @@ set -euo pipefail
 AWS_ACCOUNT_ID="${AWS_ACCOUNT_ID:-}"
 S3_BUCKET="${S3_BUCKET:-ars-build-artifacts}"
 GITHUB_ORG="${GITHUB_ORG:-LUDIARS}"
-GITHUB_REPO="${GITHUB_REPO:-LudasComposer}"
+GITHUB_REPO="${GITHUB_REPO:-Ars}"
 AWS_REGION="${AWS_REGION:-ap-northeast-1}"
 
 # ----- 引数パース -----

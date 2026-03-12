@@ -15,8 +15,8 @@ LOG_PREFIX="[ars-build-setup]"
 log() { echo "$LOG_PREFIX $(date '+%Y-%m-%d %H:%M:%S') $*"; }
 
 # ----- 設定 -----
-REPO_URL="https://github.com/LUDIARS/LudasComposer.git"
-WORK_DIR="$HOME/LudasComposer"
+REPO_URL="https://github.com/LUDIARS/Ars.git"
+WORK_DIR="$HOME/Ars"
 NODE_VERSION="20"
 
 # =============================================================================

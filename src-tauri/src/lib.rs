@@ -10,7 +10,7 @@ use std::sync::Mutex;
 pub fn run() {
     let registry_service = ModuleRegistryService::with_defaults()
         .unwrap_or_else(|_| {
-            let cache_dir = std::env::temp_dir().join("ludas-composer").join("module-cache");
+            let cache_dir = std::env::temp_dir().join("ars").join("module-cache");
             ModuleRegistryService::new(cache_dir)
         });
 

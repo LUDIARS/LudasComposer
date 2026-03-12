@@ -147,7 +147,7 @@ jobs:
               'export NVM_DIR=/home/ubuntu/.nvm',
               '. /home/ubuntu/.nvm/nvm.sh',
               '. /home/ubuntu/.cargo/env',
-              'cd /home/ubuntu/LudasComposer',
+              'cd /home/ubuntu/Ars',
               'bash infra/build-instance/build.sh $VERSION_ARG'
             ]" \
             --timeout-seconds 1200 \

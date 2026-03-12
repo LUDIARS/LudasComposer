@@ -1,6 +1,6 @@
-# LudasComposer (Ars Editor) - Linux arm64 セットアップガイド
+# Ars (Ars Editor) - Linux arm64 セットアップガイド
 
-このガイドでは、Linux arm64 (aarch64) 環境で LudasComposer (Ars Editor) を開発・ビルドするための手順を説明します。
+このガイドでは、Linux arm64 (aarch64) 環境で Ars (Ars Editor) を開発・ビルドするための手順を説明します。
 
 ## 動作環境
 
@@ -89,8 +89,8 @@ npm install -g @tauri-apps/cli
 
 ```bash
 # リポジトリのクローン
-git clone https://github.com/LUDIARS/LudasComposer.git
-cd LudasComposer/ars-editor
+git clone https://github.com/LUDIARS/Ars.git
+cd Ars/ars-editor
 
 # npm 依存パッケージのインストール
 npm install

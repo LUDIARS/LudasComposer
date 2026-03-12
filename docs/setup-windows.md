@@ -1,6 +1,6 @@
-# LudasComposer (Ars Editor) - Windows セットアップガイド
+# Ars (Ars Editor) - Windows セットアップガイド
 
-このガイドでは、Windows 環境で LudasComposer (Ars Editor) を開発・ビルドするための手順を説明します。
+このガイドでは、Windows 環境で Ars (Ars Editor) を開発・ビルドするための手順を説明します。
 
 ## 動作環境
 
@@ -85,8 +85,8 @@ PowerShell またはコマンドプロンプトで以下を実行します：
 
 ```powershell
 # リポジトリのクローン
-git clone https://github.com/LUDIARS/LudasComposer.git
-cd LudasComposer\ars-editor
+git clone https://github.com/LUDIARS/Ars.git
+cd Ars\ars-editor
 
 # npm 依存パッケージのインストール
 npm install
@@ -186,7 +186,7 @@ Windows Defender のリアルタイムスキャンがビルドを遅くする場
 1. **Windows セキュリティ** → **ウイルスと脅威の防止** → **設定の管理**
 2. **除外の追加または削除** をクリック
 3. 以下のフォルダを追加：
-   - プロジェクトフォルダ（例: `C:\Users\<ユーザー名>\LudasComposer`）
+   - プロジェクトフォルダ（例: `C:\Users\<ユーザー名>\Ars`）
    - Cargo のキャッシュ（例: `C:\Users\<ユーザー名>\.cargo`）
    - Rust のターゲットフォルダ（例: `...\ars-editor\src-tauri\target`）
 

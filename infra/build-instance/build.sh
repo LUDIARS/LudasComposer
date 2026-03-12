@@ -18,7 +18,7 @@ set -euo pipefail
 # ----- 設定 -----
 S3_BUCKET="${S3_BUCKET:-ars-build-artifacts}"
 REPO_BRANCH="${REPO_BRANCH:-main}"
-WORK_DIR="$HOME/LudasComposer"
+WORK_DIR="$HOME/Ars"
 BUILD_DIR="$WORK_DIR/ars-editor"
 ARTIFACT_DIR="/tmp/ars-build-artifacts"
 VERSION=""

@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-/// Ludusモジュール定義のカテゴリ
+/// Arsモジュール定義のカテゴリ
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub enum ModuleCategory {
     UI,
@@ -53,7 +53,7 @@ pub struct TestCase {
     pub description: String,
 }
 
-/// Ludusモジュール定義（markdownから解析）
+/// Arsモジュール定義（markdownから解析）
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ModuleDefinition {
     pub id: String,

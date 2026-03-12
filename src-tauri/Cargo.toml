@@ -1,5 +1,5 @@
 [package]
-name = "ludas-composer"
+name = "ars"
 version = "0.1.0"
 edition = "2021"
 
@@ -17,7 +17,7 @@ dirs = "6"
 walkdir = "2"
 
 [lib]
-name = "ludas_composer_lib"
+name = "ars_lib"
 crate-type = ["lib", "cdylib", "staticlib"]
 
 [build-dependencies]

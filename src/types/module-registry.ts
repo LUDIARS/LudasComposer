@@ -30,7 +30,7 @@ export interface TestCase {
   description: string;
 }
 
-/** Ludusモジュール定義 */
+/** Arsモジュール定義 */
 export interface ModuleDefinition {
   id: string;
   name: string;

@@ -31,10 +31,10 @@ impl GitCloneService {
     }
 
     /// デフォルトのキャッシュディレクトリを使って作成
-    /// $HOME/.ludas-composer/module-cache/
+    /// $HOME/.ars/module-cache/
     pub fn with_default_cache() -> Result<Self, GitCloneError> {
         let home = dirs::data_local_dir().ok_or(GitCloneError::CacheDirectoryNotFound)?;
-        let cache_dir = home.join("ludas-composer").join("module-cache");
+        let cache_dir = home.join("ars").join("module-cache");
         Ok(Self { cache_dir })
     }
 
