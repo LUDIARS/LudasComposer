@@ -1,0 +1,19 @@
+services:
+  web:
+    build: .
+    ports:
+      - "8080:8080"
+    environment:
+      PORT: "8080"
+      # GitHub OAuth
+      GITHUB_CLIENT_ID: "${GITHUB_CLIENT_ID}"
+      GITHUB_CLIENT_SECRET: "${GITHUB_CLIENT_SECRET}"
+      GITHUB_REDIRECT_URI: "${GITHUB_REDIRECT_URI:-http://localhost:8080/auth/github/callback}"
+      # AWS DynamoDB
+      AWS_REGION: "${AWS_REGION:-ap-northeast-1}"
+      AWS_ACCESS_KEY_ID: "${AWS_ACCESS_KEY_ID}"
+      AWS_SECRET_ACCESS_KEY: "${AWS_SECRET_ACCESS_KEY}"
+      DYNAMODB_USERS_TABLE: "${DYNAMODB_USERS_TABLE:-ars-users}"
+      DYNAMODB_SESSIONS_TABLE: "${DYNAMODB_SESSIONS_TABLE:-ars-sessions}"
+      DYNAMODB_PROJECTS_TABLE: "${DYNAMODB_PROJECTS_TABLE:-ars-projects}"
+    restart: unless-stopped
