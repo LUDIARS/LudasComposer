@@ -34,6 +34,7 @@ web-server = [
     "dep:aws-sdk-dynamodb",
     "dep:time",
     "dep:urlencoding",
+    "dep:git2",
 ]
 
 [[bin]]
@@ -68,3 +69,5 @@ urlencoding = { version = "2", optional = true }
 # AWS DynamoDB
 aws-config = { version = "1", optional = true }
 aws-sdk-dynamodb = { version = "1", optional = true }
+# Git operations
+git2 = { version = "0.19", optional = true }

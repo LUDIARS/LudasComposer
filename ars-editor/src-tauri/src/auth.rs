@@ -39,6 +39,8 @@ pub struct Session {
     pub expires_at: String,
     #[serde(rename = "createdAt")]
     pub created_at: String,
+    #[serde(rename = "accessToken")]
+    pub access_token: String,
 }
 
 #[derive(Debug, Deserialize)]
@@ -65,7 +67,7 @@ struct GitHubUser {
 /// GET /auth/github/login - Redirect to GitHub OAuth
 pub async fn github_login(State(state): State<AppState>) -> Redirect {
     let url = format!(
-        "https://github.com/login/oauth/authorize?client_id={}&redirect_uri={}&scope=read:user%20user:email",
+        "https://github.com/login/oauth/authorize?client_id={}&redirect_uri={}&scope=read:user%20user:email%20repo",
         state.github_client_id,
         urlencoding::encode(&state.github_redirect_uri),
     );
@@ -144,12 +146,13 @@ pub async fn github_callback(
         }
     };
 
-    // Create session
+    // Create session (store access token for Git operations)
     let session = Session {
         id: Uuid::new_v4().to_string(),
         user_id: user.id,
         expires_at: (Utc::now() + chrono::Duration::seconds(SESSION_TTL_SECS)).to_rfc3339(),
         created_at: now,
+        access_token: token_data.access_token.clone(),
     };
     state.dynamo.put_session(&session).await
         .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, format!("Failed to create session: {}", e)))?;
@@ -184,6 +187,30 @@ pub async fn logout(
         .path("/")
         .max_age(time::Duration::seconds(0));
     Ok((jar.remove(cookie), Json(())))
+}
+
+/// Extract session from cookie
+pub async fn extract_session(state: &AppState, jar: &CookieJar) -> Result<Session, (StatusCode, String)> {
+    let session_id = jar
+        .get(SESSION_COOKIE)
+        .map(|c| c.value().to_string())
+        .ok_or((StatusCode::UNAUTHORIZED, "Not authenticated".to_string()))?;
+
+    let session = state
+        .dynamo
+        .get_session(&session_id)
+        .await
+        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, format!("Session lookup failed: {}", e)))?
+        .ok_or((StatusCode::UNAUTHORIZED, "Session not found".to_string()))?;
+
+    let expires_at = chrono::DateTime::parse_from_rfc3339(&session.expires_at)
+        .map_err(|_| (StatusCode::INTERNAL_SERVER_ERROR, "Invalid session expiry".to_string()))?;
+    if Utc::now() > expires_at {
+        let _ = state.dynamo.delete_session(&session_id).await;
+        return Err((StatusCode::UNAUTHORIZED, "Session expired".to_string()));
+    }
+
+    Ok(session)
 }
 
 /// Extract user from session cookie

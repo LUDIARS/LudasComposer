@@ -96,6 +96,7 @@ impl DynamoClient {
         item.insert("userId".to_string(), AttributeValue::S(session.user_id.clone()));
         item.insert("expiresAt".to_string(), AttributeValue::S(session.expires_at.clone()));
         item.insert("createdAt".to_string(), AttributeValue::S(session.created_at.clone()));
+        item.insert("accessToken".to_string(), AttributeValue::S(session.access_token.clone()));
 
         self.client
             .put_item()
@@ -123,6 +124,7 @@ impl DynamoClient {
                     user_id: get_s(&item, "userId")?,
                     expires_at: get_s(&item, "expiresAt")?,
                     created_at: get_s(&item, "createdAt")?,
+                    access_token: get_s(&item, "accessToken").unwrap_or_default(),
                 };
                 Ok(Some(session))
             }

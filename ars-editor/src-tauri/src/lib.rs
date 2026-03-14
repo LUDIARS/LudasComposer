@@ -7,6 +7,8 @@ pub mod auth;
 #[cfg(feature = "web-server")]
 pub mod dynamo;
 #[cfg(feature = "web-server")]
+pub mod git_ops;
+#[cfg(feature = "web-server")]
 pub mod web_server;
 
 #[cfg(feature = "tauri-app")]

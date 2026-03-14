@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import type { User, ProjectSummary } from '@/types/auth';
+import type { User, ProjectSummary, GitRepo, GitProjectInfo } from '@/types/auth';
 import * as authApi from '@/lib/auth-api';
 
 interface AuthState {
@@ -7,12 +7,19 @@ interface AuthState {
   loading: boolean;
   cloudProjects: ProjectSummary[];
   cloudProjectsLoading: boolean;
+  gitRepos: GitRepo[];
+  gitReposLoading: boolean;
+  localGitProjects: GitProjectInfo[];
+  activeGitRepo: string | null;
 }
 
 interface AuthActions {
   fetchUser: () => Promise<void>;
   logout: () => Promise<void>;
   fetchCloudProjects: () => Promise<void>;
+  fetchGitRepos: () => Promise<void>;
+  fetchLocalGitProjects: () => Promise<void>;
+  setActiveGitRepo: (repo: string | null) => void;
 }
 
 export const useAuthStore = create<AuthState & AuthActions>()((set) => ({
@@ -20,6 +27,10 @@ export const useAuthStore = create<AuthState & AuthActions>()((set) => ({
   loading: true,
   cloudProjects: [],
   cloudProjectsLoading: false,
+  gitRepos: [],
+  gitReposLoading: false,
+  localGitProjects: [],
+  activeGitRepo: null,
 
   fetchUser: async () => {
     set({ loading: true });
@@ -37,7 +48,7 @@ export const useAuthStore = create<AuthState & AuthActions>()((set) => ({
     } catch {
       // ignore
     }
-    set({ user: null });
+    set({ user: null, gitRepos: [], localGitProjects: [], activeGitRepo: null });
   },
 
   fetchCloudProjects: async () => {
@@ -49,4 +60,25 @@ export const useAuthStore = create<AuthState & AuthActions>()((set) => ({
       set({ cloudProjectsLoading: false });
     }
   },
+
+  fetchGitRepos: async () => {
+    set({ gitReposLoading: true });
+    try {
+      const repos = await authApi.listGitRepos();
+      set({ gitRepos: repos, gitReposLoading: false });
+    } catch {
+      set({ gitReposLoading: false });
+    }
+  },
+
+  fetchLocalGitProjects: async () => {
+    try {
+      const projects = await authApi.listLocalGitProjects();
+      set({ localGitProjects: projects });
+    } catch {
+      // ignore
+    }
+  },
+
+  setActiveGitRepo: (repo) => set({ activeGitRepo: repo }),
 }));

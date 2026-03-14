@@ -1,10 +1,13 @@
 import { useState, useCallback } from 'react';
 import { useProjectStore } from '@/stores/projectStore';
 import { useEditorStore } from '@/stores/editorStore';
+import { useAuthStore } from '@/stores/authStore';
 import { canUndo, canRedo, undo, redo } from '@/stores/historyMiddleware';
 import { useIsMobile } from '@/hooks/useIsMobile';
 import * as backend from '@/lib/backend';
+import * as authApi from '@/lib/auth-api';
 import { UserMenu } from './UserMenu';
+import { ProjectManager } from './ProjectManager';
 
 export function Toolbar() {
   const project = useProjectStore((s) => s.project);
@@ -20,8 +23,11 @@ export function Toolbar() {
   const setMobileSceneMenu = useEditorStore((s) => s.setMobileSceneMenu);
   const mobileBottomSheetOpen = useEditorStore((s) => s.mobileBottomSheetOpen);
   const setMobileBottomSheet = useEditorStore((s) => s.setMobileBottomSheet);
+  const activeGitRepo = useAuthStore((s) => s.activeGitRepo);
   const [status, setStatus] = useState<string>('');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [showProjectManager, setShowProjectManager] = useState(false);
+  const [pushing, setPushing] = useState(false);
   const isMobile = useIsMobile();
 
   const showStatus = (msg: string) => {
@@ -100,6 +106,21 @@ export function Toolbar() {
     markSaved();
     showStatus('New project');
   }, [loadProject, setProjectPath, markSaved, isDirty]);
+
+  const handleGitPush = useCallback(async () => {
+    if (!activeGitRepo) return;
+    setPushing(true);
+    showStatus('Pushing to GitHub...');
+    try {
+      await authApi.pushGitProject(activeGitRepo, project);
+      markSaved();
+      showStatus('Pushed!');
+    } catch {
+      showStatus('Push failed');
+    } finally {
+      setPushing(false);
+    }
+  }, [activeGitRepo, project, markSaved]);
 
   const lastSavedLabel = lastSavedAt
     ? `Last saved: ${new Date(lastSavedAt).toLocaleTimeString()}`
@@ -230,12 +251,33 @@ export function Toolbar() {
                 Preview
               </button>
               <div className="h-px bg-zinc-700 my-1" />
+              {!backend.isTauri() && (
+                <button
+                  onClick={() => { setShowProjectManager(true); setMobileMenuOpen(false); }}
+                  className="w-full text-left px-3 py-2 text-zinc-300 hover:bg-zinc-700 transition-colors"
+                >
+                  Projects
+                </button>
+              )}
+              {activeGitRepo && (
+                <button
+                  onClick={() => { handleGitPush(); setMobileMenuOpen(false); }}
+                  disabled={pushing}
+                  className="w-full text-left px-3 py-2 text-green-400 hover:bg-zinc-700 transition-colors disabled:opacity-50"
+                >
+                  Push to GitHub
+                </button>
+              )}
+              <div className="h-px bg-zinc-700 my-1" />
               <div className="px-3 py-2 text-zinc-500 truncate">
                 {project.name}
                 {isDirty && <span className="text-amber-400 ml-1">*</span>}
               </div>
             </div>
           </>
+        )}
+        {showProjectManager && (
+          <ProjectManager onClose={() => setShowProjectManager(false)} />
         )}
       </div>
     );
@@ -337,7 +379,29 @@ export function Toolbar() {
         <span className="text-green-400 ml-2">{status}</span>
       )}
       <div className="w-px h-4 bg-zinc-600 mx-1" />
-      <UserMenu />
+      {activeGitRepo && (
+        <button
+          onClick={handleGitPush}
+          disabled={pushing}
+          className="px-2 py-1 text-green-400 hover:bg-zinc-700 rounded transition-colors disabled:opacity-50"
+          title={`Push to ${activeGitRepo}`}
+        >
+          Push{pushing ? '...' : ''}
+        </button>
+      )}
+      {!backend.isTauri() && (
+        <button
+          onClick={() => setShowProjectManager(true)}
+          className="px-2 py-1 text-zinc-300 hover:bg-zinc-700 rounded transition-colors"
+          title="Project Manager"
+        >
+          Projects
+        </button>
+      )}
+      <UserMenu onOpenProjectManager={() => setShowProjectManager(true)} />
+      {showProjectManager && (
+        <ProjectManager onClose={() => setShowProjectManager(false)} />
+      )}
     </div>
   );
 }
