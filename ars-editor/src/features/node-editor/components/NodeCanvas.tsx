@@ -18,6 +18,8 @@ import { ActorNode } from './ActorNode';
 import { GroupNode } from './GroupNode';
 import { ActorEdge } from './ActorEdge';
 import { ContextMenu } from './ContextMenu';
+import { HelpTooltip } from '@/components/HelpTooltip';
+import { helpContent } from '@/lib/help-content';
 import { validateConnection } from '@/lib/connection-validator';
 import type { AnyFlowNode } from '../types/nodes';
 
@@ -79,8 +81,15 @@ export function NodeCanvas() {
     );
   }
 
+  const canvasHelpButton = (
+    <div className="absolute top-2 right-2 z-10">
+      <HelpTooltip content={helpContent.nodeCanvas} position="left" />
+    </div>
+  );
+
   return (
     <div ref={wrapperRef} className="flex-1 relative">
+      {canvasHelpButton}
       <ReactFlow
         nodes={nodes}
         edges={edges}

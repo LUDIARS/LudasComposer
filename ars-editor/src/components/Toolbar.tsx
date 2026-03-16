@@ -8,6 +8,9 @@ import * as backend from '@/lib/backend';
 import * as authApi from '@/lib/auth-api';
 import { UserMenu } from './UserMenu';
 import { ProjectManager } from './ProjectManager';
+import { GettingStartedGuide } from './GettingStartedGuide';
+import { HelpTooltip } from './HelpTooltip';
+import { helpContent } from '@/lib/help-content';
 
 export function Toolbar() {
   const project = useProjectStore((s) => s.project);
@@ -27,6 +30,7 @@ export function Toolbar() {
   const [status, setStatus] = useState<string>('');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [showProjectManager, setShowProjectManager] = useState(false);
+  const [showGuide, setShowGuide] = useState(false);
   const [pushing, setPushing] = useState(false);
   const isMobile = useIsMobile();
 
@@ -269,6 +273,13 @@ export function Toolbar() {
                 </button>
               )}
               <div className="h-px bg-zinc-700 my-1" />
+              <button
+                onClick={() => { setShowGuide(true); setMobileMenuOpen(false); }}
+                className="w-full text-left px-3 py-2 text-amber-400 hover:bg-zinc-700 transition-colors"
+              >
+                ? Help
+              </button>
+              <div className="h-px bg-zinc-700 my-1" />
               <div className="px-3 py-2 text-zinc-500 truncate">
                 {project.name}
                 {isDirty && <span className="text-amber-400 ml-1">*</span>}
@@ -278,6 +289,9 @@ export function Toolbar() {
         )}
         {showProjectManager && (
           <ProjectManager onClose={() => setShowProjectManager(false)} />
+        )}
+        {showGuide && (
+          <GettingStartedGuide onClose={() => setShowGuide(false)} />
         )}
       </div>
     );
@@ -399,8 +413,20 @@ export function Toolbar() {
         </button>
       )}
       <UserMenu onOpenProjectManager={() => setShowProjectManager(true)} />
+      <div className="w-px h-4 bg-zinc-600 mx-1" />
+      <HelpTooltip content={helpContent.toolbar} position="bottom" className="mr-1" />
+      <button
+        onClick={() => setShowGuide(true)}
+        className="px-2 py-1 text-amber-400 hover:bg-zinc-700 rounded transition-colors font-medium"
+        title="Getting Started Guide"
+      >
+        ? Help
+      </button>
       {showProjectManager && (
         <ProjectManager onClose={() => setShowProjectManager(false)} />
+      )}
+      {showGuide && (
+        <GettingStartedGuide onClose={() => setShowGuide(false)} />
       )}
     </div>
   );
