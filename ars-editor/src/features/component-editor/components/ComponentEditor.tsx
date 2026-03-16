@@ -3,6 +3,8 @@ import { useProjectStore } from '@/stores/projectStore';
 import { useEditorStore } from '@/stores/editorStore';
 import { VariableEditor } from './VariableEditor';
 import { TaskEditor } from './TaskEditor';
+import { HelpTooltip } from '@/components/HelpTooltip';
+import { helpContent } from '@/lib/help-content';
 import type { Component, ComponentCategory } from '@/types/domain';
 import { generateId } from '@/lib/utils';
 
@@ -84,9 +86,10 @@ export function ComponentEditor() {
   return (
     <div className="flex flex-col h-full">
       <div className="flex items-center justify-between px-4 py-2 border-b border-zinc-700">
-        <h2 className="text-sm font-semibold text-white">
+        <h2 className="text-sm font-semibold text-white flex items-center gap-1.5">
           {existingComponent ? 'Edit Component' : 'New Component'}
           {isDirty && <span className="text-amber-400 ml-1">*</span>}
+          <HelpTooltip content={helpContent.componentEditor} position="left" />
         </h2>
         <button
           onClick={closeComponentEditor}

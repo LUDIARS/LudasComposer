@@ -1,5 +1,7 @@
 import { useState } from 'react';
 import { useProjectStore } from '@/stores/projectStore';
+import { HelpTooltip } from '@/components/HelpTooltip';
+import { helpContent } from '@/lib/help-content';
 import { cn } from '@/lib/utils';
 
 export function PrefabList() {
@@ -37,8 +39,9 @@ export function PrefabList() {
   return (
     <div className="flex flex-col h-full">
       <div className="px-3 py-2 border-b border-zinc-700">
-        <h2 className="text-xs font-semibold uppercase tracking-wider text-zinc-400">
+        <h2 className="text-xs font-semibold uppercase tracking-wider text-zinc-400 flex items-center gap-1.5">
           Prefabs
+          <HelpTooltip content={helpContent.prefabList} position="right" />
         </h2>
       </div>
       <div className="flex-1 overflow-y-auto p-2 space-y-1">
