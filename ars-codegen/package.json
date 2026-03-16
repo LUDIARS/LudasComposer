@@ -1,0 +1,22 @@
+{
+  "name": "@ars/codegen",
+  "version": "0.1.0",
+  "description": "Ars Code Generator - Generate game content code from Ars design flow using Claude Code",
+  "type": "module",
+  "main": "dist/index.js",
+  "bin": {
+    "ars-codegen": "dist/index.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "start": "node dist/index.js"
+  },
+  "dependencies": {
+    "zod": "^4.3.6"
+  },
+  "devDependencies": {
+    "@types/node": "^22.15.0",
+    "typescript": "~5.9.3"
+  }
+}
