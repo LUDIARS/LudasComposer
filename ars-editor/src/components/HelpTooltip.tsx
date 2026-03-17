@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, type ReactNode } from 'react';
+import { useState, useRef, useEffect, useCallback, type ReactNode } from 'react';
 
 interface HelpTooltipProps {
   content: ReactNode;
@@ -8,17 +8,23 @@ interface HelpTooltipProps {
 
 export function HelpTooltip({ content, position = 'bottom', className = '' }: HelpTooltipProps) {
   const [isOpen, setIsOpen] = useState(false);
-  const tooltipRef = useRef<HTMLDivElement>(null);
-  const triggerRef = useRef<HTMLButtonElement>(null);
+  const containerRef = useRef<HTMLSpanElement>(null);
+  const hoverTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  const clearHoverTimeout = useCallback(() => {
+    if (hoverTimeoutRef.current) {
+      clearTimeout(hoverTimeoutRef.current);
+      hoverTimeoutRef.current = null;
+    }
+  }, []);
+
+  // Close on outside click
   useEffect(() => {
     if (!isOpen) return;
     const handleClickOutside = (e: MouseEvent) => {
       if (
-        tooltipRef.current &&
-        !tooltipRef.current.contains(e.target as Node) &&
-        triggerRef.current &&
-        !triggerRef.current.contains(e.target as Node)
+        containerRef.current &&
+        !containerRef.current.contains(e.target as Node)
       ) {
         setIsOpen(false);
       }
@@ -26,6 +32,21 @@ export function HelpTooltip({ content, position = 'bottom', className = '' }: He
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [isOpen]);
+
+  // Cleanup timeout on unmount
+  useEffect(() => clearHoverTimeout, [clearHoverTimeout]);
+
+  const handleMouseEnter = useCallback(() => {
+    clearHoverTimeout();
+    setIsOpen(true);
+  }, [clearHoverTimeout]);
+
+  const handleMouseLeave = useCallback(() => {
+    clearHoverTimeout();
+    hoverTimeoutRef.current = setTimeout(() => {
+      setIsOpen(false);
+    }, 150);
+  }, [clearHoverTimeout]);
 
   const positionClasses: Record<string, string> = {
     top: 'bottom-full left-1/2 -translate-x-1/2 mb-2',
@@ -42,14 +63,14 @@ export function HelpTooltip({ content, position = 'bottom', className = '' }: He
   };
 
   return (
-    <span className={`relative inline-flex items-center ${className}`}>
+    <span
+      ref={containerRef}
+      className={`relative inline-flex items-center ${className}`}
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
+    >
       <button
-        ref={triggerRef}
         onClick={() => setIsOpen(!isOpen)}
-        onMouseEnter={() => setIsOpen(true)}
-        onMouseLeave={() => setIsOpen(false)}
-        onFocus={() => setIsOpen(true)}
-        onBlur={() => setIsOpen(false)}
         className="inline-flex items-center justify-center w-4 h-4 text-[10px] font-bold rounded-full border border-zinc-500 text-zinc-400 hover:border-blue-400 hover:text-blue-400 hover:bg-blue-400/10 transition-colors cursor-help leading-none"
         aria-label="Help"
       >
@@ -57,7 +78,6 @@ export function HelpTooltip({ content, position = 'bottom', className = '' }: He
       </button>
       {isOpen && (
         <div
-          ref={tooltipRef}
           className={`absolute z-[100] ${positionClasses[position]}`}
         >
           <div className="bg-zinc-800 border border-zinc-700 rounded-lg shadow-xl p-3 text-xs text-zinc-300 min-w-[200px] max-w-[320px] leading-relaxed">

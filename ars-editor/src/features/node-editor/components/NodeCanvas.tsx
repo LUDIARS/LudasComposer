@@ -91,6 +91,7 @@ export function NodeCanvas() {
     <div ref={wrapperRef} className="flex-1 relative">
       {canvasHelpButton}
       <ReactFlow
+        key={activeScene.id}
         nodes={nodes}
         edges={edges}
         onNodesChange={onNodesChange}
