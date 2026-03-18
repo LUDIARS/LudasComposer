@@ -4,7 +4,9 @@ pub mod services;
 
 use commands::assembly::AssemblyState;
 use commands::module_registry::RegistryState;
+use commands::resource_depot::ResourceDepotState;
 use services::{AssemblyManagerService, ModuleRegistryService};
+use services::ResourceDepotService;
 use std::sync::Mutex;
 
 /// Tauriアプリケーションの実行
@@ -24,10 +26,24 @@ pub fn run() {
         )
     });
 
+    let depot_file = dirs::home_dir()
+        .unwrap_or_else(|| std::path::PathBuf::from("."))
+        .join(".ars")
+        .join("resource-depot")
+        .join("depot.json");
+
+    let depot_service = ResourceDepotService::new(depot_file)
+        .unwrap_or_else(|e| {
+            eprintln!("Warning: Failed to initialize resource depot reader: {}", e);
+            ResourceDepotService::with_defaults()
+                .expect("Failed to initialize resource depot")
+        });
+
     tauri::Builder::default()
         .plugin(tauri_plugin_shell::init())
         .manage(RegistryState(Mutex::new(registry_service)))
         .manage(AssemblyState(Mutex::new(assembly_service)))
+        .manage(ResourceDepotState(Mutex::new(depot_service)))
         .invoke_handler(tauri::generate_handler![
             // モジュールレジストリコマンド
             commands::add_registry_source,
@@ -58,6 +74,17 @@ pub fn run() {
             commands::set_resource_depot_ref,
             commands::set_data_organizer_ref,
             commands::resolve_core_dependencies,
+            // リソースデポ（リードオンリー）
+            commands::resource_depot::reload_depot,
+            commands::resource_depot::get_all_resources,
+            commands::resource_depot::get_resources_by_category,
+            commands::resource_depot::search_resources,
+            commands::resource_depot::get_resource_by_id,
+            commands::resource_depot::get_bone_patterns,
+            commands::resource_depot::find_compatible_motions,
+            commands::resource_depot::get_motion_groups,
+            commands::resource_depot::get_texture_groups,
+            commands::resource_depot::get_depot_state,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

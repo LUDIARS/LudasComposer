@@ -1,0 +1,11 @@
+[package]
+name = "data-organizer"
+version = "0.1.0"
+edition = "2021"
+description = "Data Organizer: Master data & user data management with blackboard architecture"
+
+[dependencies]
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+uuid = { version = "1", features = ["v4"] }
+thiserror = "2"
