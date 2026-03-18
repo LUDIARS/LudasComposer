@@ -1,3 +1,4 @@
+pub mod assembly;
 pub mod module_definition;
 pub mod resource_depot;
 

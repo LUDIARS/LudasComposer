@@ -2,9 +2,10 @@ pub mod commands;
 pub mod models;
 pub mod services;
 
+use commands::assembly::AssemblyState;
 use commands::module_registry::RegistryState;
 use commands::resource_depot::ResourceDepotState;
-use services::ModuleRegistryService;
+use services::{AssemblyManagerService, ModuleRegistryService};
 use services::ResourceDepotService;
 use std::sync::Mutex;
 
@@ -15,6 +16,15 @@ pub fn run() {
             let cache_dir = std::env::temp_dir().join("ars").join("module-cache");
             ModuleRegistryService::new(cache_dir)
         });
+
+    // アセンブリ管理サービスの初期化（プロジェクトルートはカレントディレクトリ）
+    let assembly_service = AssemblyManagerService::load(
+        std::env::current_dir().unwrap_or_else(|_| std::env::temp_dir().join("ars"))
+    ).unwrap_or_else(|_| {
+        AssemblyManagerService::new(
+            std::env::current_dir().unwrap_or_else(|_| std::env::temp_dir().join("ars"))
+        )
+    });
 
     let depot_file = dirs::home_dir()
         .unwrap_or_else(|| std::path::PathBuf::from("."))
@@ -32,9 +42,10 @@ pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_shell::init())
         .manage(RegistryState(Mutex::new(registry_service)))
+        .manage(AssemblyState(Mutex::new(assembly_service)))
         .manage(ResourceDepotState(Mutex::new(depot_service)))
         .invoke_handler(tauri::generate_handler![
-            // モジュールレジストリ
+            // モジュールレジストリコマンド
             commands::add_registry_source,
             commands::remove_registry_source,
             commands::sync_registry_source,
@@ -44,6 +55,25 @@ pub fn run() {
             commands::search_modules,
             commands::get_registry_sources,
             commands::get_module_by_id,
+            // アセンブリ管理コマンド
+            commands::get_assembly_config,
+            commands::add_release_depot,
+            commands::remove_release_depot,
+            commands::get_release_depots,
+            commands::add_core_assembly,
+            commands::update_core_assembly,
+            commands::remove_core_assembly,
+            commands::get_core_assemblies,
+            commands::get_core_assembly,
+            commands::add_app_assembly,
+            commands::update_app_assembly,
+            commands::remove_app_assembly,
+            commands::get_app_assemblies,
+            commands::get_app_assembly,
+            commands::get_app_assemblies_by_scene,
+            commands::set_resource_depot_ref,
+            commands::set_data_organizer_ref,
+            commands::resolve_core_dependencies,
             // リソースデポ（リードオンリー）
             commands::resource_depot::reload_depot,
             commands::resource_depot::get_all_resources,
