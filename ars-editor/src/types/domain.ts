@@ -57,6 +57,19 @@ export interface Prefab {
   actor: Omit<Actor, 'id' | 'position' | 'parentId' | 'prefabId'>;
 }
 
+export interface KeyBinding {
+  id: string;
+  key: string;
+  description: string;
+  targetActorId?: string | null;
+}
+
+export interface SceneState {
+  id: string;
+  name: string;
+  keyBindings: KeyBinding[];
+}
+
 export interface Connection {
   id: string;
   sourceActorId: string;
@@ -71,6 +84,8 @@ export interface Scene {
   rootActorId: string;
   actors: Record<string, Actor>;
   connections: Connection[];
+  states: SceneState[];
+  activeStateId: string | null;
 }
 
 export interface Project {

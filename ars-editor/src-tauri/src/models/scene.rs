@@ -16,6 +16,23 @@ pub struct Connection {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct KeyBinding {
+    pub id: String,
+    pub key: String,
+    pub description: String,
+    #[serde(rename = "targetActorId", skip_serializing_if = "Option::is_none")]
+    pub target_actor_id: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SceneState {
+    pub id: String,
+    pub name: String,
+    #[serde(rename = "keyBindings")]
+    pub key_bindings: Vec<KeyBinding>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Scene {
     pub id: String,
     pub name: String,
@@ -23,6 +40,10 @@ pub struct Scene {
     pub root_actor_id: String,
     pub actors: HashMap<String, Actor>,
     pub connections: Vec<Connection>,
+    #[serde(default)]
+    pub states: Vec<SceneState>,
+    #[serde(rename = "activeStateId", default)]
+    pub active_state_id: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

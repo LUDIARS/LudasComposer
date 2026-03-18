@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import type { Project, Actor, Connection, Component, Scene, SequenceStep, Prefab } from '@/types/domain';
+import type { Project, Actor, Connection, Component, Scene, SequenceStep, Prefab, SceneState, KeyBinding } from '@/types/domain';
 import { generateId } from '@/lib/utils';
 
 interface ProjectActions {
@@ -41,6 +41,17 @@ interface ProjectActions {
   upsertComponent: (component: Component) => void;
   deleteComponent: (id: string) => void;
 
+  // Scene State actions
+  addSceneState: (sceneId: string, name: string) => string;
+  removeSceneState: (sceneId: string, stateId: string) => void;
+  renameSceneState: (sceneId: string, stateId: string, name: string) => void;
+  setActiveState: (sceneId: string, stateId: string | null) => void;
+
+  // KeyBinding actions
+  addKeyBinding: (sceneId: string, stateId: string, binding: Omit<KeyBinding, 'id'>) => string;
+  updateKeyBinding: (sceneId: string, stateId: string, bindingId: string, updates: Partial<KeyBinding>) => void;
+  removeKeyBinding: (sceneId: string, stateId: string, bindingId: string) => void;
+
   // Project actions
   loadProject: (project: Project) => void;
   getActiveScene: () => Scene | null;
@@ -75,12 +86,20 @@ export const useProjectStore = create<ProjectState & ProjectActions>()((set, get
       subSceneId: null,
       prefabId: null,
     };
+    const defaultStateId = generateId();
+    const defaultState: SceneState = {
+      id: defaultStateId,
+      name: 'Default',
+      keyBindings: [],
+    };
     const scene: Scene = {
       id: sceneId,
       name,
       rootActorId,
       actors: { [rootActorId]: rootActor },
       connections: [],
+      states: [defaultState],
+      activeStateId: defaultStateId,
     };
     set((state) => ({
       project: {
@@ -612,6 +631,222 @@ export const useProjectStore = create<ProjectState & ProjectActions>()((set, get
     });
   },
 
+  // Scene State actions
+  addSceneState: (sceneId, name) => {
+    const stateId = generateId();
+    const newState: SceneState = { id: stateId, name, keyBindings: [] };
+    set((state) => {
+      const scene = state.project.scenes[sceneId];
+      if (!scene) return state;
+      return {
+        project: {
+          ...state.project,
+          scenes: {
+            ...state.project.scenes,
+            [sceneId]: {
+              ...scene,
+              states: [...scene.states, newState],
+              activeStateId: scene.activeStateId ?? stateId,
+            },
+          },
+        },
+      };
+    });
+    return stateId;
+  },
+
+  removeSceneState: (sceneId, stateId) => {
+    set((state) => {
+      const scene = state.project.scenes[sceneId];
+      if (!scene) return state;
+      const newStates = scene.states.filter((s) => s.id !== stateId);
+      return {
+        project: {
+          ...state.project,
+          scenes: {
+            ...state.project.scenes,
+            [sceneId]: {
+              ...scene,
+              states: newStates,
+              activeStateId:
+                scene.activeStateId === stateId
+                  ? newStates.length > 0 ? newStates[0].id : null
+                  : scene.activeStateId,
+            },
+          },
+        },
+      };
+    });
+  },
+
+  renameSceneState: (sceneId, stateId, name) => {
+    set((state) => {
+      const scene = state.project.scenes[sceneId];
+      if (!scene) return state;
+      return {
+        project: {
+          ...state.project,
+          scenes: {
+            ...state.project.scenes,
+            [sceneId]: {
+              ...scene,
+              states: scene.states.map((s) =>
+                s.id === stateId ? { ...s, name } : s,
+              ),
+            },
+          },
+        },
+      };
+    });
+  },
+
+  setActiveState: (sceneId, stateId) => {
+    set((state) => {
+      const scene = state.project.scenes[sceneId];
+      if (!scene) return state;
+      return {
+        project: {
+          ...state.project,
+          scenes: {
+            ...state.project.scenes,
+            [sceneId]: { ...scene, activeStateId: stateId },
+          },
+        },
+      };
+    });
+  },
+
+  // KeyBinding actions
+  addKeyBinding: (sceneId, stateId, bindingData) => {
+    const bindingId = generateId();
+    const binding: KeyBinding = { ...bindingData, id: bindingId };
+    set((state) => {
+      const scene = state.project.scenes[sceneId];
+      if (!scene) return state;
+      const newStates = scene.states.map((s) =>
+        s.id === stateId
+          ? { ...s, keyBindings: [...s.keyBindings, binding] }
+          : s,
+      );
+
+      // Auto-connect: if targetActorId is specified, create a connection
+      let newConnections = scene.connections;
+      if (binding.targetActorId && scene.actors[binding.targetActorId]) {
+        const alreadyConnected = scene.connections.some(
+          (c) =>
+            c.sourceActorId === scene.rootActorId &&
+            c.targetActorId === binding.targetActorId &&
+            c.sourcePort === `key:${binding.key}`,
+        );
+        if (!alreadyConnected) {
+          newConnections = [
+            ...scene.connections,
+            {
+              id: generateId(),
+              sourceActorId: scene.rootActorId,
+              sourcePort: `key:${binding.key}`,
+              targetActorId: binding.targetActorId,
+              targetPort: 'input',
+            },
+          ];
+        }
+      }
+
+      return {
+        project: {
+          ...state.project,
+          scenes: {
+            ...state.project.scenes,
+            [sceneId]: { ...scene, states: newStates, connections: newConnections },
+          },
+        },
+      };
+    });
+    return bindingId;
+  },
+
+  updateKeyBinding: (sceneId, stateId, bindingId, updates) => {
+    set((state) => {
+      const scene = state.project.scenes[sceneId];
+      if (!scene) return state;
+      let updatedBinding: KeyBinding | null = null;
+      const newStates = scene.states.map((s) =>
+        s.id === stateId
+          ? {
+              ...s,
+              keyBindings: s.keyBindings.map((b) => {
+                if (b.id === bindingId) {
+                  updatedBinding = { ...b, ...updates };
+                  return updatedBinding;
+                }
+                return b;
+              }),
+            }
+          : s,
+      );
+
+      // Auto-connect for updated targetActorId
+      let newConnections = scene.connections;
+      if (updatedBinding && (updatedBinding as KeyBinding).targetActorId) {
+        const targetId = (updatedBinding as KeyBinding).targetActorId!;
+        const key = (updatedBinding as KeyBinding).key;
+        if (scene.actors[targetId]) {
+          const alreadyConnected = scene.connections.some(
+            (c) =>
+              c.sourceActorId === scene.rootActorId &&
+              c.targetActorId === targetId &&
+              c.sourcePort === `key:${key}`,
+          );
+          if (!alreadyConnected) {
+            newConnections = [
+              ...scene.connections,
+              {
+                id: generateId(),
+                sourceActorId: scene.rootActorId,
+                sourcePort: `key:${key}`,
+                targetActorId: targetId,
+                targetPort: 'input',
+              },
+            ];
+          }
+        }
+      }
+
+      return {
+        project: {
+          ...state.project,
+          scenes: {
+            ...state.project.scenes,
+            [sceneId]: { ...scene, states: newStates, connections: newConnections },
+          },
+        },
+      };
+    });
+  },
+
+  removeKeyBinding: (sceneId, stateId, bindingId) => {
+    set((state) => {
+      const scene = state.project.scenes[sceneId];
+      if (!scene) return state;
+      return {
+        project: {
+          ...state.project,
+          scenes: {
+            ...state.project.scenes,
+            [sceneId]: {
+              ...scene,
+              states: scene.states.map((s) =>
+                s.id === stateId
+                  ? { ...s, keyBindings: s.keyBindings.filter((b) => b.id !== bindingId) }
+                  : s,
+              ),
+            },
+          },
+        },
+      };
+    });
+  },
+
   loadProject: (project) => set({
     project: {
       ...project,
@@ -621,6 +856,8 @@ export const useProjectStore = create<ProjectState & ProjectActions>()((set, get
           k,
           {
             ...scene,
+            states: scene.states ?? [],
+            activeStateId: scene.activeStateId ?? null,
             actors: Object.fromEntries(
               Object.entries(scene.actors).map(([ak, actor]) => [
                 ak,

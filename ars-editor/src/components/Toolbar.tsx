@@ -244,6 +244,18 @@ export function Toolbar() {
               </button>
               <button
                 onClick={() => {
+                  togglePanel('behaviorEditor');
+                  setMobileBottomSheet(true);
+                  setMobileMenuOpen(false);
+                }}
+                className={`w-full text-left px-3 py-2 transition-colors ${
+                  panelVisibility.behaviorEditor ? 'text-cyan-400' : 'text-zinc-300 hover:bg-zinc-700'
+                }`}
+              >
+                Behavior
+              </button>
+              <button
+                onClick={() => {
                   togglePanel('preview');
                   setMobileBottomSheet(true);
                   setMobileMenuOpen(false);
@@ -367,6 +379,17 @@ export function Toolbar() {
         title="Toggle Prefab List"
       >
         Prefabs
+      </button>
+      <button
+        onClick={() => togglePanel('behaviorEditor')}
+        className={`px-2 py-1 rounded transition-colors ${
+          panelVisibility.behaviorEditor
+            ? 'bg-cyan-600 text-white'
+            : 'text-zinc-300 hover:bg-zinc-700'
+        }`}
+        title="Toggle Behavior Editor"
+      >
+        Behavior
       </button>
       <button
         onClick={() => togglePanel('preview')}

@@ -9,6 +9,7 @@ import { ScenePreview } from './features/preview';
 import { SequenceEditor } from './features/sequence-editor';
 import { SubScenePicker } from './features/subscene-picker';
 import { PrefabList } from './features/prefab-list';
+import { BehaviorEditor } from './features/behavior-editor';
 import { Toolbar } from './components/Toolbar';
 import { useEditorStore } from './stores/editorStore';
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
@@ -181,10 +182,16 @@ function AppInner() {
                 !panelVisibility.componentEditor &&
                 !panelVisibility.preview &&
                 !panelVisibility.componentList && <PrefabList />}
+              {panelVisibility.behaviorEditor &&
+                !panelVisibility.componentEditor &&
+                !panelVisibility.preview &&
+                !panelVisibility.componentList &&
+                !panelVisibility.prefabList && <BehaviorEditor />}
               {!panelVisibility.componentEditor &&
                 !panelVisibility.preview &&
                 !panelVisibility.componentList &&
-                !panelVisibility.prefabList && (
+                !panelVisibility.prefabList &&
+                !panelVisibility.behaviorEditor && (
                   <div className="p-4 text-zinc-500 text-sm text-center">
                     Toggle panels from the toolbar to view content here.
                   </div>
@@ -250,6 +257,13 @@ function AppInner() {
         {panelVisibility.preview && (
           <div className="w-72 min-w-[288px] bg-zinc-850 border-l border-zinc-700">
             <ScenePreview />
+          </div>
+        )}
+
+        {/* Behavior Editor Panel */}
+        {panelVisibility.behaviorEditor && (
+          <div className="w-80 min-w-[320px] bg-zinc-850 border-l border-zinc-700">
+            <BehaviorEditor />
           </div>
         )}
 
