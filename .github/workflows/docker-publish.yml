@@ -106,7 +106,8 @@ jobs:
         id: push
         uses: docker/build-push-action@v6
         with:
-          context: ./ars-editor
+          context: .
+          file: ./ars-editor/Dockerfile
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
@@ -114,13 +115,6 @@ jobs:
           cache-to: type=gha,mode=max
           provenance: true
           sbom: true
-
-      - name: Attest build provenance
-        uses: actions/attest-build-provenance@v2
-        with:
-          subject-name: ${{ env.REGISTRY }}/${{ github.repository_owner }}/ars-editor
-          subject-digest: ${{ steps.push.outputs.digest }}
-          push-to-registry: true
 
   # -------------------------------------------------------------------
   # resource-depot イメージのビルド & プッシュ
@@ -169,12 +163,6 @@ jobs:
           provenance: true
           sbom: true
 
-      - name: Attest build provenance
-        uses: actions/attest-build-provenance@v2
-        with:
-          subject-name: ${{ env.REGISTRY }}/${{ github.repository_owner }}/resource-depot
-          subject-digest: ${{ steps.push.outputs.digest }}
-          push-to-registry: true
 
   # -------------------------------------------------------------------
   # data-organizer イメージのビルド & プッシュ
@@ -223,9 +211,3 @@ jobs:
           provenance: true
           sbom: true
 
-      - name: Attest build provenance
-        uses: actions/attest-build-provenance@v2
-        with:
-          subject-name: ${{ env.REGISTRY }}/${{ github.repository_owner }}/data-organizer
-          subject-digest: ${{ steps.push.outputs.digest }}
-          push-to-registry: true

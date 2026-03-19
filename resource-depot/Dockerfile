@@ -2,8 +2,7 @@
 # resource-depot Dockerfile
 # Multi-stage build: Rust build → minimal runtime
 #
-# 現在は Tauri デスクトップアプリのみ。
-# Web サーバーモードが追加された際に CMD を更新してください。
+# Web サーバーモードでビルド (Docker 環境用)
 # =============================================================================
 
 FROM rust:1-bookworm AS builder
@@ -14,13 +13,13 @@ WORKDIR /app/src-tauri
 COPY src-tauri/Cargo.toml src-tauri/Cargo.lock* ./
 RUN mkdir -p src/commands src/models src/services && \
     echo "pub fn dummy() {}" > src/lib.rs && \
-    echo "fn main() {}" > src/main.rs && \
-    cargo build --release 2>/dev/null || true && \
+    echo "fn main() {}" > src/web_main.rs && \
+    cargo build --features web-server --no-default-features --bin resource-depot-web --release 2>/dev/null || true && \
     rm -rf src
 
 # ソースコードをコピーしてビルド
 COPY src-tauri/ .
-RUN cargo build --release
+RUN cargo build --features web-server --no-default-features --bin resource-depot-web --release
 
 # ----- Runtime -----
 FROM debian:bookworm-slim
@@ -34,7 +33,7 @@ RUN useradd -r -s /bin/false ars
 
 WORKDIR /app
 
-COPY --from=builder /app/src-tauri/target/release/resource-depot ./resource-depot
+COPY --from=builder /app/src-tauri/target/release/resource-depot-web ./resource-depot-web
 
 RUN chown -R ars:ars /app
 USER ars
@@ -42,4 +41,4 @@ USER ars
 ENV PORT=5174
 EXPOSE 5174
 
-CMD ["./resource-depot"]
+CMD ["./resource-depot-web"]
