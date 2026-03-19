@@ -1,0 +1,199 @@
+name: Build and Publish Docker Images
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version tag (e.g. v0.2.0). Leave empty to use git SHA.'
+        required: false
+        type: string
+      services:
+        description: 'Services to build'
+        required: false
+        type: choice
+        options:
+          - all
+          - ars-editor
+          - resource-depot
+          - data-organizer
+
+concurrency:
+  group: docker-publish-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  packages: write
+
+env:
+  REGISTRY: ghcr.io
+
+jobs:
+  # -------------------------------------------------------------------
+  # 変更検出: push 時にどのサービスが変更されたか判定
+  # -------------------------------------------------------------------
+  detect-changes:
+    runs-on: ubuntu-latest
+    outputs:
+      ars-editor: ${{ steps.changes.outputs.ars-editor }}
+      resource-depot: ${{ steps.changes.outputs.resource-depot }}
+      data-organizer: ${{ steps.changes.outputs.data-organizer }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Detect changed services
+        id: changes
+        run: |
+          # workflow_dispatch の場合は入力に従う
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            SERVICE="${{ inputs.services }}"
+            if [ "$SERVICE" = "all" ] || [ -z "$SERVICE" ]; then
+              echo "ars-editor=true" >> "$GITHUB_OUTPUT"
+              echo "resource-depot=true" >> "$GITHUB_OUTPUT"
+              echo "data-organizer=true" >> "$GITHUB_OUTPUT"
+            else
+              echo "ars-editor=$( [ '$SERVICE' = 'ars-editor' ] && echo true || echo false )" >> "$GITHUB_OUTPUT"
+              echo "resource-depot=$( [ '$SERVICE' = 'resource-depot' ] && echo true || echo false )" >> "$GITHUB_OUTPUT"
+              echo "data-organizer=$( [ '$SERVICE' = 'data-organizer' ] && echo true || echo false )" >> "$GITHUB_OUTPUT"
+            fi
+          else
+            # タグ push の場合は全サービスをビルド
+            echo "ars-editor=true" >> "$GITHUB_OUTPUT"
+            echo "resource-depot=true" >> "$GITHUB_OUTPUT"
+            echo "data-organizer=true" >> "$GITHUB_OUTPUT"
+          fi
+
+  # -------------------------------------------------------------------
+  # ars-editor イメージのビルド & プッシュ
+  # -------------------------------------------------------------------
+  build-ars-editor:
+    needs: detect-changes
+    if: needs.detect-changes.outputs.ars-editor == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ github.repository_owner }}/ars-editor
+          tags: |
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=sha,prefix=
+            type=raw,value=latest,enable={{is_default_branch}}
+            type=raw,value=${{ inputs.version }},enable=${{ inputs.version != '' }}
+
+      - name: Build and push
+        uses: docker/build-push-action@v5
+        with:
+          context: ./ars-editor
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  # -------------------------------------------------------------------
+  # resource-depot イメージのビルド & プッシュ
+  # -------------------------------------------------------------------
+  build-resource-depot:
+    needs: detect-changes
+    if: needs.detect-changes.outputs.resource-depot == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ github.repository_owner }}/resource-depot
+          tags: |
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=sha,prefix=
+            type=raw,value=latest,enable={{is_default_branch}}
+            type=raw,value=${{ inputs.version }},enable=${{ inputs.version != '' }}
+
+      - name: Build and push
+        uses: docker/build-push-action@v5
+        with:
+          context: ./resource-depot
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  # -------------------------------------------------------------------
+  # data-organizer イメージのビルド & プッシュ
+  # -------------------------------------------------------------------
+  build-data-organizer:
+    needs: detect-changes
+    if: needs.detect-changes.outputs.data-organizer == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ github.repository_owner }}/data-organizer
+          tags: |
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=sha,prefix=
+            type=raw,value=latest,enable={{is_default_branch}}
+            type=raw,value=${{ inputs.version }},enable=${{ inputs.version != '' }}
+
+      - name: Build and push
+        uses: docker/build-push-action@v5
+        with:
+          context: ./data-organizer
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max

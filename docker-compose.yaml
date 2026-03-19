@@ -1,0 +1,50 @@
+# =============================================================================
+# Ars - Docker Compose
+#
+# GHCR にリリース済みのイメージを参照して各サービスを起動します。
+#
+# 使用方法:
+#   docker compose up -d              # 全サービス起動
+#   docker compose up ars-editor -d   # ars-editor のみ起動
+#   docker compose logs -f            # ログ確認
+#   docker compose down               # 全サービス停止
+#
+# 環境変数:
+#   IMAGE_TAG (default: latest) - 使用するイメージのタグ
+# =============================================================================
+
+services:
+  ars-editor:
+    image: ghcr.io/ludiars/ars-editor:${IMAGE_TAG:-latest}
+    container_name: ars-editor
+    ports:
+      - "${ARS_EDITOR_PORT:-5173}:5173"
+    environment:
+      - PORT=5173
+      - GITHUB_CLIENT_ID=${GITHUB_CLIENT_ID:-}
+      - GITHUB_CLIENT_SECRET=${GITHUB_CLIENT_SECRET:-}
+      - GITHUB_REDIRECT_URI=${GITHUB_REDIRECT_URI:-http://localhost:5173/auth/github/callback}
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID:-}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY:-}
+      - AWS_REGION=${AWS_REGION:-ap-northeast-1}
+    restart: unless-stopped
+
+  resource-depot:
+    image: ghcr.io/ludiars/resource-depot:${IMAGE_TAG:-latest}
+    container_name: resource-depot
+    ports:
+      - "${RESOURCE_DEPOT_PORT:-5174}:5174"
+    environment:
+      - PORT=5174
+    depends_on:
+      - ars-editor
+    restart: unless-stopped
+
+  data-organizer:
+    image: ghcr.io/ludiars/data-organizer:${IMAGE_TAG:-latest}
+    container_name: data-organizer
+    ports:
+      - "${DATA_ORGANIZER_PORT:-5175}:5175"
+    environment:
+      - PORT=5175
+    restart: unless-stopped
