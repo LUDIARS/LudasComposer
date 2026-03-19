@@ -8,6 +8,9 @@
 #   docker compose logs -f      # ログ確認
 #   docker compose down         # サービス停止
 #
+# ローカルビルド:
+#   docker compose up -d --build
+#
 # 環境変数:
 #   IMAGE_TAG (default: latest) - 使用するイメージのタグ
 # =============================================================================
@@ -15,6 +18,9 @@
 services:
   ars:
     image: ghcr.io/ludiars/ars:${IMAGE_TAG:-latest}
+    build:
+      context: .
+      dockerfile: ars-editor/Dockerfile
     container_name: ars
     ports:
       - "${ARS_PORT:-5173}:5173"
