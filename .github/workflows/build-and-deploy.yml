@@ -215,6 +215,9 @@ jobs:
     if: inputs.deploy == true
     environment: production
     timeout-minutes: 10
+    permissions:
+      id-token: write    # OIDC for AWS credentials
+      contents: none     # deploy ジョブはリポジトリ読み取り不要
 
     steps:
       - name: Configure AWS credentials (OIDC)

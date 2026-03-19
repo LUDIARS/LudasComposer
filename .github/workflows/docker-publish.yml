@@ -27,6 +27,8 @@ concurrency:
 permissions:
   contents: read
   packages: write
+  attestations: write   # SLSA provenance (public リポジトリ移行後に有効)
+  id-token: write       # OIDC for provenance signing
 
 env:
   REGISTRY: ghcr.io
@@ -101,7 +103,8 @@ jobs:
             type=raw,value=${{ inputs.version }},enable=${{ inputs.version != '' }}
 
       - name: Build and push
-        uses: docker/build-push-action@v5
+        id: push
+        uses: docker/build-push-action@v6
         with:
           context: ./ars-editor
           push: true
@@ -109,6 +112,15 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
+          provenance: true
+          sbom: true
+
+      - name: Attest build provenance
+        uses: actions/attest-build-provenance@v2
+        with:
+          subject-name: ${{ env.REGISTRY }}/${{ github.repository_owner }}/ars-editor
+          subject-digest: ${{ steps.push.outputs.digest }}
+          push-to-registry: true
 
   # -------------------------------------------------------------------
   # resource-depot イメージのビルド & プッシュ
@@ -145,7 +157,8 @@ jobs:
             type=raw,value=${{ inputs.version }},enable=${{ inputs.version != '' }}
 
       - name: Build and push
-        uses: docker/build-push-action@v5
+        id: push
+        uses: docker/build-push-action@v6
         with:
           context: ./resource-depot
           push: true
@@ -153,6 +166,15 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
+          provenance: true
+          sbom: true
+
+      - name: Attest build provenance
+        uses: actions/attest-build-provenance@v2
+        with:
+          subject-name: ${{ env.REGISTRY }}/${{ github.repository_owner }}/resource-depot
+          subject-digest: ${{ steps.push.outputs.digest }}
+          push-to-registry: true
 
   # -------------------------------------------------------------------
   # data-organizer イメージのビルド & プッシュ
@@ -189,7 +211,8 @@ jobs:
             type=raw,value=${{ inputs.version }},enable=${{ inputs.version != '' }}
 
       - name: Build and push
-        uses: docker/build-push-action@v5
+        id: push
+        uses: docker/build-push-action@v6
         with:
           context: ./data-organizer
           push: true
@@ -197,3 +220,12 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
+          provenance: true
+          sbom: true
+
+      - name: Attest build provenance
+        uses: actions/attest-build-provenance@v2
+        with:
+          subject-name: ${{ env.REGISTRY }}/${{ github.repository_owner }}/data-organizer
+          subject-digest: ${{ steps.push.outputs.digest }}
+          push-to-registry: true
