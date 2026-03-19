@@ -10,10 +10,12 @@ pub enum BuildTarget {
 
 /// ビルド方式
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
-#[serde(rename_all = "lowercase")]
+#[serde(rename_all = "kebab-case")]
 pub enum BuildMethod {
-    Jit,
-    Dll,
+    /// TypeScript JIT: ホットリロード対応、WebGL/PC共通
+    TypescriptJit,
+    /// WASM Bundle: Emscriptenコンパイル済みC++コアエンジン
+    WasmBundle,
 }
 
 /// ビルド設定
@@ -36,8 +38,10 @@ pub enum CoreAssemblyOrigin {
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 #[serde(rename_all = "lowercase")]
 pub enum CoreArtifactType {
+    /// TypeScriptソースコード
     Source,
-    Dll,
+    /// Emscriptenコンパイル済みWASMバイナリ
+    Wasm,
 }
 
 /// カスタマイズ状態

@@ -5,7 +5,7 @@
 export type BuildTarget = 'webgl' | 'pc';
 
 /** ビルド方式 */
-export type BuildMethod = 'jit' | 'dll';
+export type BuildMethod = 'typescript-jit' | 'wasm-bundle';
 
 /** ビルドターゲットとビルド方式の対応 */
 export interface BuildConfig {
@@ -15,8 +15,8 @@ export interface BuildConfig {
 
 /** プラットフォームごとのデフォルトビルド方式 */
 export const DEFAULT_BUILD_CONFIGS: BuildConfig[] = [
-  { target: 'webgl', method: 'jit' },  // WebGL/WebAsm は JIT
-  { target: 'pc', method: 'dll' },       // PC は DLL
+  { target: 'webgl', method: 'typescript-jit' },  // WebGL: TypeScript JIT (ホットリロード対応)
+  { target: 'pc', method: 'typescript-jit' },      // PC: TypeScript JIT (Tauri webview内実行)
 ];
 
 // ─────────────────────────────────────────────
@@ -28,7 +28,7 @@ export const DEFAULT_BUILD_CONFIGS: BuildConfig[] = [
 export type CoreAssemblyOrigin = 'pictor' | 'ergo' | 'other';
 
 /** コアアセンブリのアーティファクト種別 */
-export type CoreArtifactType = 'source' | 'dll';
+export type CoreArtifactType = 'source' | 'wasm';
 
 /** コアアセンブリのカスタマイズ状態 */
 export type CustomizationStatus = 'original' | 'modified';
