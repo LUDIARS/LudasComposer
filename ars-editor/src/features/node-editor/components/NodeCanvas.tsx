@@ -83,7 +83,7 @@ export function NodeCanvas() {
 
   const canvasHelpButton = (
     <div className="absolute top-2 right-2 z-10">
-      <HelpTooltip content={helpContent.nodeCanvas} position="left" />
+      <HelpTooltip content={helpContent.nodeCanvas} position="left" highlightSelector='[data-help-target="nodeCanvas"]' />
     </div>
   );
 

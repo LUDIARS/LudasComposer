@@ -150,7 +150,7 @@ export function ScenePreview() {
       <div className="px-3 py-2 border-b border-zinc-700">
         <h2 className="text-xs font-semibold uppercase tracking-wider text-zinc-400 flex items-center gap-1.5">
           Preview
-          <HelpTooltip content={helpContent.preview} position="left" />
+          <HelpTooltip content={helpContent.preview} position="left" highlightSelector='[data-help-target="preview"]' />
         </h2>
         <div className="text-sm text-white mt-1">{activeScene.name}</div>
         {stats && (

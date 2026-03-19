@@ -209,7 +209,7 @@ export function EditorPage() {
       <Toolbar />
       <div className="flex flex-1 overflow-hidden">
         {panelVisibility.sceneManager && (
-          <div className="w-60 min-w-[240px] bg-zinc-850 border-r border-zinc-700 flex flex-col">
+          <div className="w-60 min-w-[240px] bg-zinc-850 border-r border-zinc-700 flex flex-col" data-help-target="sceneList">
             <div className="flex-1 overflow-hidden">
               <SceneList />
             </div>
@@ -225,35 +225,35 @@ export function EditorPage() {
         )}
 
         {panelVisibility.componentList && (
-          <div className="w-64 min-w-[256px] bg-zinc-850 border-r border-zinc-700">
+          <div className="w-64 min-w-[256px] bg-zinc-850 border-r border-zinc-700" data-help-target="componentList">
             <ComponentList />
           </div>
         )}
 
         {panelVisibility.prefabList && (
-          <div className="w-60 min-w-[240px] bg-zinc-850 border-r border-zinc-700">
+          <div className="w-60 min-w-[240px] bg-zinc-850 border-r border-zinc-700" data-help-target="prefabList">
             <PrefabList />
           </div>
         )}
 
-        <div className="flex-1 flex flex-col overflow-hidden">
+        <div className="flex-1 flex flex-col overflow-hidden" data-help-target="nodeCanvas">
           <NodeCanvas />
         </div>
 
         {panelVisibility.preview && (
-          <div className="w-72 min-w-[288px] bg-zinc-850 border-l border-zinc-700">
+          <div className="w-72 min-w-[288px] bg-zinc-850 border-l border-zinc-700" data-help-target="preview">
             <ScenePreview />
           </div>
         )}
 
         {panelVisibility.behaviorEditor && (
-          <div className="w-80 min-w-[320px] bg-zinc-850 border-l border-zinc-700">
+          <div className="w-80 min-w-[320px] bg-zinc-850 border-l border-zinc-700" data-help-target="behaviorEditor">
             <BehaviorEditor />
           </div>
         )}
 
         {panelVisibility.componentEditor && (
-          <div className="w-80 min-w-[320px] bg-zinc-850 border-l border-zinc-700">
+          <div className="w-80 min-w-[320px] bg-zinc-850 border-l border-zinc-700" data-help-target="componentEditor">
             <ComponentEditor />
           </div>
         )}

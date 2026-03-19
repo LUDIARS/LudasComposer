@@ -89,7 +89,7 @@ export function ComponentEditor() {
         <h2 className="text-sm font-semibold text-white flex items-center gap-1.5">
           {existingComponent ? 'Edit Component' : 'New Component'}
           {isDirty && <span className="text-amber-400 ml-1">*</span>}
-          <HelpTooltip content={helpContent.componentEditor} position="left" />
+          <HelpTooltip content={helpContent.componentEditor} position="left" highlightSelector='[data-help-target="componentEditor"]' />
         </h2>
         <button
           onClick={closeComponentEditor}

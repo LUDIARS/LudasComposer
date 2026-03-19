@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { useEditorStore } from '@/stores/editorStore';
 import { useProjectStore } from '@/stores/projectStore';
+import { HelpTooltip } from '@/components/HelpTooltip';
+import { helpContent } from '@/lib/help-content';
 
 export function SequenceEditor() {
   const actorId = useEditorStore((s) => s.sequenceEditorTarget);
@@ -61,8 +63,9 @@ export function SequenceEditor() {
       >
         {/* Header */}
         <div className="flex items-center justify-between px-4 py-3 border-b border-zinc-700">
-          <h2 className="text-sm font-semibold text-white">
+          <h2 className="text-sm font-semibold text-white flex items-center gap-1.5">
             Sequences - {actor.name}
+            <HelpTooltip content={helpContent.sequenceEditor} position="bottom" />
           </h2>
           <button
             className="text-zinc-400 hover:text-white text-sm"

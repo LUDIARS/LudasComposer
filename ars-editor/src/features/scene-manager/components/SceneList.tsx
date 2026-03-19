@@ -20,7 +20,7 @@ export function SceneList() {
       <div className="px-3 py-2 border-b border-zinc-700">
         <h2 className="text-xs font-semibold uppercase tracking-wider text-zinc-400 mb-2 flex items-center gap-1.5">
           Scenes
-          <HelpTooltip content={helpContent.sceneList} position="right" />
+          <HelpTooltip content={helpContent.sceneList} position="right" highlightSelector='[data-help-target="sceneList"]' />
         </h2>
         <div className="flex gap-1">
           <input

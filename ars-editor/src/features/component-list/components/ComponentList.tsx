@@ -57,7 +57,7 @@ export function ComponentList() {
       <div className="px-3 py-2 border-b border-zinc-700">
         <h2 className="text-xs font-semibold uppercase tracking-wider text-zinc-400 mb-2 flex items-center gap-1.5">
           Components ({allComponents.length})
-          <HelpTooltip content={helpContent.componentList} position="right" />
+          <HelpTooltip content={helpContent.componentList} position="right" highlightSelector='[data-help-target="componentList"]' />
         </h2>
         <input
           className="w-full bg-zinc-800 text-white text-sm px-2 py-1 rounded border border-zinc-600 outline-none focus:border-blue-500 mb-2"

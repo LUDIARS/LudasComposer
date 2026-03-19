@@ -1,5 +1,7 @@
 import { useState, useCallback } from 'react';
 import { useProjectStore } from '@/stores/projectStore';
+import { HelpTooltip } from '@/components/HelpTooltip';
+import { helpContent } from '@/lib/help-content';
 import type { SceneState, KeyBinding } from '@/types/domain';
 
 const COMMON_KEYS = [
@@ -56,7 +58,10 @@ export function BehaviorEditor() {
     <div className="h-full flex flex-col overflow-hidden">
       {/* Header */}
       <div className="px-4 py-3 border-b border-zinc-700">
-        <h2 className="text-sm font-semibold text-white">Behavior Editor</h2>
+        <h2 className="text-sm font-semibold text-white flex items-center gap-1.5">
+          Behavior Editor
+          <HelpTooltip content={helpContent.behaviorEditor} position="bottom" highlightSelector='[data-help-target="behaviorEditor"]' />
+        </h2>
         <p className="text-xs text-zinc-500 mt-0.5">
           {scene.name} - {states.length} state(s)
         </p>

@@ -2,6 +2,8 @@ import { useState, useMemo } from 'react';
 import { useProjectStore } from '@/stores/projectStore';
 import { useEditorStore } from '@/stores/editorStore';
 import { ComponentCard } from './ComponentCard';
+import { HelpTooltip } from '@/components/HelpTooltip';
+import { helpContent } from '@/lib/help-content';
 import type { ComponentCategory } from '@/types/domain';
 
 const CATEGORIES: ComponentCategory[] = ['UI', 'Logic', 'System', 'GameObject'];
@@ -67,9 +69,12 @@ export function ComponentPicker() {
       <div className="bg-zinc-900 border border-zinc-700 rounded-xl shadow-2xl w-[480px] max-h-[600px] flex flex-col">
         {/* Header */}
         <div className="flex items-center justify-between px-4 py-3 border-b border-zinc-700">
-          <div>
-            <h3 className="text-white font-semibold">Component Picker</h3>
-            <p className="text-xs text-zinc-400">Actor: {actor.name}</p>
+          <div className="flex items-center gap-2">
+            <div>
+              <h3 className="text-white font-semibold">Component Picker</h3>
+              <p className="text-xs text-zinc-400">Actor: {actor.name}</p>
+            </div>
+            <HelpTooltip content={helpContent.componentPicker} position="bottom" />
           </div>
           <button
             onClick={closeComponentPicker}
