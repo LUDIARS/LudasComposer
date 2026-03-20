@@ -10,7 +10,7 @@ use tower_http::services::ServeDir;
 use crate::app_state::AppState;
 use crate::web_modules;
 
-pub async fn serve(port: u16, static_dir: Option<String>) {
+pub async fn serve(port: u16, static_dir: Option<String>) -> Result<(), Box<dyn std::error::Error>> {
     let state = AppState::from_env().await;
 
     // 各モジュールのルーターを構築・マージ
@@ -35,6 +35,8 @@ pub async fn serve(port: u16, static_dir: Option<String>) {
     println!("  Resource Depot: /api/depot/*");
     println!("  Data Organizer: /api/data/*");
 
-    let listener = tokio::net::TcpListener::bind(addr).await.unwrap();
-    axum::serve(listener, app).await.unwrap();
+    let listener = tokio::net::TcpListener::bind(addr).await
+        .map_err(|e| format!("Failed to bind {}: {}", addr, e))?;
+    axum::serve(listener, app).await?;
+    Ok(())
 }

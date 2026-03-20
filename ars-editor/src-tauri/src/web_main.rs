@@ -9,5 +9,8 @@ async fn main() {
 
     let static_dir = env::args().nth(1);
 
-    app_lib::web_server::serve(port, static_dir).await;
+    if let Err(e) = app_lib::web_server::serve(port, static_dir).await {
+        eprintln!("Server error: {}", e);
+        std::process::exit(1);
+    }
 }

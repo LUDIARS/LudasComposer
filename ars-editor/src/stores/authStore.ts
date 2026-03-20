@@ -5,6 +5,7 @@ import * as authApi from '@/lib/auth-api';
 interface AuthState {
   user: User | null;
   loading: boolean;
+  error: string | null;
   cloudProjects: ProjectSummary[];
   cloudProjectsLoading: boolean;
   gitRepos: GitRepo[];
@@ -25,6 +26,7 @@ interface AuthActions {
 export const useAuthStore = create<AuthState & AuthActions>()((set) => ({
   user: null,
   loading: true,
+  error: null,
   cloudProjects: [],
   cloudProjectsLoading: false,
   gitRepos: [],
@@ -33,12 +35,12 @@ export const useAuthStore = create<AuthState & AuthActions>()((set) => ({
   activeGitRepo: null,
 
   fetchUser: async () => {
-    set({ loading: true });
+    set({ loading: true, error: null });
     try {
       const user = await authApi.getMe();
       set({ user, loading: false });
-    } catch {
-      set({ user: null, loading: false });
+    } catch (e) {
+      set({ user: null, loading: false, error: e instanceof Error ? e.message : 'Failed to fetch user' });
     }
   },
 
@@ -52,22 +54,22 @@ export const useAuthStore = create<AuthState & AuthActions>()((set) => ({
   },
 
   fetchCloudProjects: async () => {
-    set({ cloudProjectsLoading: true });
+    set({ cloudProjectsLoading: true, error: null });
     try {
       const projects = await authApi.listCloudProjects();
       set({ cloudProjects: projects, cloudProjectsLoading: false });
-    } catch {
-      set({ cloudProjectsLoading: false });
+    } catch (e) {
+      set({ cloudProjectsLoading: false, error: e instanceof Error ? e.message : 'Failed to fetch cloud projects' });
     }
   },
 
   fetchGitRepos: async () => {
-    set({ gitReposLoading: true });
+    set({ gitReposLoading: true, error: null });
     try {
       const repos = await authApi.listGitRepos();
       set({ gitRepos: repos, gitReposLoading: false });
-    } catch {
-      set({ gitReposLoading: false });
+    } catch (e) {
+      set({ gitReposLoading: false, error: e instanceof Error ? e.message : 'Failed to fetch git repos' });
     }
   },
 
@@ -75,8 +77,8 @@ export const useAuthStore = create<AuthState & AuthActions>()((set) => ({
     try {
       const projects = await authApi.listLocalGitProjects();
       set({ localGitProjects: projects });
-    } catch {
-      // ignore
+    } catch (e) {
+      set({ error: e instanceof Error ? e.message : 'Failed to fetch local git projects' });
     }
   },
 

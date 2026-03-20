@@ -11,11 +11,11 @@ const MAX_HISTORY = 50;
 class CommandHistory {
   private undoStack: Command[] = [];
   private redoStack: Command[] = [];
-  private isRestoring = false;
+  private restoringCount = 0;
 
   /** True while undo/redo is restoring state — prevents re-entry */
   get restoring(): boolean {
-    return this.isRestoring;
+    return this.restoringCount > 0;
   }
 
   /** Push a pre-built command onto the undo stack */
@@ -29,12 +29,12 @@ class CommandHistory {
   undo(): void {
     if (this.undoStack.length === 0) return;
     const command = this.undoStack.pop()!;
-    this.isRestoring = true;
+    this.restoringCount++;
     try {
       command.undo();
       this.redoStack.unshift(command);
     } finally {
-      this.isRestoring = false;
+      this.restoringCount--;
     }
   }
 
@@ -42,12 +42,12 @@ class CommandHistory {
   redo(): void {
     if (this.redoStack.length === 0) return;
     const command = this.redoStack.shift()!;
-    this.isRestoring = true;
+    this.restoringCount++;
     try {
       command.redo();
       this.undoStack.push(command);
     } finally {
-      this.isRestoring = false;
+      this.restoringCount--;
     }
   }
 

@@ -37,7 +37,7 @@ export function VariableEditor({ variables, onChange }: VariableEditorProps) {
         <p className="text-xs text-zinc-500 italic">No variables defined</p>
       )}
       {variables.map((variable, index) => (
-        <div key={index} className="flex gap-2 items-center">
+        <div key={`var-${variable.name || index}`} className="flex gap-2 items-center">
           <input
             className="flex-1 bg-zinc-800 text-white text-sm px-2 py-1 rounded border border-zinc-600 outline-none focus:border-blue-500"
             placeholder="Name"

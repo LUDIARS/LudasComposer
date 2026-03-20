@@ -142,8 +142,8 @@ export function ComponentList() {
                       {comp.variables.length > 0 && (
                         <div>
                           <div className="text-xs text-zinc-500 font-medium">Variables</div>
-                          {comp.variables.map((v, i) => (
-                            <div key={i} className="text-xs text-zinc-400 pl-2">
+                          {comp.variables.map((v) => (
+                            <div key={`${comp.id}-var-${v.name}`} className="text-xs text-zinc-400 pl-2">
                               {v.name}: <span className="text-zinc-500">{v.type}</span>
                               {v.defaultValue !== undefined && (
                                 <span className="text-zinc-600"> = {String(v.defaultValue)}</span>
@@ -157,8 +157,8 @@ export function ComponentList() {
                       {comp.tasks.length > 0 && (
                         <div>
                           <div className="text-xs text-zinc-500 font-medium">Tasks</div>
-                          {comp.tasks.map((t, i) => (
-                            <div key={i} className="text-xs text-zinc-400 pl-2">
+                          {comp.tasks.map((t) => (
+                            <div key={`${comp.id}-task-${t.name}`} className="text-xs text-zinc-400 pl-2">
                               <span className="text-zinc-300">{t.name}</span>
                               {t.inputs.length > 0 && (
                                 <span className="text-zinc-600">

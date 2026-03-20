@@ -28,7 +28,7 @@ function PortList({
         </button>
       </div>
       {ports.map((port, i) => (
-        <div key={i} className="flex gap-1 items-center">
+        <div key={`${label}-port-${port.name || i}`} className="flex gap-1 items-center">
           <input
             className="flex-1 bg-zinc-700 text-white text-xs px-1.5 py-0.5 rounded border border-zinc-600 outline-none focus:border-blue-500"
             placeholder="Port name"
@@ -92,7 +92,7 @@ export function TaskEditor({ tasks, onChange }: TaskEditorProps) {
         <p className="text-xs text-zinc-500 italic">No tasks defined (at least 1 required)</p>
       )}
       {tasks.map((task, index) => (
-        <div key={index} className="bg-zinc-800 rounded-md p-3 space-y-2 border border-zinc-700">
+        <div key={`task-${task.name || index}`} className="bg-zinc-800 rounded-md p-3 space-y-2 border border-zinc-700">
           <div className="flex items-center gap-2">
             <input
               className="flex-1 bg-zinc-700 text-white text-sm px-2 py-1 rounded border border-zinc-600 outline-none focus:border-blue-500"

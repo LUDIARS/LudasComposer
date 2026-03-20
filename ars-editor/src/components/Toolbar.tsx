@@ -2,7 +2,7 @@ import { useState, useCallback } from 'react';
 import { useProjectStore } from '@/stores/projectStore';
 import { useEditorStore } from '@/stores/editorStore';
 import { useAuthStore } from '@/stores/authStore';
-import { canUndo, canRedo, undo, redo } from '@/stores/historyMiddleware';
+import { canUndo, canRedo, undo, redo, clearHistory } from '@/stores/historyMiddleware';
 import { useIsMobile } from '@/hooks/useIsMobile';
 import * as backend from '@/lib/backend';
 import * as authApi from '@/lib/auth-api';
@@ -72,6 +72,7 @@ export function Toolbar() {
         if (!input) return;
         const loaded = await backend.loadProject(input);
         loadProject(loaded);
+        clearHistory();
         setProjectPath(input);
         markSaved(input);
         showStatus('Loaded!');
@@ -89,6 +90,7 @@ export function Toolbar() {
         try {
           const parsed = JSON.parse(text);
           loadProject(parsed);
+          clearHistory();
           markSaved();
           showStatus('Loaded!');
         } catch {
@@ -108,6 +110,7 @@ export function Toolbar() {
       prefabs: {},
       activeSceneId: null,
     });
+    clearHistory();
     setProjectPath(null);
     markSaved();
     showStatus('New project');

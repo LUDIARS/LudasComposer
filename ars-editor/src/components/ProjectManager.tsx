@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useAuthStore } from '@/stores/authStore';
 import { useProjectStore } from '@/stores/projectStore';
 import { useEditorStore } from '@/stores/editorStore';
+import { clearHistory } from '@/stores/historyMiddleware';
 import * as authApi from '@/lib/auth-api';
 import type { GitRepo } from '@/types/auth';
 
@@ -55,6 +56,7 @@ export function ProjectManager({ onClose }: ProjectManagerProps) {
       const loadedProject = await authApi.loadGitProject(info.repo_full_name);
       if (loadedProject) {
         loadProject(loadedProject);
+        clearHistory();
         setActiveGitRepo(info.repo_full_name);
         markSaved();
         showStatus('Project loaded!');
@@ -77,6 +79,7 @@ export function ProjectManager({ onClose }: ProjectManagerProps) {
       const loadedProject = await authApi.loadGitProject(repoFullName);
       if (loadedProject) {
         loadProject(loadedProject);
+        clearHistory();
         setActiveGitRepo(repoFullName);
         markSaved();
         showStatus('Project loaded!');

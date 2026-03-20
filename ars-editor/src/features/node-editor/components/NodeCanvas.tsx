@@ -100,9 +100,9 @@ export function NodeCanvas() {
         onInit={setRfInstance}
         onPaneClick={() => closeContextMenu()}
         onContextMenu={onContextMenu}
-        onSelectionChange={({ nodes: selectedNodes }) => {
+        onSelectionChange={useCallback(({ nodes: selectedNodes }: { nodes: Array<{ id: string }> }) => {
           setSelectedNodes(selectedNodes.map((n) => n.id));
-        }}
+        }, [setSelectedNodes])}
         nodeTypes={nodeTypes}
         edgeTypes={edgeTypes}
         defaultEdgeOptions={{ type: 'actor', animated: true }}

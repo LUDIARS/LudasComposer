@@ -1,6 +1,14 @@
 use crate::models::*;
+use once_cell::sync::Lazy;
 use regex::Regex;
 use uuid::Uuid;
+
+static HEADER_RE: Lazy<Regex> =
+    Lazy::new(|| Regex::new(r"(?m)^###\s+(.+?)(?:\s+モジュール定義)?$").unwrap());
+static TASK_RE: Lazy<Regex> =
+    Lazy::new(|| Regex::new(r"(?m)^#####\s+タスク\s*\n([\s\S]*?)(?=\n####|\n###|\n#####|\z)").unwrap());
+static VAR_TYPE_RE: Lazy<Regex> =
+    Lazy::new(|| Regex::new(r"^(.+?)\s*\((.+?)\)$").unwrap());
 
 /// Arsモジュール定義のMarkdownをパースする
 ///
@@ -38,10 +46,9 @@ pub fn parse_module_markdown(content: &str, source_path: Option<&str>) -> Vec<Mo
 /// Markdownを "### " ヘッダーでモジュール単位に分割
 fn split_by_module_headers(content: &str) -> Vec<(String, String)> {
     let mut result = Vec::new();
-    let header_re = Regex::new(r"(?m)^###\s+(.+?)(?:\s+モジュール定義)?$").unwrap();
 
-    let matches: Vec<_> = header_re.find_iter(content).collect();
-    let captures: Vec<_> = header_re.captures_iter(content).collect();
+    let matches: Vec<_> = HEADER_RE.find_iter(content).collect();
+    let captures: Vec<_> = HEADER_RE.captures_iter(content).collect();
 
     for (i, cap) in captures.iter().enumerate() {
         let name = cap[1].trim().to_string();
@@ -139,8 +146,7 @@ fn parse_variables(content: &str) -> Vec<VariableDefinition> {
                 let desc = parts[1].trim().to_string();
 
                 // 型情報があれば抽出 "name (type)"
-                let type_re = Regex::new(r"^(.+?)\s*\((.+?)\)$").ok()?;
-                let (name, var_type) = if let Some(caps) = type_re.captures(name_part) {
+                let (name, var_type) = if let Some(caps) = VAR_TYPE_RE.captures(name_part) {
                     (caps[1].trim().to_string(), caps[2].trim().to_string())
                 } else {
                     (name_part.to_string(), "unknown".to_string())
@@ -165,8 +171,7 @@ fn parse_variables(content: &str) -> Vec<VariableDefinition> {
 /// 作業セクション内のタスクをパース
 fn parse_tasks(content: &str) -> Vec<TaskDefinition> {
     // "##### タスク" セクションを探す
-    let task_pattern = Regex::new(r"(?m)^#####\s+タスク\s*\n([\s\S]*?)(?=\n####|\n###|\n#####|\z)").unwrap();
-    let task_section = match task_pattern.captures(content) {
+    let task_section = match TASK_RE.captures(content) {
         Some(caps) => caps[1].to_string(),
         None => return Vec::new(),
     };

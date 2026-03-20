@@ -114,17 +114,24 @@ server.tool(
     name: z.string().describe('シーン名'),
   },
   async ({ file_path, name }) => {
-    const fullPath = path.isAbsolute(file_path) ? file_path : path.join(projectDir, file_path);
-    let project = pm.loadProject(fullPath);
-    const result = pm.createScene(project, name);
-    project = result.project;
-    pm.saveProject(fullPath, project);
-    return {
-      content: [{
-        type: 'text',
-        text: `シーン "${name}" を作成しました (ID: ${result.scene.id})\nルートアクター: ${result.scene.rootActorId}`,
-      }],
-    };
+    try {
+      const fullPath = path.isAbsolute(file_path) ? file_path : path.join(projectDir, file_path);
+      let project = pm.loadProject(fullPath);
+      const result = pm.createScene(project, name);
+      project = result.project;
+      pm.saveProject(fullPath, project);
+      return {
+        content: [{
+          type: 'text',
+          text: `シーン "${name}" を作成しました (ID: ${result.scene.id})\nルートアクター: ${result.scene.rootActorId}`,
+        }],
+      };
+    } catch (e) {
+      return {
+        content: [{ type: 'text', text: `エラー: ${e instanceof Error ? e.message : String(e)}` }],
+        isError: true,
+      };
+    }
   },
 );
 
@@ -164,17 +171,24 @@ server.tool(
     y: z.number().optional().describe('Y座標（デフォルト: 200）'),
   },
   async ({ file_path, scene_id, name, role, x, y }) => {
-    const fullPath = path.isAbsolute(file_path) ? file_path : path.join(projectDir, file_path);
-    let project = pm.loadProject(fullPath);
-    const result = pm.addActor(project, scene_id, name, role, { x: x ?? 200, y: y ?? 200 });
-    project = result.project;
-    pm.saveProject(fullPath, project);
-    return {
-      content: [{
-        type: 'text',
-        text: `アクター "${name}" [${role}] を追加しました (ID: ${result.actor.id})`,
-      }],
-    };
+    try {
+      const fullPath = path.isAbsolute(file_path) ? file_path : path.join(projectDir, file_path);
+      let project = pm.loadProject(fullPath);
+      const result = pm.addActor(project, scene_id, name, role, { x: x ?? 200, y: y ?? 200 });
+      project = result.project;
+      pm.saveProject(fullPath, project);
+      return {
+        content: [{
+          type: 'text',
+          text: `アクター "${name}" [${role}] を追加しました (ID: ${result.actor.id})`,
+        }],
+      };
+    } catch (e) {
+      return {
+        content: [{ type: 'text', text: `エラー: ${e instanceof Error ? e.message : String(e)}` }],
+        isError: true,
+      };
+    }
   },
 );
 
@@ -225,29 +239,36 @@ server.tool(
     dependencies: z.array(z.string()).optional().describe('依存コンポーネントID'),
   },
   async ({ file_path, name, category, domain, variables, tasks, dependencies }) => {
-    const fullPath = path.isAbsolute(file_path) ? file_path : path.join(projectDir, file_path);
-    let project = pm.loadProject(fullPath);
-    const result = pm.createComponent(project, {
-      name,
-      category,
-      domain,
-      variables: variables?.map(v => ({ ...v, defaultValue: undefined })),
-      tasks: tasks?.map(t => ({
-        name: t.name,
-        description: t.description,
-        inputs: t.inputs ?? [],
-        outputs: t.outputs ?? [],
-      })),
-      dependencies,
-    });
-    project = result.project;
-    pm.saveProject(fullPath, project);
-    return {
-      content: [{
-        type: 'text',
-        text: `コンポーネント "${name}" [${category}] を作成しました (ID: ${result.component.id})`,
-      }],
-    };
+    try {
+      const fullPath = path.isAbsolute(file_path) ? file_path : path.join(projectDir, file_path);
+      let project = pm.loadProject(fullPath);
+      const result = pm.createComponent(project, {
+        name,
+        category,
+        domain,
+        variables: variables?.map(v => ({ ...v, defaultValue: undefined })),
+        tasks: tasks?.map(t => ({
+          name: t.name,
+          description: t.description,
+          inputs: t.inputs ?? [],
+          outputs: t.outputs ?? [],
+        })),
+        dependencies,
+      });
+      project = result.project;
+      pm.saveProject(fullPath, project);
+      return {
+        content: [{
+          type: 'text',
+          text: `コンポーネント "${name}" [${category}] を作成しました (ID: ${result.component.id})`,
+        }],
+      };
+    } catch (e) {
+      return {
+        content: [{ type: 'text', text: `エラー: ${e instanceof Error ? e.message : String(e)}` }],
+        isError: true,
+      };
+    }
   },
 );
 
@@ -285,18 +306,25 @@ server.tool(
     component_id: z.string().describe('コンポーネントID'),
   },
   async ({ file_path, scene_id, actor_id, component_id }) => {
-    const fullPath = path.isAbsolute(file_path) ? file_path : path.join(projectDir, file_path);
-    let project = pm.loadProject(fullPath);
-    project = pm.attachComponent(project, scene_id, actor_id, component_id);
-    pm.saveProject(fullPath, project);
-    const compName = project.components[component_id]?.name ?? component_id;
-    const actorName = project.scenes[scene_id]?.actors[actor_id]?.name ?? actor_id;
-    return {
-      content: [{
-        type: 'text',
-        text: `コンポーネント "${compName}" をアクター "${actorName}" にアタッチしました。`,
-      }],
-    };
+    try {
+      const fullPath = path.isAbsolute(file_path) ? file_path : path.join(projectDir, file_path);
+      let project = pm.loadProject(fullPath);
+      project = pm.attachComponent(project, scene_id, actor_id, component_id);
+      pm.saveProject(fullPath, project);
+      const compName = project.components[component_id]?.name ?? component_id;
+      const actorName = project.scenes[scene_id]?.actors[actor_id]?.name ?? actor_id;
+      return {
+        content: [{
+          type: 'text',
+          text: `コンポーネント "${compName}" をアクター "${actorName}" にアタッチしました。`,
+        }],
+      };
+    } catch (e) {
+      return {
+        content: [{ type: 'text', text: `エラー: ${e instanceof Error ? e.message : String(e)}` }],
+        isError: true,
+      };
+    }
   },
 );
 
@@ -314,22 +342,40 @@ server.tool(
     target_port: z.string().describe('接続先ポート名'),
   },
   async ({ file_path, scene_id, source_actor_id, source_port, target_actor_id, target_port }) => {
-    const fullPath = path.isAbsolute(file_path) ? file_path : path.join(projectDir, file_path);
-    let project = pm.loadProject(fullPath);
-    const result = pm.addConnection(project, scene_id, {
-      sourceActorId: source_actor_id,
-      sourcePort: source_port,
-      targetActorId: target_actor_id,
-      targetPort: target_port,
-    });
-    project = result.project;
-    pm.saveProject(fullPath, project);
-    return {
-      content: [{
-        type: 'text',
-        text: `接続を追加しました (ID: ${result.connection.id}): ${source_actor_id}:${source_port} → ${target_actor_id}:${target_port}`,
-      }],
-    };
+    try {
+      const fullPath = path.isAbsolute(file_path) ? file_path : path.join(projectDir, file_path);
+      let project = pm.loadProject(fullPath);
+      // Validate that source and target actors exist in the scene
+      const scene = project.scenes[scene_id];
+      if (!scene) {
+        return { content: [{ type: 'text', text: `エラー: シーンが見つかりません: ${scene_id}` }], isError: true };
+      }
+      if (!scene.actors[source_actor_id]) {
+        return { content: [{ type: 'text', text: `エラー: 接続元アクターが見つかりません: ${source_actor_id}` }], isError: true };
+      }
+      if (!scene.actors[target_actor_id]) {
+        return { content: [{ type: 'text', text: `エラー: 接続先アクターが見つかりません: ${target_actor_id}` }], isError: true };
+      }
+      const result = pm.addConnection(project, scene_id, {
+        sourceActorId: source_actor_id,
+        sourcePort: source_port,
+        targetActorId: target_actor_id,
+        targetPort: target_port,
+      });
+      project = result.project;
+      pm.saveProject(fullPath, project);
+      return {
+        content: [{
+          type: 'text',
+          text: `接続を追加しました (ID: ${result.connection.id}): ${source_actor_id}:${source_port} → ${target_actor_id}:${target_port}`,
+        }],
+      };
+    } catch (e) {
+      return {
+        content: [{ type: 'text', text: `エラー: ${e instanceof Error ? e.message : String(e)}` }],
+        isError: true,
+      };
+    }
   },
 );
 

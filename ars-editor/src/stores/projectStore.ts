@@ -183,6 +183,7 @@ export const useProjectStore = create<ProjectState & ProjectActions>()((set, get
     set((state) => {
       const scene = state.project.scenes[sceneId];
       if (!scene) return state;
+      const removedActor = scene.actors[actorId];
       const { [actorId]: _, ...remainingActors } = scene.actors;
       const updatedActors = Object.fromEntries(
         Object.entries(remainingActors).map(([k, a]) => [
@@ -190,6 +191,14 @@ export const useProjectStore = create<ProjectState & ProjectActions>()((set, get
           { ...a, children: a.children.filter((c) => c !== actorId) },
         ]),
       );
+      // Clear parentId for orphaned children
+      if (removedActor) {
+        for (const childId of removedActor.children) {
+          if (updatedActors[childId]) {
+            updatedActors[childId] = { ...updatedActors[childId], parentId: null };
+          }
+        }
+      }
       const updatedConnections = scene.connections.filter(
         (c) => c.sourceActorId !== actorId && c.targetActorId !== actorId,
       );
@@ -263,6 +272,14 @@ export const useProjectStore = create<ProjectState & ProjectActions>()((set, get
       if (!scene) return state;
       const actor = scene.actors[actorId];
       if (!actor) return state;
+      // Circular dependency check: walk up from parentId to ensure actorId is not an ancestor
+      if (parentId) {
+        let current: string | null | undefined = parentId;
+        while (current) {
+          if (current === actorId) return state; // Would create a cycle
+          current = scene.actors[current]?.parentId;
+        }
+      }
       const updatedActors = { ...scene.actors };
       for (const a of Object.values(updatedActors)) {
         if (a.children.includes(actorId)) {

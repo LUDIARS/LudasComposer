@@ -48,16 +48,15 @@ impl GitCloneService {
         // URLからホスト/ユーザー/リポジトリを抽出
         let parts: Vec<&str> = url.split("://").collect();
         let path_part = if parts.len() == 2 {
-            parts[1]
+            parts[1].to_string()
         } else if url.starts_with("git@") {
             // git@github.com:user/repo 形式
-            &url[4..].replace(':', "/")
-                .leak() // 簡易的な処理
+            url[4..].replace(':', "/")
         } else {
             return Err(GitCloneError::InvalidUrl(repo_url.to_string()));
         };
 
-        Ok(self.cache_dir.join(path_part))
+        Ok(self.cache_dir.join(&path_part))
     }
 
     /// リポジトリをクローンまたは既存なら最新をプル

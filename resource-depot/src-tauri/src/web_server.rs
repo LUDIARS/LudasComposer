@@ -127,7 +127,7 @@ pub fn api_router(state: std::sync::Arc<AppState>) -> Router {
         .with_state(state)
 }
 
-pub async fn serve(port: u16, static_dir: Option<String>) {
+pub async fn serve(port: u16, static_dir: Option<String>) -> Result<(), Box<dyn std::error::Error>> {
     let depot_service = ResourceDepotService::with_defaults()
         .unwrap_or_else(|e| {
             eprintln!("Warning: Failed to init depot: {}", e);
@@ -148,6 +148,8 @@ pub async fn serve(port: u16, static_dir: Option<String>) {
     let addr = std::net::SocketAddr::from(([0, 0, 0, 0], port));
     println!("Resource Depot web server listening on http://localhost:{}", port);
 
-    let listener = tokio::net::TcpListener::bind(addr).await.unwrap();
-    axum::serve(listener, app).await.unwrap();
+    let listener = tokio::net::TcpListener::bind(addr).await
+        .map_err(|e| format!("Failed to bind {}: {}", addr, e))?;
+    axum::serve(listener, app).await?;
+    Ok(())
 }

@@ -32,7 +32,7 @@ export function TestCaseEditor({ testCases, onChange }: TestCaseEditorProps) {
         <p className="text-xs text-zinc-600 italic">No test cases</p>
       )}
       {testCases.map((tc, i) => (
-        <div key={i} className="flex gap-1 items-start">
+        <div key={`tc-${i}-${tc.slice(0, 20)}`} className="flex gap-1 items-start">
           <textarea
             className="flex-1 bg-zinc-700 text-white text-xs px-1.5 py-1 rounded border border-zinc-600 outline-none focus:border-blue-500 resize-y min-h-[28px]"
             placeholder="Test case description..."
