@@ -32,8 +32,6 @@ export function HelpTooltip({
     }
   }, []);
 
-  const _hasHighlightTarget = !!(highlightSelector || highlightRef);
-
   // Calculate highlight rect and tooltip position for overlay mode
   const updateHighlightRect = useCallback(() => {
     let el: HTMLElement | null = null;
