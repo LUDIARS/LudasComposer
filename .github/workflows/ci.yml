@@ -1,0 +1,70 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  frontend:
+    name: Frontend
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: ars-editor
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+          cache-dependency-path: ars-editor/package-lock.json
+
+      - run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Build (TypeScript + Vite)
+        run: npm run build
+
+  rust:
+    name: Rust
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: |
+            ars-editor/src-tauri -> target
+            data-organizer -> target
+
+      - name: Clippy (web-server)
+        working-directory: ars-editor/src-tauri
+        run: cargo clippy --features web-server --no-default-features --bin ars-web-server -- -D warnings
+
+      - name: Build (web-server)
+        working-directory: ars-editor/src-tauri
+        run: cargo build --features web-server --no-default-features --bin ars-web-server
+
+      - name: Test (data-organizer)
+        working-directory: data-organizer
+        run: cargo test
