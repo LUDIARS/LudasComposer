@@ -1,4 +1,4 @@
-import { useState, useMemo, useRef } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useProjectStore } from '@/stores/projectStore';
 import { useEditorStore } from '@/stores/editorStore';
 import { VariableEditor } from './VariableEditor';
@@ -38,13 +38,13 @@ export function ComponentEditor() {
   const [isDirty, setIsDirty] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  const prevTarget = useRef(componentEditorTarget);
-  if (prevTarget.current !== componentEditorTarget) {
-    prevTarget.current = componentEditorTarget;
+  /* eslint-disable react-hooks/set-state-in-effect, react-hooks/exhaustive-deps */
+  useEffect(() => {
     setDraft(existingComponent ?? createEmptyComponent());
     setIsDirty(false);
     setErrors({});
-  }
+  }, [componentEditorTarget]);
+  /* eslint-enable react-hooks/set-state-in-effect, react-hooks/exhaustive-deps */
 
   const allComponents = useMemo(() => Object.values(project.components), [project.components]);
 
