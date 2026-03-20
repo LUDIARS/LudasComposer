@@ -73,6 +73,10 @@ export function NodeCanvas() {
     [activeScene, project],
   );
 
+  const onSelectionChange = useCallback(({ nodes: selectedNodes }: { nodes: Array<{ id: string }> }) => {
+    setSelectedNodes(selectedNodes.map((n) => n.id));
+  }, [setSelectedNodes]);
+
   if (!activeScene) {
     return (
       <div className="flex-1 flex items-center justify-center text-zinc-500 text-lg">
@@ -100,9 +104,7 @@ export function NodeCanvas() {
         onInit={setRfInstance}
         onPaneClick={() => closeContextMenu()}
         onContextMenu={onContextMenu}
-        onSelectionChange={useCallback(({ nodes: selectedNodes }: { nodes: Array<{ id: string }> }) => {
-          setSelectedNodes(selectedNodes.map((n) => n.id));
-        }, [setSelectedNodes])}
+        onSelectionChange={onSelectionChange}
         nodeTypes={nodeTypes}
         edgeTypes={edgeTypes}
         defaultEdgeOptions={{ type: 'actor', animated: true }}
