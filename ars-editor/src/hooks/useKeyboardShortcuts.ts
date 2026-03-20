@@ -11,7 +11,9 @@ interface KeyboardShortcutOptions {
 
 export function useKeyboardShortcuts(options: KeyboardShortcutOptions = {}) {
   const optionsRef = useRef(options);
-  optionsRef.current = options;
+  useEffect(() => {
+    optionsRef.current = options;
+  });
 
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {

@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useMemo, useRef } from 'react';
 import { useProjectStore } from '@/stores/projectStore';
 import { useEditorStore } from '@/stores/editorStore';
 import { VariableEditor } from './VariableEditor';
@@ -38,15 +38,13 @@ export function ComponentEditor() {
   const [isDirty, setIsDirty] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  useEffect(() => {
-    if (existingComponent) {
-      setDraft(existingComponent);
-    } else {
-      setDraft(createEmptyComponent());
-    }
+  const prevTarget = useRef(componentEditorTarget);
+  if (prevTarget.current !== componentEditorTarget) {
+    prevTarget.current = componentEditorTarget;
+    setDraft(existingComponent ?? createEmptyComponent());
     setIsDirty(false);
     setErrors({});
-  }, [existingComponent]);
+  }
 
   const allComponents = useMemo(() => Object.values(project.components), [project.components]);
 
