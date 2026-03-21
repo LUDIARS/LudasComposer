@@ -3,8 +3,10 @@ import { useSceneManager } from '../hooks/useSceneManager';
 import { SceneItem } from './SceneItem';
 import { HelpTooltip } from '@/components/HelpTooltip';
 import { helpContent } from '@/lib/help-content';
+import { useI18n } from '@/hooks/useI18n';
 
 export function SceneList() {
+  const { t } = useI18n();
   const { scenes, activeSceneId, createScene, deleteScene, renameScene, setActiveScene } =
     useSceneManager();
   const [newSceneName, setNewSceneName] = useState('');
@@ -19,13 +21,13 @@ export function SceneList() {
     <div className="flex flex-col h-full">
       <div className="px-3 py-2 border-b border-zinc-700">
         <h2 className="text-xs font-semibold uppercase tracking-wider text-zinc-400 mb-2 flex items-center gap-1.5">
-          Scenes
+          {t('sceneManager.scenes')}
           <HelpTooltip content={helpContent.sceneList} position="right" highlightSelector='[data-help-target="sceneList"]' />
         </h2>
         <div className="flex gap-1">
           <input
             className="flex-1 bg-zinc-800 text-white text-sm px-2 py-1 rounded border border-zinc-600 outline-none focus:border-blue-500"
-            placeholder="New scene name..."
+            placeholder={t('sceneManager.newScenePlaceholder')}
             value={newSceneName}
             onChange={(e) => setNewSceneName(e.target.value)}
             onKeyDown={(e) => {
@@ -42,7 +44,7 @@ export function SceneList() {
       </div>
       <div className="flex-1 overflow-y-auto p-2 space-y-1">
         {scenes.length === 0 ? (
-          <p className="text-zinc-500 text-sm text-center py-4">No scenes yet</p>
+          <p className="text-zinc-500 text-sm text-center py-4">{t('sceneManager.noScenes')}</p>
         ) : (
           scenes.map((scene) => (
             <SceneItem

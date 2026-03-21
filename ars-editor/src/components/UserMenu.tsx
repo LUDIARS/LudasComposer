@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { useAuthStore } from '@/stores/authStore';
 import * as authApi from '@/lib/auth-api';
 import { isTauri } from '@/lib/backend';
+import { useI18n } from '@/hooks/useI18n';
 import { ProjectManager } from './ProjectManager';
 
 interface UserMenuProps {
@@ -9,6 +10,7 @@ interface UserMenuProps {
 }
 
 export function UserMenu({ onOpenProjectManager }: UserMenuProps) {
+  const { t } = useI18n();
   const user = useAuthStore((s) => s.user);
   const loading = useAuthStore((s) => s.loading);
   const fetchUser = useAuthStore((s) => s.fetchUser);
@@ -56,7 +58,7 @@ export function UserMenu({ onOpenProjectManager }: UserMenuProps) {
           href={authApi.getLoginUrl()}
           className="px-2 py-1 text-zinc-300 hover:bg-zinc-700 rounded transition-colors text-xs"
         >
-          Login with GitHub
+          {t('app.auth.loginGithub')}
         </a>
         {showProjectManager && (
           <ProjectManager onClose={() => setShowProjectManager(false)} />
@@ -89,13 +91,13 @@ export function UserMenu({ onOpenProjectManager }: UserMenuProps) {
               onClick={handleOpenProjects}
               className="w-full text-left px-3 py-2 text-xs text-zinc-300 hover:bg-zinc-700 transition-colors"
             >
-              Projects
+              {t('userMenu.projects')}
             </button>
             <button
               onClick={() => { logout(); setOpen(false); }}
               className="w-full text-left px-3 py-2 text-xs text-zinc-300 hover:bg-zinc-700 transition-colors"
             >
-              Sign out
+              {t('app.auth.signOut')}
             </button>
           </div>
         )}

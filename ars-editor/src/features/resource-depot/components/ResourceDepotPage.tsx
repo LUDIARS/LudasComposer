@@ -1,14 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
+import { useI18n } from '@/hooks/useI18n';
 import { depotApi, type Resource, type ResourceCategory, type BonePattern, type MotionGroup, type TextureGroup } from '@/lib/depot-api';
-
-const CATEGORIES: { label: string; value: ResourceCategory | 'all' }[] = [
-  { label: 'All', value: 'all' },
-  { label: 'Model', value: 'model' },
-  { label: 'Texture', value: 'texture' },
-  { label: 'Motion', value: 'motion' },
-  { label: 'Font', value: 'font' },
-  { label: 'Sound', value: 'sound' },
-];
 
 function formatSize(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`;
@@ -34,6 +26,7 @@ function CategoryBadge({ category }: { category: ResourceCategory }) {
 type Tab = 'resources' | 'bone-patterns' | 'motion-groups' | 'texture-groups';
 
 export function ResourceDepotPage() {
+  const { t } = useI18n();
   const [tab, setTab] = useState<Tab>('resources');
   const [resources, setResources] = useState<Resource[]>([]);
   const [bonePatterns, setBonePatterns] = useState<BonePattern[]>([]);
@@ -44,6 +37,15 @@ export function ResourceDepotPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [selectedResource, setSelectedResource] = useState<Resource | null>(null);
+
+  const categories: { label: string; value: ResourceCategory | 'all' }[] = [
+    { label: t('resourceDepot.all'), value: 'all' },
+    { label: t('resourceDepot.categories.model'), value: 'model' },
+    { label: t('resourceDepot.categories.texture'), value: 'texture' },
+    { label: t('resourceDepot.categories.motion'), value: 'motion' },
+    { label: t('resourceDepot.categories.font'), value: 'font' },
+    { label: t('resourceDepot.categories.sound'), value: 'sound' },
+  ];
 
   const loadResources = useCallback(async () => {
     setLoading(true);
@@ -86,34 +88,34 @@ export function ResourceDepotPage() {
   }, [loadResources, loadGroupData]);
 
   const tabs: { key: Tab; label: string; count: number }[] = [
-    { key: 'resources', label: 'Resources', count: resources.length },
-    { key: 'bone-patterns', label: 'Bone Patterns', count: bonePatterns.length },
-    { key: 'motion-groups', label: 'Motion Groups', count: motionGroups.length },
-    { key: 'texture-groups', label: 'Texture Groups', count: textureGroups.length },
+    { key: 'resources', label: t('resourceDepot.tabs.resources'), count: resources.length },
+    { key: 'bone-patterns', label: t('resourceDepot.tabs.bonePatterns'), count: bonePatterns.length },
+    { key: 'motion-groups', label: t('resourceDepot.tabs.motionGroups'), count: motionGroups.length },
+    { key: 'texture-groups', label: t('resourceDepot.tabs.textureGroups'), count: textureGroups.length },
   ];
 
   return (
     <div className="flex flex-col h-full">
       {/* Header */}
       <div className="flex items-center gap-4 px-4 py-3 border-b border-zinc-700">
-        <h2 className="text-sm font-semibold text-white whitespace-nowrap">Resource Depot</h2>
-        <span className="text-xs text-zinc-500">Read-only</span>
+        <h2 className="text-sm font-semibold text-white whitespace-nowrap">{t('resourceDepot.title')}</h2>
+        <span className="text-xs text-zinc-500">{t('resourceDepot.readOnly')}</span>
       </div>
 
       {/* Tabs */}
       <div className="flex border-b border-zinc-700">
-        {tabs.map(t => (
+        {tabs.map(tb => (
           <button
-            key={t.key}
-            onClick={() => setTab(t.key)}
+            key={tb.key}
+            onClick={() => setTab(tb.key)}
             className={`px-4 py-2 text-xs font-medium transition-colors ${
-              tab === t.key
+              tab === tb.key
                 ? 'text-blue-400 border-b-2 border-blue-400'
                 : 'text-zinc-400 hover:text-zinc-200'
             }`}
           >
-            {t.label}
-            {t.count > 0 && <span className="ml-1 text-zinc-500">({t.count})</span>}
+            {tb.label}
+            {tb.count > 0 && <span className="ml-1 text-zinc-500">({tb.count})</span>}
           </button>
         ))}
       </div>
@@ -129,11 +131,11 @@ export function ResourceDepotPage() {
                 value={search}
                 onChange={e => setSearch(e.target.value)}
                 onKeyDown={e => e.key === 'Enter' && loadResources()}
-                placeholder="Search..."
+                placeholder={t('resourceDepot.searchPlaceholder')}
                 className="flex-1 bg-zinc-800 text-sm text-zinc-200 px-3 py-1.5 rounded border border-zinc-700 focus:outline-none focus:border-blue-500"
               />
               <div className="flex gap-1">
-                {CATEGORIES.map(c => (
+                {categories.map(c => (
                   <button
                     key={c.value}
                     onClick={() => setCategory(c.value)}
@@ -151,20 +153,20 @@ export function ResourceDepotPage() {
 
             {/* Resource List */}
             <div className="flex-1 overflow-y-auto">
-              {loading && <div className="p-4 text-zinc-500 text-sm">Loading...</div>}
+              {loading && <div className="p-4 text-zinc-500 text-sm">{t('resourceDepot.loading')}</div>}
               {error && <div className="p-4 text-red-400 text-sm">{error}</div>}
               {!loading && resources.length === 0 && (
-                <div className="p-4 text-zinc-500 text-sm text-center">No resources found</div>
+                <div className="p-4 text-zinc-500 text-sm text-center">{t('resourceDepot.noResources')}</div>
               )}
               <table className="w-full text-xs">
                 <thead className="sticky top-0 bg-zinc-900 text-zinc-400">
                   <tr>
-                    <th className="text-left px-4 py-2 font-medium">Filename</th>
-                    <th className="text-left px-4 py-2 font-medium">Original</th>
-                    <th className="text-left px-4 py-2 font-medium">Category</th>
-                    <th className="text-left px-4 py-2 font-medium">Role</th>
-                    <th className="text-right px-4 py-2 font-medium">Size</th>
-                    <th className="text-left px-4 py-2 font-medium">Status</th>
+                    <th className="text-left px-4 py-2 font-medium">{t('resourceDepot.table.filename')}</th>
+                    <th className="text-left px-4 py-2 font-medium">{t('resourceDepot.table.original')}</th>
+                    <th className="text-left px-4 py-2 font-medium">{t('resourceDepot.table.category')}</th>
+                    <th className="text-left px-4 py-2 font-medium">{t('resourceDepot.table.role')}</th>
+                    <th className="text-right px-4 py-2 font-medium">{t('resourceDepot.table.size')}</th>
+                    <th className="text-left px-4 py-2 font-medium">{t('resourceDepot.table.status')}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -192,19 +194,19 @@ export function ResourceDepotPage() {
 
         {tab === 'bone-patterns' && (
           <div className="flex-1 overflow-y-auto p-4">
-            {bonePatterns.length === 0 && <div className="text-zinc-500 text-sm">No bone patterns</div>}
+            {bonePatterns.length === 0 && <div className="text-zinc-500 text-sm">{t('resourceDepot.noBonePatterns')}</div>}
             <div className="space-y-3">
               {bonePatterns.map(bp => (
                 <div key={bp.id} className="bg-zinc-800 rounded-lg p-3">
                   <div className="text-sm font-medium text-zinc-200">{bp.name}</div>
-                  <div className="text-xs text-zinc-500 mt-1">ID: {bp.id}</div>
+                  <div className="text-xs text-zinc-500 mt-1">{t('resourceDepot.id')}{bp.id}</div>
                   <div className="mt-2">
-                    <span className="text-xs text-zinc-400">Required: </span>
+                    <span className="text-xs text-zinc-400">{t('resourceDepot.required')}</span>
                     <span className="text-xs text-zinc-300">{bp.required_bones.join(', ') || 'none'}</span>
                   </div>
                   {bp.optional_bones.length > 0 && (
                     <div className="mt-1">
-                      <span className="text-xs text-zinc-400">Optional: </span>
+                      <span className="text-xs text-zinc-400">{t('resourceDepot.optional')}</span>
                       <span className="text-xs text-zinc-300">{bp.optional_bones.join(', ')}</span>
                     </div>
                   )}
@@ -216,14 +218,13 @@ export function ResourceDepotPage() {
 
         {tab === 'motion-groups' && (
           <div className="flex-1 overflow-y-auto p-4">
-            {motionGroups.length === 0 && <div className="text-zinc-500 text-sm">No motion groups</div>}
+            {motionGroups.length === 0 && <div className="text-zinc-500 text-sm">{t('resourceDepot.noMotionGroups')}</div>}
             <div className="space-y-3">
               {motionGroups.map(mg => (
                 <div key={mg.id} className="bg-zinc-800 rounded-lg p-3">
                   <div className="text-sm font-medium text-zinc-200">{mg.name}</div>
                   <div className="text-xs text-zinc-500 mt-1">
-                    {mg.motion_ids.length} motion(s)
-                    {mg.bone_pattern_id && ` | Pattern: ${mg.bone_pattern_id}`}
+                    {t('resourceDepot.motionInfo', { count: mg.motion_ids.length, pattern: mg.bone_pattern_id || '' })}
                   </div>
                 </div>
               ))}
@@ -233,14 +234,13 @@ export function ResourceDepotPage() {
 
         {tab === 'texture-groups' && (
           <div className="flex-1 overflow-y-auto p-4">
-            {textureGroups.length === 0 && <div className="text-zinc-500 text-sm">No texture groups</div>}
+            {textureGroups.length === 0 && <div className="text-zinc-500 text-sm">{t('resourceDepot.noTextureGroups')}</div>}
             <div className="space-y-3">
               {textureGroups.map(tg => (
                 <div key={tg.id} className="bg-zinc-800 rounded-lg p-3">
                   <div className="text-sm font-medium text-zinc-200">{tg.name}</div>
                   <div className="text-xs text-zinc-500 mt-1">
-                    {tg.texture_ids.length} texture(s) |
-                    Atlas: {tg.atlas_config.max_width}x{tg.atlas_config.max_height}
+                    {t('resourceDepot.textureInfo', { count: tg.texture_ids.length, width: tg.atlas_config.max_width, height: tg.atlas_config.max_height })}
                   </div>
                 </div>
               ))}
@@ -251,48 +251,48 @@ export function ResourceDepotPage() {
         {/* Detail Panel */}
         {tab === 'resources' && selectedResource && (
           <div className="w-72 border-l border-zinc-700 overflow-y-auto p-4">
-            <h3 className="text-sm font-semibold text-white mb-3">Resource Detail</h3>
+            <h3 className="text-sm font-semibold text-white mb-3">{t('resourceDepot.detail.title')}</h3>
             <div className="space-y-2 text-xs">
               <div>
-                <span className="text-zinc-500">ID</span>
+                <span className="text-zinc-500">{t('resourceDepot.detail.id')}</span>
                 <div className="text-zinc-300 font-mono break-all">{selectedResource.id}</div>
               </div>
               <div>
-                <span className="text-zinc-500">Filename</span>
+                <span className="text-zinc-500">{t('resourceDepot.detail.filename')}</span>
                 <div className="text-zinc-200">{selectedResource.filename}</div>
               </div>
               <div>
-                <span className="text-zinc-500">Original</span>
+                <span className="text-zinc-500">{t('resourceDepot.detail.original')}</span>
                 <div className="text-zinc-200">{selectedResource.original_filename}</div>
               </div>
               <div>
-                <span className="text-zinc-500">Category</span>
+                <span className="text-zinc-500">{t('resourceDepot.detail.category')}</span>
                 <div><CategoryBadge category={selectedResource.category} /></div>
               </div>
               <div>
-                <span className="text-zinc-500">Role</span>
+                <span className="text-zinc-500">{t('resourceDepot.detail.role')}</span>
                 <div className="text-zinc-200">{selectedResource.role}</div>
               </div>
               <div>
-                <span className="text-zinc-500">Size</span>
+                <span className="text-zinc-500">{t('resourceDepot.detail.size')}</span>
                 <div className="text-zinc-200">{formatSize(selectedResource.size)}</div>
               </div>
               <div>
-                <span className="text-zinc-500">Hash</span>
+                <span className="text-zinc-500">{t('resourceDepot.detail.hash')}</span>
                 <div className="text-zinc-300 font-mono break-all">{selectedResource.hash}</div>
               </div>
               <div>
-                <span className="text-zinc-500">Status</span>
+                <span className="text-zinc-500">{t('resourceDepot.detail.status')}</span>
                 <div className="text-zinc-200">{selectedResource.status}</div>
               </div>
               {selectedResource.local_path && (
                 <div>
-                  <span className="text-zinc-500">Local Path</span>
+                  <span className="text-zinc-500">{t('resourceDepot.detail.localPath')}</span>
                   <div className="text-zinc-300 font-mono break-all text-[10px]">{selectedResource.local_path}</div>
                 </div>
               )}
               <div>
-                <span className="text-zinc-500">Metadata</span>
+                <span className="text-zinc-500">{t('resourceDepot.detail.metadata')}</span>
                 <pre className="text-zinc-300 font-mono text-[10px] mt-1 bg-zinc-800 rounded p-2 overflow-x-auto">
                   {JSON.stringify(selectedResource.metadata, null, 2)}
                 </pre>

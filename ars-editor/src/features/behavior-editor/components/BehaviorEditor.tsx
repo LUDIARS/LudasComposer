@@ -1,5 +1,6 @@
 import { useState, useCallback } from 'react';
 import { useProjectStore } from '@/stores/projectStore';
+import { useI18n } from '@/hooks/useI18n';
 import { HelpTooltip } from '@/components/HelpTooltip';
 import { helpContent } from '@/lib/help-content';
 import type { SceneState, KeyBinding } from '@/types/domain';
@@ -13,6 +14,7 @@ const COMMON_KEYS = [
 ];
 
 export function BehaviorEditor() {
+  const { t } = useI18n();
   const activeSceneId = useProjectStore((s) => s.project.activeSceneId);
   const scenes = useProjectStore((s) => s.project.scenes);
   const addSceneState = useProjectStore((s) => s.addSceneState);
@@ -59,11 +61,11 @@ export function BehaviorEditor() {
       {/* Header */}
       <div className="px-4 py-3 border-b border-zinc-700">
         <h2 className="text-sm font-semibold text-white flex items-center gap-1.5">
-          Behavior Editor
+          {t('behaviorEditor.title')}
           <HelpTooltip content={helpContent.behaviorEditor} position="bottom" highlightSelector='[data-help-target="behaviorEditor"]' />
         </h2>
         <p className="text-xs text-zinc-500 mt-0.5">
-          {scene.name} - {states.length} state(s)
+          {t('behaviorEditor.sceneStates', { scene: scene.name, count: states.length })}
         </p>
       </div>
 
@@ -85,7 +87,7 @@ export function BehaviorEditor() {
         <div className="flex items-center gap-1 ml-1">
           <input
             className="w-20 bg-zinc-900 text-white text-xs px-2 py-1 rounded border border-zinc-600 outline-none focus:border-cyan-500"
-            placeholder="New state..."
+            placeholder={t('behaviorEditor.newStatePlaceholder')}
             value={newStateName}
             onChange={(e) => setNewStateName(e.target.value)}
             onKeyDown={(e) => {
@@ -123,7 +125,7 @@ export function BehaviorEditor() {
           />
         ) : (
           <div className="p-4 text-zinc-500 text-sm text-center">
-            Add a state to define key behaviors
+            {t('behaviorEditor.addStatePrompt')}
           </div>
         )}
       </div>
@@ -157,6 +159,7 @@ function ActiveStateEditor({
   onStartCapture,
   onStopCapture,
 }: ActiveStateEditorProps) {
+  const { t } = useI18n();
   const [newKey, setNewKey] = useState('');
   const [newDescription, setNewDescription] = useState('');
   const [newTargetActorId, setNewTargetActorId] = useState<string>('');
@@ -201,14 +204,14 @@ function ActiveStateEditor({
             onChange={(e) => onRename(e.target.value)}
           />
           <span className="text-xs text-zinc-600">
-            ({state.keyBindings.length} bindings)
+            {t('behaviorEditor.bindings', { count: state.keyBindings.length })}
           </span>
         </div>
         <button
           onClick={onDelete}
           className="text-red-400 hover:text-red-300 text-xs px-2 py-1 rounded hover:bg-zinc-800"
         >
-          Delete State
+          {t('behaviorEditor.deleteState')}
         </button>
       </div>
 
@@ -216,7 +219,7 @@ function ActiveStateEditor({
       <div className="space-y-2">
         {state.keyBindings.length === 0 ? (
           <div className="text-zinc-500 text-sm text-center py-4 bg-zinc-900 rounded-md border border-zinc-800">
-            No key bindings yet. Add one below.
+            {t('behaviorEditor.noBindings')}
           </div>
         ) : (
           state.keyBindings.map((binding) => (
@@ -233,14 +236,14 @@ function ActiveStateEditor({
 
       {/* Add new binding */}
       <div className="bg-zinc-900 rounded-md border border-zinc-700 p-3 space-y-3">
-        <div className="text-xs text-zinc-400 font-medium">Add Key Binding</div>
+        <div className="text-xs text-zinc-400 font-medium">{t('behaviorEditor.addKeyBinding')}</div>
 
         {/* Key selection */}
         <div className="flex items-center gap-2">
           <div className="flex-1 relative">
             <input
               className="w-full bg-zinc-800 text-white text-sm px-3 py-1.5 rounded border border-zinc-600 outline-none focus:border-cyan-500"
-              placeholder={isCapturingKey ? 'Press a key...' : 'Key (e.g., W, Space)'}
+              placeholder={isCapturingKey ? t('behaviorEditor.pressKey') : t('behaviorEditor.keyPlaceholder')}
               value={newKey}
               onChange={(e) => setNewKey(e.target.value)}
               onKeyDown={handleKeyCapture}
@@ -261,13 +264,13 @@ function ActiveStateEditor({
                 : 'bg-zinc-800 text-zinc-400 hover:bg-zinc-700 border border-zinc-600'
             }`}
           >
-            {isCapturingKey ? 'Cancel' : 'Capture'}
+            {isCapturingKey ? t('behaviorEditor.cancelCapture') : t('behaviorEditor.capture')}
           </button>
           <button
             onClick={() => setShowKeyPicker(!showKeyPicker)}
             className="text-xs px-2 py-1.5 bg-zinc-800 text-zinc-400 hover:bg-zinc-700 rounded border border-zinc-600"
           >
-            List
+            {t('behaviorEditor.list')}
           </button>
         </div>
 
@@ -292,7 +295,7 @@ function ActiveStateEditor({
         {/* Description - natural language */}
         <input
           className="w-full bg-zinc-800 text-white text-sm px-3 py-1.5 rounded border border-zinc-600 outline-none focus:border-cyan-500"
-          placeholder="Description (e.g., Move player forward)"
+          placeholder={t('behaviorEditor.descPlaceholder')}
           value={newDescription}
           onChange={(e) => setNewDescription(e.target.value)}
           onKeyDown={(e) => {
@@ -306,7 +309,7 @@ function ActiveStateEditor({
           value={newTargetActorId}
           onChange={(e) => setNewTargetActorId(e.target.value)}
         >
-          <option value="">Target Actor (auto-connect)</option>
+          <option value="">{t('behaviorEditor.targetActor')}</option>
           {nonSceneActors.map((actor) => (
             <option key={actor.id} value={actor.id}>
               {actor.name}
@@ -319,7 +322,7 @@ function ActiveStateEditor({
           disabled={!newKey.trim() || !newDescription.trim()}
           className="w-full bg-cyan-600 hover:bg-cyan-500 text-white text-sm py-1.5 rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          + Add Binding
+          {t('behaviorEditor.addBinding')}
         </button>
       </div>
     </div>
@@ -334,6 +337,7 @@ interface KeyBindingRowProps {
 }
 
 function KeyBindingRow({ binding, actors, onUpdate, onRemove }: KeyBindingRowProps) {
+  const { t } = useI18n();
   const targetActor = actors.find((a) => a.id === binding.targetActorId);
 
   return (
@@ -358,13 +362,13 @@ function KeyBindingRow({ binding, actors, onUpdate, onRemove }: KeyBindingRowPro
         </button>
       </div>
       <div className="flex items-center gap-2">
-        <span className="text-xs text-zinc-500">Target:</span>
+        <span className="text-xs text-zinc-500">{t('behaviorEditor.target')}</span>
         <select
           className="flex-1 bg-zinc-800 text-xs text-zinc-300 px-2 py-1 rounded border border-zinc-700 outline-none focus:border-cyan-500"
           value={binding.targetActorId ?? ''}
           onChange={(e) => onUpdate({ targetActorId: e.target.value || null })}
         >
-          <option value="">None</option>
+          <option value="">{t('behaviorEditor.targetNone')}</option>
           {actors.map((actor) => (
             <option key={actor.id} value={actor.id}>
               {actor.name}

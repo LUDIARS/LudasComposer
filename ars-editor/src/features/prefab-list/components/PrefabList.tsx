@@ -1,10 +1,12 @@
 import { useState } from 'react';
 import { useProjectStore } from '@/stores/projectStore';
+import { useI18n } from '@/hooks/useI18n';
 import { HelpTooltip } from '@/components/HelpTooltip';
 import { helpContent } from '@/lib/help-content';
 import { cn } from '@/lib/utils';
 
 export function PrefabList() {
+  const { t } = useI18n();
   const prefabs = useProjectStore((s) => s.project.prefabs);
   const deletePrefab = useProjectStore((s) => s.deletePrefab);
   const renamePrefab = useProjectStore((s) => s.renamePrefab);
@@ -40,14 +42,14 @@ export function PrefabList() {
     <div className="flex flex-col h-full">
       <div className="px-3 py-2 border-b border-zinc-700">
         <h2 className="text-xs font-semibold uppercase tracking-wider text-zinc-400 flex items-center gap-1.5">
-          Prefabs
+          {t('prefabList.title')}
           <HelpTooltip content={helpContent.prefabList} position="right" highlightSelector='[data-help-target="prefabList"]' />
         </h2>
       </div>
       <div className="flex-1 overflow-y-auto p-2 space-y-1">
         {prefabList.length === 0 ? (
           <p className="text-zinc-500 text-sm text-center py-4">
-            No prefabs yet. Save an Actor as a Prefab to reuse it.
+            {t('prefabList.empty')}
           </p>
         ) : (
           prefabList.map((prefab) => (
@@ -86,18 +88,18 @@ export function PrefabList() {
                   )}
                   onClick={() => handleInstantiate(prefab.id)}
                   disabled={!activeSceneId}
-                  title="Add to scene"
+                  title={t('prefabList.addToScene')}
                 >
                   +
                 </button>
                 <button
                   className="text-xs text-red-400 hover:bg-zinc-600 px-1.5 py-0.5 rounded transition-colors"
                   onClick={() => {
-                    if (confirm(`Delete prefab "${prefab.name}"?`)) {
+                    if (confirm(t('prefabList.deleteConfirm', { name: prefab.name }))) {
                       deletePrefab(prefab.id);
                     }
                   }}
-                  title="Delete prefab"
+                  title={t('prefabList.deleteTitle')}
                 >
                   ✕
                 </button>
