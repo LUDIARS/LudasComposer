@@ -51,6 +51,19 @@ npx tauri dev
 
 ## ビルド
 
+### Docker
+
+```bash
+# ビルド & 起動 (docker compose)
+docker compose up -d --build
+
+# または手動でビルド & 起動
+docker build -t ars .
+docker run -p 5173:5173 ars
+```
+
+`http://localhost:5173` でアクセスできます。
+
 ### デスクトップアプリ
 
 ```bash
