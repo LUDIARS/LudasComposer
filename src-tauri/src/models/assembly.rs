@@ -1,5 +1,44 @@
 use serde::{Deserialize, Serialize};
 
+/// バックエンドプラットフォーム
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[serde(rename_all = "kebab-case")]
+pub enum BackendPlatform {
+    /// Ars独自ランタイム (TypeScript JIT / WASM)
+    ArsNative,
+    /// Unity (C#)
+    Unity,
+    /// Unreal Engine (C++)
+    Unreal,
+    /// Godot (GDScript)
+    Godot,
+}
+
+impl Default for BackendPlatform {
+    fn default() -> Self {
+        Self::ArsNative
+    }
+}
+
+/// バックエンドプラットフォーム設定
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct BackendPlatformConfig {
+    /// 選択中のバックエンドプラットフォーム
+    pub platform: BackendPlatform,
+    /// プラットフォーム固有の設定
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub platform_options: Option<serde_json::Value>,
+}
+
+impl Default for BackendPlatformConfig {
+    fn default() -> Self {
+        Self {
+            platform: BackendPlatform::default(),
+            platform_options: None,
+        }
+    }
+}
+
 /// ビルドターゲットプラットフォーム
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 #[serde(rename_all = "lowercase")]
@@ -121,6 +160,9 @@ pub struct DataOrganizerRef {
 /// プロジェクトのアセンブリ管理設定
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ProjectAssemblyConfig {
+    /// バックエンドプラットフォーム設定
+    #[serde(default)]
+    pub backend_platform: BackendPlatformConfig,
     pub release_depots: Vec<ReleaseDepotConfig>,
     pub core_assemblies: Vec<CoreAssembly>,
     pub application_assemblies: Vec<ApplicationAssembly>,
@@ -133,6 +175,7 @@ pub struct ProjectAssemblyConfig {
 impl Default for ProjectAssemblyConfig {
     fn default() -> Self {
         Self {
+            backend_platform: BackendPlatformConfig::default(),
             release_depots: Vec::new(),
             core_assemblies: Vec::new(),
             application_assemblies: Vec::new(),

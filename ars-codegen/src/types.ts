@@ -65,12 +65,23 @@ export interface Project {
   activeSceneId: string | null;
 }
 
+// === バックエンドプラットフォーム ===
+
+export type BackendPlatform = 'ars-native' | 'unity' | 'unreal' | 'godot';
+
+export interface BackendPlatformConfig {
+  platform: BackendPlatform;
+  platformOptions?: Record<string, unknown>;
+}
+
 // === コード生成固有の型 ===
 
 export interface CodegenConfig {
   projectFile: string;
   outputDir: string;
   targetPlatform?: string;
+  /** バックエンドプラットフォーム (デフォルト: ars-native) */
+  backendPlatform?: BackendPlatform;
   sceneIds?: string[];
   componentIds?: string[];
   dryRun?: boolean;

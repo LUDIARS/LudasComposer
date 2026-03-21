@@ -1,4 +1,4 @@
-import type { Project, Scene, Actor, Component, Connection, CodegenTask } from './types.js';
+import type { Project, Scene, Actor, Component, Connection, CodegenTask, BackendPlatform } from './types.js';
 
 /** Ergoモジュール定義カテゴリのマッピング */
 const CATEGORY_MAP: Record<string, string> = {
@@ -14,15 +14,56 @@ function isPictorDomain(domain: string): boolean {
   return pictorDomains.some(d => domain.toLowerCase().includes(d));
 }
 
+/** プラットフォームごとの言語・ファイル拡張子・規約定義 */
+const PLATFORM_INFO: Record<BackendPlatform, {
+  language: string;
+  fileExtension: string;
+  stubExtension: string;
+  testExtension: string;
+  modulePattern: string;
+}> = {
+  'ars-native': {
+    language: 'TypeScript',
+    fileExtension: '.ts',
+    stubExtension: '.stub.ts',
+    testExtension: '.test.ts',
+    modulePattern: 'Ergoモジュール (TypeScript)',
+  },
+  'unity': {
+    language: 'C#',
+    fileExtension: '.cs',
+    stubExtension: '.Stub.cs',
+    testExtension: '.Tests.cs',
+    modulePattern: 'Ergoモジュール (Unity C# MonoBehaviour)',
+  },
+  'unreal': {
+    language: 'C++',
+    fileExtension: '.cpp',
+    stubExtension: '.Stub.cpp',
+    testExtension: '.Test.cpp',
+    modulePattern: 'Ergoモジュール (Unreal C++ UObject)',
+  },
+  'godot': {
+    language: 'GDScript',
+    fileExtension: '.gd',
+    stubExtension: '_stub.gd',
+    testExtension: '_test.gd',
+    modulePattern: 'Ergoモジュール (Godot GDScript Node)',
+  },
+};
+
 /**
  * Arsプロジェクトのシーン/コンポーネント設計データから
  * Ergoモジュール定義フォーマット + Pictor連携を含むコード生成プロンプトを組み立てる
+ * バックエンドプラットフォームに応じて生成言語・規約を切り替える
  */
 export class PromptGenerator {
   private project: Project;
+  private platform: BackendPlatform;
 
-  constructor(project: Project) {
+  constructor(project: Project, platform: BackendPlatform = 'ars-native') {
     this.project = project;
+    this.platform = platform;
   }
 
   /** プロジェクト全体からコード生成タスク一覧を生成 */
@@ -171,55 +212,171 @@ export class PromptGenerator {
       '',
       '## Pictor連携 (レンダリングパイプライン)',
       '',
-      'このモジュールはPictorレンダリングパイプラインと連携する。以下の規約に従うこと。',
-      '',
-      '### ObjectDescriptor登録',
-      '描画対象はObjectDescriptorを介してPictorのSceneRegistryに登録する:',
-      '- transform: Transform行列 (64B, キャッシュライン整列)',
-      '- bounds: AABB (min/max)',
-      '- flags: 16bitフラグ (Static/Dynamic/GPU_Driven/Cast_Shadow/Receive_Shadow/Transparent/Two_Sided/Instanced)',
-      '- shaderKey: シェーダー識別子',
-      '- materialKey: マテリアル識別子',
-      '- lodLevel: LODレベル',
-      '',
-      '### データレイアウト (SoA)',
-      'Pictorはデータ指向設計(DOD)のStructure-of-Arraysを採用する:',
-      '- Group A (Hot - Culling): bounds, visibility flags',
-      '- Group B (Hot - Sorting): shader keys, sort keys, material keys',
-      '- Group C (Hot - Transform): world transforms, previous frames',
-      '- Group D (Cold - Metadata): mesh handles, LOD levels, flags',
-      '',
-      '### マテリアル',
-      'BaseMaterialBuilderのfluent APIでPBRマテリアルを構築し、パス別バリアントを自動生成:',
-      '- Shadow/Depth: alpha test + two-sided のみ',
-      '- GI: albedo, emissive, alpha test, two-sided, vertex color',
-      '- Opaque/Transparent: 全機能',
-      '',
-      '### プール分類',
-      'ObjectClassifierがオブジェクトをプールに振り分ける:',
-      '- Static: 静的ジオメトリ (BVH最適化)',
-      '- Dynamic: 毎フレーム更新 (CPU並列 or Compute Shader)',
-      '- GPU-Driven: GPU駆動パイプライン (Compute更新・カリング・LOD選択・描画コンパクション)',
     ];
+
+    // プラットフォームごとのPictor連携指示
+    switch (this.platform) {
+      case 'unity':
+        lines.push(
+          'このモジュールはUnityのレンダリングパイプライン (URP/HDRP) と連携する。以下の規約に従うこと。',
+          '',
+          '### 描画オブジェクト登録',
+          '描画対象はMeshRenderer + MeshFilterでシーンに登録する:',
+          '- transform: UnityのTransformコンポーネント',
+          '- bounds: Renderer.boundsで自動計算',
+          '- flags: StaticBatchingUtility / ShadowCastingMode / MotionVectorGenerationMode等で設定',
+          '- shader: Shader Graphベースシェーダー',
+          '- material: Material / MaterialPropertyBlock',
+          '- LOD: LODGroupコンポーネント',
+          '',
+          '### バッチング・描画最適化',
+          'UnityのSRP Batcher / GPU Instancing / Static Batching を活用する:',
+          '- 静的オブジェクト: Static Batching',
+          '- 動的オブジェクト: GPU Instancing / SRP Batcher',
+          '- 大量オブジェクト: DrawMeshInstanced / DrawMeshInstancedIndirect',
+          '',
+          '### マテリアル',
+          'Shader Graphで定義し、MaterialPropertyBlockでインスタンス個別パラメータを制御する。',
+        );
+        break;
+      case 'unreal':
+        lines.push(
+          'このモジュールはUnreal EngineのNanite/Lumenレンダリングパイプラインと連携する。以下の規約に従うこと。',
+          '',
+          '### 描画オブジェクト登録',
+          '描画対象はUStaticMeshComponent / USkeletalMeshComponentでワールドに登録する:',
+          '- transform: FTransform (Relative / World)',
+          '- bounds: CalcBounds()で自動計算',
+          '- flags: bCastShadow, bAffectDynamicIndirectLighting, bNeverDistanceCull等',
+          '- material: UMaterialInterface / UMaterialInstanceDynamic',
+          '- LOD: FStaticMeshLODResources / LODScreenSize',
+          '',
+          '### 描画最適化',
+          '- Nanite: 自動LODメッシュ (Static Meshに設定)',
+          '- ISM/HISM: UInstancedStaticMeshComponent / UHierarchicalInstancedStaticMeshComponent',
+          '- Lumen: ソフトウェアレイトレーシングGI',
+          '',
+          '### マテリアル',
+          'UMaterialでマテリアルを定義し、UMaterialInstanceDynamicでランタイムパラメータを制御する。',
+        );
+        break;
+      case 'godot':
+        lines.push(
+          'このモジュールはGodotのVulkanレンダリングパイプラインと連携する。以下の規約に従うこと。',
+          '',
+          '### 描画オブジェクト登録',
+          '描画対象はMeshInstance3D / MultiMeshInstance3Dでシーンツリーに登録する:',
+          '- transform: Node3DのTransform3D',
+          '- bounds: AABB (自動計算)',
+          '- flags: cast_shadow, gi_mode, visibility_range等',
+          '- material: ShaderMaterial / StandardMaterial3D',
+          '- LOD: visibility_range_begin / visibility_range_end',
+          '',
+          '### 描画最適化',
+          '- MultiMesh: 大量同一オブジェクト描画',
+          '- OccluderInstance3D: オクルージョンカリング',
+          '- VisibilityNotifier3D: 可視性ベース処理',
+          '',
+          '### マテリアル',
+          '.gdshaderファイルでシェーダーを定義し、ShaderMaterialでパラメータを制御する。',
+        );
+        break;
+      case 'ars-native':
+      default:
+        lines.push(
+          'このモジュールはPictorレンダリングパイプラインと連携する。以下の規約に従うこと。',
+          '',
+          '### ObjectDescriptor登録',
+          '描画対象はObjectDescriptorを介してPictorのSceneRegistryに登録する:',
+          '- transform: Transform行列 (64B, キャッシュライン整列)',
+          '- bounds: AABB (min/max)',
+          '- flags: 16bitフラグ (Static/Dynamic/GPU_Driven/Cast_Shadow/Receive_Shadow/Transparent/Two_Sided/Instanced)',
+          '- shaderKey: シェーダー識別子',
+          '- materialKey: マテリアル識別子',
+          '- lodLevel: LODレベル',
+          '',
+          '### データレイアウト (SoA)',
+          'Pictorはデータ指向設計(DOD)のStructure-of-Arraysを採用する:',
+          '- Group A (Hot - Culling): bounds, visibility flags',
+          '- Group B (Hot - Sorting): shader keys, sort keys, material keys',
+          '- Group C (Hot - Transform): world transforms, previous frames',
+          '- Group D (Cold - Metadata): mesh handles, LOD levels, flags',
+          '',
+          '### マテリアル',
+          'BaseMaterialBuilderのfluent APIでPBRマテリアルを構築し、パス別バリアントを自動生成:',
+          '- Shadow/Depth: alpha test + two-sided のみ',
+          '- GI: albedo, emissive, alpha test, two-sided, vertex color',
+          '- Opaque/Transparent: 全機能',
+          '',
+          '### プール分類',
+          'ObjectClassifierがオブジェクトをプールに振り分ける:',
+          '- Static: 静的ジオメトリ (BVH最適化)',
+          '- Dynamic: 毎フレーム更新 (CPU並列 or Compute Shader)',
+          '- GPU-Driven: GPU駆動パイプライン (Compute更新・カリング・LOD選択・描画コンパクション)',
+        );
+        break;
+    }
 
     // ドメイン固有の追加指示
     const domainLower = component.domain.toLowerCase();
     if (domainLower.includes('lighting') || domainLower.includes('gi') || domainLower.includes('light')) {
-      lines.push(
-        '',
-        '### GI連携',
-        'GILightingSystemの事前パス結果 (Shadow → SSAO → GI Probes) をread-onlyテクスチャ/SSBOとして参照すること。',
-        '静的ジオメトリにはGIBakeSystemによるオフラインベイク (static shadow maps, AO, Light Probe SH L2, lightmaps) を利用可能。',
-      );
+      lines.push('', '### GI連携');
+      switch (this.platform) {
+        case 'unity':
+          lines.push(
+            'Enlighten / Progressive LightmapperでGIベイクを行い、Light Probeで動的オブジェクトにGIを適用すること。',
+            'リアルタイムGIはScreen Space Global Illumination (SSGI) またはLight Probe Proxyで補完する。',
+          );
+          break;
+        case 'unreal':
+          lines.push(
+            'Lumenによるリアルタイム Global Illumination を活用すること。',
+            '静的ジオメトリにはLightmassによるオフラインベイクも利用可能。',
+          );
+          break;
+        case 'godot':
+          lines.push(
+            'VoxelGI / SDFGI / LightmapGIノードでGIを設定すること。',
+            '動的オブジェクトにはReflectionProbe / VoxelGIを使用する。',
+          );
+          break;
+        default:
+          lines.push(
+            'GILightingSystemの事前パス結果 (Shadow → SSAO → GI Probes) をread-onlyテクスチャ/SSBOとして参照すること。',
+            '静的ジオメトリにはGIBakeSystemによるオフラインベイク (static shadow maps, AO, Light Probe SH L2, lightmaps) を利用可能。',
+          );
+          break;
+      }
     }
 
     if (domainLower.includes('material') || domainLower.includes('shader')) {
-      lines.push(
-        '',
-        '### マテリアルレジストリ',
-        'MaterialRegistryのO(1)ルックアップでBuiltMaterialを取得する。',
-        'パス固有バリアントは自動生成されるため、ベースマテリアル定義のみ行うこと。',
-      );
+      lines.push('', '### マテリアルレジストリ');
+      switch (this.platform) {
+        case 'unity':
+          lines.push(
+            'Addressablesまたはリソースフォルダからマテリアルをロードし、MaterialPropertyBlockでインスタンス化する。',
+            'シェーダーバリアント管理にはShaderVariantCollectionを活用する。',
+          );
+          break;
+        case 'unreal':
+          lines.push(
+            'UMaterialInterface::FindOrCreateMaterialInstanceDynamic()でマテリアルインスタンスを取得する。',
+            'マスターマテリアルからMaterial Instance経由でバリアントを自動生成する。',
+          );
+          break;
+        case 'godot':
+          lines.push(
+            'preload() / load()でマテリアルリソースを取得し、duplicate()でインスタンス化する。',
+            'シェーダーパラメータはset_shader_parameter()で制御する。',
+          );
+          break;
+        default:
+          lines.push(
+            'MaterialRegistryのO(1)ルックアップでBuiltMaterialを取得する。',
+            'パス固有バリアントは自動生成されるため、ベースマテリアル定義のみ行うこと。',
+          );
+          break;
+      }
     }
 
     return lines.join('\n');
@@ -228,11 +385,15 @@ export class PromptGenerator {
   /** コンポーネント用プロンプトを構築 */
   private buildComponentPrompt(component: Component): string {
     const needsPictor = isPictorDomain(component.domain);
+    const info = PLATFORM_INFO[this.platform];
 
     const lines: string[] = [
       `# コード生成指示: ${component.name} コンポーネント`,
       '',
-      `以下のErgoモジュール定義に基づいて、Ergoモジュールとして実装コードを生成してください。`,
+      `## ターゲットプラットフォーム: ${this.platform}`,
+      `## 実装言語: ${info.language}`,
+      '',
+      `以下のErgoモジュール定義に基づいて、${info.modulePattern}として実装コードを生成してください。`,
       '',
       '---',
       '',
@@ -245,6 +406,9 @@ export class PromptGenerator {
     if (needsPictor) {
       lines.push(this.buildPictorIntegration(component));
     }
+
+    // プラットフォーム固有の規約
+    lines.push(this.buildPlatformConventions(component));
 
     // 生成ルール
     lines.push(
@@ -265,9 +429,9 @@ export class PromptGenerator {
       '9. テストはモノリシック結合時の複合テスト条件として参照される前提で記述すること',
       '',
       '### ファイル構成',
-      `10. モジュール実装: \`${this.toKebabCase(component.name)}.ts\``,
-      `11. ダミープラグ: \`${this.toKebabCase(component.name)}.stub.ts\` (インターフェースのみ、実装なし)`,
-      `12. テスト: \`${this.toKebabCase(component.name)}.test.ts\``,
+      `10. モジュール実装: \`${this.toKebabCase(component.name)}${info.fileExtension}\``,
+      `11. ダミープラグ: \`${this.toKebabCase(component.name)}${info.stubExtension}\` (インターフェースのみ、実装なし)`,
+      `12. テスト: \`${this.toKebabCase(component.name)}${info.testExtension}\``,
       `13. モジュール定義書: \`spec.md\` (上記のErgoモジュール定義をそのまま格納)`,
     );
 
@@ -275,19 +439,104 @@ export class PromptGenerator {
       lines.push(
         '',
         '### Pictor統合',
-        '14. RenderObjectの登録・更新・削除はObjectDescriptorを介してPictorのSceneRegistryに対して行うこと',
-        '15. データレイアウトはSoA (Structure-of-Arrays) に従い、Hot/Coldのグループ分けを意識すること',
-        '16. ISurfaceProviderを直接参照せず、Ergoのモジュール依存経由でレンダリング機能にアクセスすること',
+        ...this.buildPictorRules(),
       );
     }
 
     return lines.join('\n');
   }
 
+  /** プラットフォーム固有の規約セクションを構築 */
+  private buildPlatformConventions(component: Component): string {
+    const lines: string[] = ['', `## プラットフォーム規約 (${this.platform})`];
+
+    switch (this.platform) {
+      case 'unity':
+        lines.push(
+          '',
+          '### Unity規約',
+          '- コンポーネントはMonoBehaviourまたはScriptableObjectを継承すること',
+          '- アクターモデルのメッセージパッシングはUnityEvent / C# eventで実装すること',
+          '- 変数は[SerializeField]属性でインスペクター公開すること',
+          '- タスクはpublicメソッドとしてコルーチンまたはasync/awaitで実装すること',
+          '- 依存モジュールは[RequireComponent]属性またはDI (Zenject/VContainer) で解決すること',
+          '- namespaceは Ars.Ergo.{Domain} とすること',
+        );
+        break;
+      case 'unreal':
+        lines.push(
+          '',
+          '### Unreal規約',
+          '- コンポーネントはUActorComponentまたはUObjectを継承すること',
+          '- アクターモデルのメッセージパッシングはDelegate / Event Dispatcherで実装すること',
+          '- 変数はUPROPERTY(EditAnywhere)でエディタ公開すること',
+          '- タスクはUFUNCTION(BlueprintCallable)でBP連携可能にすること',
+          '- ヘッダファイル (.h) と実装ファイル (.cpp) を分離すること',
+          '- モジュールは ArsErgo{Domain} モジュールに配置すること',
+        );
+        break;
+      case 'godot':
+        lines.push(
+          '',
+          '### Godot規約',
+          '- コンポーネントはNodeまたはResourceを継承すること',
+          '- アクターモデルのメッセージパッシングはsignal / call_group()で実装すること',
+          '- 変数は@exportアノテーションでインスペクター公開すること',
+          '- タスクはpublicメソッド (func) として実装すること',
+          '- class_nameを Ergo{ComponentName} とすること',
+        );
+        break;
+      case 'ars-native':
+      default:
+        lines.push(
+          '',
+          '### Ars Native規約',
+          '- TypeScriptモジュールとして実装すること',
+          '- アクターモデルのメッセージパッシングはErgo標準のポートベースインターフェースに従うこと',
+          '- 型安全なインターフェースを定義すること',
+        );
+        break;
+    }
+
+    return lines.join('\n');
+  }
+
+  /** プラットフォーム対応のPictor統合ルールを構築 */
+  private buildPictorRules(): string[] {
+    switch (this.platform) {
+      case 'unity':
+        return [
+          '14. 描画オブジェクトはMeshRenderer / MeshFilterコンポーネント経由でUnityのレンダリングパイプラインに登録すること',
+          '15. URP/HDRPのRenderFeatureでカスタムパスが必要な場合はScriptableRenderPassを実装すること',
+          '16. マテリアルはShaderGraphまたはShader Labで定義し、MaterialPropertyBlockでインスタンス化すること',
+        ];
+      case 'unreal':
+        return [
+          '14. 描画オブジェクトはUStaticMeshComponent / USkeletalMeshComponent経由でレンダリングパイプラインに登録すること',
+          '15. カスタムレンダリングパスはFSceneViewExtensionまたはMeshMaterialShaderで実装すること',
+          '16. マテリアルはUMaterialInstanceDynamic経由でランタイム制御すること',
+        ];
+      case 'godot':
+        return [
+          '14. 描画オブジェクトはMeshInstance3D / MultiMeshInstance3D経由でレンダリングパイプラインに登録すること',
+          '15. カスタムシェーダーは.gdshaderファイルで定義すること',
+          '16. マテリアルはShaderMaterial / StandardMaterial3Dで定義すること',
+        ];
+      case 'ars-native':
+      default:
+        return [
+          '14. RenderObjectの登録・更新・削除はObjectDescriptorを介してPictorのSceneRegistryに対して行うこと',
+          '15. データレイアウトはSoA (Structure-of-Arrays) に従い、Hot/Coldのグループ分けを意識すること',
+          '16. ISurfaceProviderを直接参照せず、Ergoのモジュール依存経由でレンダリング機能にアクセスすること',
+        ];
+    }
+  }
+
   /** シーン用プロンプトを構築 */
   private buildScenePrompt(scene: Scene): string {
     const actors = Object.values(scene.actors);
     const rootActor = scene.actors[scene.rootActorId];
+    const info = PLATFORM_INFO[this.platform];
 
     // シーン内のPictor連携コンポーネントを検出
     const hasPictorComponents = actors.some(actor =>
@@ -300,7 +549,10 @@ export class PromptGenerator {
     const lines: string[] = [
       `# コード生成指示: ${scene.name} シーン`,
       '',
-      `以下のArsシーン設計に基づいて、Ergoモジュールの結合・配線コードを生成してください。`,
+      `## ターゲットプラットフォーム: ${this.platform}`,
+      `## 実装言語: ${info.language}`,
+      '',
+      `以下のArsシーン設計に基づいて、${info.modulePattern}の結合・配線コードを生成してください。`,
       '',
       `## シーン情報`,
       `- 名前: ${scene.name}`,
@@ -351,21 +603,57 @@ export class PromptGenerator {
 
     // Pictor連携シーンの場合、レンダリングパイプライン指示を追加
     if (hasPictorComponents) {
-      lines.push(
-        '',
-        '## Pictorレンダリングパイプライン結合',
-        '',
-        'このシーンにはPictor連携モジュールが含まれる。以下の順序でフレーム実行を配線すること:',
-        '1. BeginFrame: GPU同期',
-        '2. UpdateScheduler: プール別戦略で更新 (Static=スキップ, Dynamic=CPU並列, GPU-Driven=Compute)',
-        '3. CullingSystem: Frustumカリング → オクルージョンカリング → Hi-Zカリング',
-        '4. BatchBuilder: シェーダーキーでRadix Sort、RenderBatchを生成',
-        '5. RenderPassScheduler: PipelineProfile (Forward/Forward+/Deferred/Hybrid) に基づくパス実行',
-        '6. EndFrame: サブミット・プレゼント',
-        '',
-        'RenderObject登録はObjectDescriptorを介してSceneRegistryへ。各アクターのErgoモジュールが保持するデータを',
-        'SoAストリームに展開し、Pictorの3層パイプライン (Front-End→Middle→Back-End) で処理する。',
-      );
+      lines.push('', '## Pictorレンダリングパイプライン結合', '');
+      switch (this.platform) {
+        case 'unity':
+          lines.push(
+            'このシーンにはPictor連携 (Unity URP/HDRP) モジュールが含まれる。以下の構成で配線すること:',
+            '1. シーン初期化時にMeshRenderer/MeshFilter付きGameObjectを生成',
+            '2. URP/HDRP RenderPipelineAssetでレンダリング品質を制御',
+            '3. カスタムレンダーパスが必要な場合はScriptableRenderPass/ScriptableRenderFeatureを実装',
+            '4. BatchRendererGroupで大量オブジェクト描画を最適化',
+            '',
+            'Ergoモジュール間のデータ受け渡しはUnityEvent / C# eventベースで配線する。',
+          );
+          break;
+        case 'unreal':
+          lines.push(
+            'このシーンにはPictor連携 (Unreal Nanite/Lumen) モジュールが含まれる。以下の構成で配線すること:',
+            '1. BeginPlay時にActorComponentを初期化しワールドに登録',
+            '2. Nanite対応メッシュはNanite設定を有効化',
+            '3. Lumen GIを活用し、リアルタイム間接照明を適用',
+            '4. World Partition / Level Streamingでストリーミング制御',
+            '',
+            'Ergoモジュール間のデータ受け渡しはDelegate / EventDispatcherベースで配線する。',
+          );
+          break;
+        case 'godot':
+          lines.push(
+            'このシーンにはPictor連携 (Godot Vulkan) モジュールが含まれる。以下の構成で配線すること:',
+            '1. _ready()でMeshInstance3D/MultiMeshInstance3Dを生成しシーンツリーに追加',
+            '2. Environment / WorldEnvironmentノードでレンダリング品質を制御',
+            '3. VisualServerのRID APIで低レベルレンダリング最適化が可能',
+            '4. OccluderInstance3Dでオクルージョンカリングを設定',
+            '',
+            'Ergoモジュール間のデータ受け渡しはsignal / call_group()ベースで配線する。',
+          );
+          break;
+        case 'ars-native':
+        default:
+          lines.push(
+            'このシーンにはPictor連携モジュールが含まれる。以下の順序でフレーム実行を配線すること:',
+            '1. BeginFrame: GPU同期',
+            '2. UpdateScheduler: プール別戦略で更新 (Static=スキップ, Dynamic=CPU並列, GPU-Driven=Compute)',
+            '3. CullingSystem: Frustumカリング → オクルージョンカリング → Hi-Zカリング',
+            '4. BatchBuilder: シェーダーキーでRadix Sort、RenderBatchを生成',
+            '5. RenderPassScheduler: PipelineProfile (Forward/Forward+/Deferred/Hybrid) に基づくパス実行',
+            '6. EndFrame: サブミット・プレゼント',
+            '',
+            'RenderObject登録はObjectDescriptorを介してSceneRegistryへ。各アクターのErgoモジュールが保持するデータを',
+            'SoAストリームに展開し、Pictorの3層パイプライン (Front-End→Middle→Back-End) で処理する。',
+          );
+          break;
+      }
     }
 
     // 生成ルール

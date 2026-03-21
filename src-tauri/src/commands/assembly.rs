@@ -221,6 +221,28 @@ pub fn get_app_assemblies_by_scene(
     AssemblyCommandResult::ok(results)
 }
 
+// ─── バックエンドプラットフォーム ───
+
+#[tauri::command]
+pub fn get_backend_platform(
+    state: State<'_, AssemblyState>,
+) -> AssemblyCommandResult<BackendPlatformConfig> {
+    let service = state.0.lock().unwrap();
+    AssemblyCommandResult::ok(service.get_backend_platform().clone())
+}
+
+#[tauri::command]
+pub fn set_backend_platform(
+    state: State<'_, AssemblyState>,
+    platform_config: BackendPlatformConfig,
+) -> AssemblyCommandResult<()> {
+    let mut service = state.0.lock().unwrap();
+    match service.set_backend_platform(platform_config) {
+        Ok(()) => AssemblyCommandResult::ok(()),
+        Err(e) => AssemblyCommandResult::err(e.to_string()),
+    }
+}
+
 // ─── 外部システム参照 ───
 
 #[tauri::command]

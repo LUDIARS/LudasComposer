@@ -233,6 +233,22 @@ impl AssemblyManagerService {
             .collect()
     }
 
+    // ─── バックエンドプラットフォーム設定 ───
+
+    /// バックエンドプラットフォーム設定を取得
+    pub fn get_backend_platform(&self) -> &BackendPlatformConfig {
+        &self.config.backend_platform
+    }
+
+    /// バックエンドプラットフォームを設定
+    pub fn set_backend_platform(
+        &mut self,
+        platform_config: BackendPlatformConfig,
+    ) -> Result<(), AssemblyError> {
+        self.config.backend_platform = platform_config;
+        self.save()
+    }
+
     // ─── 外部システム参照設定 ───
 
     /// リソースデポ参照を設定

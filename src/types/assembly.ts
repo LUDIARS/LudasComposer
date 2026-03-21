@@ -1,6 +1,50 @@
 // === アセンブリ管理型定義 ===
 // プログラムをコアアセンブリとアプリケーションアセンブリに分離管理する
 
+/** バックエンドプラットフォーム */
+export type BackendPlatform = 'ars-native' | 'unity' | 'unreal' | 'godot';
+
+/** バックエンドプラットフォーム設定 */
+export interface BackendPlatformConfig {
+  /** 選択中のバックエンドプラットフォーム */
+  platform: BackendPlatform;
+  /** プラットフォーム固有の設定 (Unity: C#プロジェクトパス等) */
+  platformOptions?: Record<string, unknown>;
+}
+
+/** プラットフォームごとのErgo/Pictorモジュール言語・規約マッピング */
+export const PLATFORM_DEFAULTS: Record<BackendPlatform, {
+  language: string;
+  fileExtension: string;
+  ergoModulePattern: string;
+  pictorIntegration: string;
+}> = {
+  'ars-native': {
+    language: 'TypeScript',
+    fileExtension: '.ts',
+    ergoModulePattern: 'Ergo TypeScript Module',
+    pictorIntegration: 'Pictor SoA Rendering Pipeline (WebGL/WASM)',
+  },
+  'unity': {
+    language: 'C#',
+    fileExtension: '.cs',
+    ergoModulePattern: 'Ergo Unity MonoBehaviour/ScriptableObject',
+    pictorIntegration: 'Unity URP/HDRP Rendering Pipeline',
+  },
+  'unreal': {
+    language: 'C++',
+    fileExtension: '.cpp',
+    ergoModulePattern: 'Ergo Unreal UObject/AActor',
+    pictorIntegration: 'Unreal Nanite/Lumen Rendering Pipeline',
+  },
+  'godot': {
+    language: 'GDScript',
+    fileExtension: '.gd',
+    ergoModulePattern: 'Ergo Godot Node/Resource',
+    pictorIntegration: 'Godot Vulkan Rendering Pipeline',
+  },
+};
+
 /** ビルドターゲットプラットフォーム */
 export type BuildTarget = 'webgl' | 'pc';
 
@@ -120,6 +164,8 @@ export interface DataOrganizerRef {
 
 /** プロジェクトのアセンブリ管理設定 */
 export interface ProjectAssemblyConfig {
+  /** バックエンドプラットフォーム設定 */
+  backendPlatform: BackendPlatformConfig;
   /** リリースデポ設定一覧 */
   releaseDepots: ReleaseDepotConfig[];
   /** コアアセンブリ一覧 */
@@ -135,6 +181,7 @@ export interface ProjectAssemblyConfig {
 /** デフォルトのプロジェクトアセンブリ設定 */
 export function createDefaultAssemblyConfig(): ProjectAssemblyConfig {
   return {
+    backendPlatform: { platform: 'ars-native' },
     releaseDepots: [],
     coreAssemblies: [],
     applicationAssemblies: [],
