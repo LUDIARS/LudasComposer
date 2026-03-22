@@ -1120,3 +1120,628 @@ async fn api_save_project(
 | Git操作 | 対応 | 対応 | 両方で使う（`ars-git` crate共通） |
 
 これらは feature flag ではなく **バイナリレベルで分離** する（ars-editor と ars-web-server が別バイナリ）。
+
+---
+
+## 6. モジュール インタフェース設計 & ライフサイクル
+
+### 6.1 現状の問題
+
+```rust
+// 現状: 全サービスがアプリ起動時に一括初期化
+pub fn run() {
+    let registry_service = ModuleRegistryService::with_defaults()...;
+    let assembly_service = AssemblyManagerService::load(current_dir())...;
+    let depot_service = ResourceDepotService::new(depot_file)...;
+
+    tauri::Builder::default()
+        .manage(Mutex::new(registry_service))   // ← プロジェクト未定なのに初期化
+        .manage(Mutex::new(assembly_service))    // ← current_dir() に依存
+        .manage(Mutex::new(depot_service))
+        // ...
+}
+```
+
+| 問題 | 影響 |
+|------|------|
+| プロジェクト開閉の概念がない | AssemblyManagerが`current_dir()`に固定。プロジェクト切替不可 |
+| 全モジュール起動時一括初期化 | 使わないモジュールも初期化。起動が重くなる |
+| シャットダウン処理なし | 未保存データの確認、キャッシュのフラッシュ、ロック解放が漏れる |
+| モジュール間の初期化順序が暗黙 | AssemblyManager → ResourceDepot の依存順序がコードで保証されない |
+| フロントエンドと独立に進化できない | Tauri Command が直接サービスを呼ぶ密結合 |
+
+### 6.2 2つのスコープ
+
+エディタのモジュールには **アプリスコープ** と **プロジェクトスコープ** がある。
+
+```
+App Launch
+ │
+ ├─ [App-scoped] 認証、グローバル設定、モジュールレジストリキャッシュ
+ │   ← アプリ終了まで生存
+ │
+ ├─ Project Open ("my-game")
+ │   │
+ │   ├─ [Project-scoped] アセンブリ管理、リソースデポ、データオーガナイザー、Collab
+ │   │   ← プロジェクト閉じるまで生存
+ │   │
+ │   ├─ (ユーザーが作業)
+ │   │
+ │   └─ Project Close
+ │       └─ 保存確認 → キャッシュフラッシュ → ロック解放 → 破棄
+ │
+ ├─ Project Open ("another-game")  ← 別プロジェクト開いても App-scoped は生きている
+ │   └─ ...
+ │
+ └─ App Quit
+     └─ App-scoped モジュール破棄
+```
+
+### 6.3 モジュール trait 設計
+
+```rust
+// crates/ars-core/src/module.rs
+
+use async_trait::async_trait;
+use std::any::Any;
+
+/// モジュールのメタ情報
+pub struct ModuleInfo {
+    pub id: &'static str,        // "assembly", "resource-depot", etc.
+    pub name: &'static str,      // 表示名
+    pub scope: ModuleScope,
+    pub depends_on: &'static [&'static str],  // 初期化順序の依存
+}
+
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub enum ModuleScope {
+    /// アプリ起動〜終了まで
+    App,
+    /// プロジェクト Open〜Close まで
+    Project,
+}
+
+/// App-scoped モジュール
+#[async_trait]
+pub trait AppModule: Send + Sync + Any {
+    /// メタ情報
+    fn info(&self) -> ModuleInfo;
+
+    /// アプリ起動時に呼ばれる。グローバルリソースの初期化。
+    async fn initialize(&mut self) -> Result<()>;
+
+    /// アプリ終了時に呼ばれる。クリーンアップ。
+    async fn shutdown(&mut self) -> Result<()>;
+
+    /// ダウンキャスト用
+    fn as_any(&self) -> &dyn Any;
+}
+
+/// Project-scoped モジュール
+#[async_trait]
+pub trait ProjectModule: Send + Sync + Any {
+    /// メタ情報
+    fn info(&self) -> ModuleInfo;
+
+    /// プロジェクトを開いた時に呼ばれる。
+    /// project_root: プロジェクトのルートディレクトリ
+    /// project_id: プロジェクトの識別子
+    async fn on_project_open(&mut self, project_root: &Path, project_id: &str) -> Result<()>;
+
+    /// プロジェクトを閉じる時に呼ばれる。
+    /// 未保存データがあれば Err(ArsError::UnsavedChanges) を返してもよい。
+    async fn on_project_close(&mut self) -> Result<()>;
+
+    /// プロジェクト保存時に呼ばれる（自分の管理データを永続化するチャンス）
+    async fn on_project_save(&mut self) -> Result<()>;
+
+    /// ダウンキャスト用
+    fn as_any(&self) -> &dyn Any;
+}
+```
+
+### 6.4 各モジュールの分類
+
+| モジュール | スコープ | depends_on | 初期化タイミング |
+|-----------|---------|------------|----------------|
+| `auth` | App | `[]` | アプリ起動直後 |
+| `secrets` | App | `["auth"]` | auth の後 |
+| `module-registry` | App | `[]` | アプリ起動直後（キャッシュ読み込み） |
+| `assembly` | Project | `[]` | プロジェクト Open |
+| `resource-depot` | Project | `[]` | プロジェクト Open |
+| `data-organizer` | Project | `[]` | プロジェクト Open |
+| `collab` | Project | `["auth"]` | プロジェクト Open（認証済みユーザー情報が必要） |
+| `git` | App | `["auth"]` | アプリ起動時（トークン取得のためauthが先） |
+
+### 6.5 ModuleHost（モジュール管理者）
+
+```rust
+// crates/ars-core/src/module_host.rs
+
+use std::collections::HashMap;
+use std::sync::Arc;
+use tokio::sync::RwLock;
+
+/// モジュールのライフサイクルを管理するホスト
+pub struct ModuleHost {
+    app_modules: HashMap<&'static str, Arc<RwLock<dyn AppModule>>>,
+    project_modules: HashMap<&'static str, Arc<RwLock<dyn ProjectModule>>>,
+    active_project: Option<String>,
+}
+
+impl ModuleHost {
+    pub fn new() -> Self {
+        Self {
+            app_modules: HashMap::new(),
+            project_modules: HashMap::new(),
+            active_project: None,
+        }
+    }
+
+    /// App-scoped モジュールを登録
+    pub fn register_app_module(&mut self, module: impl AppModule + 'static) {
+        let id = module.info().id;
+        self.app_modules.insert(id, Arc::new(RwLock::new(module)));
+    }
+
+    /// Project-scoped モジュールを登録
+    pub fn register_project_module(&mut self, module: impl ProjectModule + 'static) {
+        let id = module.info().id;
+        self.project_modules.insert(id, Arc::new(RwLock::new(module)));
+    }
+
+    /// アプリ起動: depends_on 順にソートして initialize
+    pub async fn startup(&self) -> Result<()> {
+        let sorted = topo_sort_modules(&self.app_modules);
+        for id in sorted {
+            if let Some(m) = self.app_modules.get(id) {
+                m.write().await.initialize().await?;
+            }
+        }
+        Ok(())
+    }
+
+    /// プロジェクトを開く
+    pub async fn open_project(&mut self, project_root: &Path, project_id: &str) -> Result<()> {
+        // 既にプロジェクトが開いていたら閉じる
+        if self.active_project.is_some() {
+            self.close_project().await?;
+        }
+        // depends_on 順にソートして on_project_open
+        let sorted = topo_sort_project_modules(&self.project_modules);
+        for id in sorted {
+            if let Some(m) = self.project_modules.get(id) {
+                m.write().await.on_project_open(project_root, project_id).await?;
+            }
+        }
+        self.active_project = Some(project_id.to_string());
+        Ok(())
+    }
+
+    /// プロジェクトを閉じる
+    pub async fn close_project(&mut self) -> Result<()> {
+        // 逆順で on_project_close
+        let sorted = topo_sort_project_modules(&self.project_modules);
+        for id in sorted.iter().rev() {
+            if let Some(m) = self.project_modules.get(id) {
+                m.write().await.on_project_close().await?;
+            }
+        }
+        self.active_project = None;
+        Ok(())
+    }
+
+    /// プロジェクト保存
+    pub async fn save_project(&self) -> Result<()> {
+        for (_, m) in &self.project_modules {
+            m.write().await.on_project_save().await?;
+        }
+        Ok(())
+    }
+
+    /// アプリ終了
+    pub async fn shutdown(&self) -> Result<()> {
+        // まずプロジェクトを閉じる（開いていれば）
+        // 次に逆順で App モジュールを shutdown
+        let sorted = topo_sort_modules(&self.app_modules);
+        for id in sorted.iter().rev() {
+            if let Some(m) = self.app_modules.get(id) {
+                m.write().await.shutdown().await?;
+            }
+        }
+        Ok(())
+    }
+
+    /// 特定の App モジュールを取得（ダウンキャスト）
+    pub fn get_app_module<T: AppModule + 'static>(&self, id: &str) -> Option<Arc<RwLock<dyn AppModule>>> {
+        self.app_modules.get(id).cloned()
+    }
+
+    /// 特定の Project モジュールを取得
+    pub fn get_project_module(&self, id: &str) -> Option<Arc<RwLock<dyn ProjectModule>>> {
+        self.project_modules.get(id).cloned()
+    }
+}
+```
+
+### 6.6 具体例: AssemblyModule の実装
+
+```rust
+// crates/ars-assembly/src/module.rs
+
+use ars_core::module::{ModuleInfo, ModuleScope, ProjectModule};
+
+pub struct AssemblyModule {
+    service: Option<AssemblyManagerService>,
+}
+
+impl AssemblyModule {
+    pub fn new() -> Self {
+        Self { service: None }
+    }
+
+    /// 外部からサービスにアクセス
+    pub fn service(&self) -> Option<&AssemblyManagerService> {
+        self.service.as_ref()
+    }
+}
+
+#[async_trait]
+impl ProjectModule for AssemblyModule {
+    fn info(&self) -> ModuleInfo {
+        ModuleInfo {
+            id: "assembly",
+            name: "Assembly Manager",
+            scope: ModuleScope::Project,
+            depends_on: &[],
+        }
+    }
+
+    async fn on_project_open(&mut self, project_root: &Path, _project_id: &str) -> Result<()> {
+        self.service = Some(
+            AssemblyManagerService::load(project_root.to_path_buf())
+                .unwrap_or_else(|_| AssemblyManagerService::new(project_root.to_path_buf()))
+        );
+        Ok(())
+    }
+
+    async fn on_project_close(&mut self) -> Result<()> {
+        // 設定を保存してからドロップ
+        if let Some(ref service) = self.service {
+            service.save()?;
+        }
+        self.service = None;
+        Ok(())
+    }
+
+    async fn on_project_save(&mut self) -> Result<()> {
+        if let Some(ref service) = self.service {
+            service.save()?;
+        }
+        Ok(())
+    }
+
+    fn as_any(&self) -> &dyn std::any::Any { self }
+}
+```
+
+### 6.7 具体例: AuthModule (App-scoped)
+
+```rust
+// crates/ars-auth/src/module.rs
+
+pub struct AuthModule {
+    session_repo: Arc<dyn SessionRepository>,
+    user_repo: Arc<dyn UserRepository>,
+    current_session: Option<Session>,
+    current_user: Option<User>,
+}
+
+#[async_trait]
+impl AppModule for AuthModule {
+    fn info(&self) -> ModuleInfo {
+        ModuleInfo {
+            id: "auth",
+            name: "Authentication",
+            scope: ModuleScope::App,
+            depends_on: &[],
+        }
+    }
+
+    async fn initialize(&mut self) -> Result<()> {
+        // アプリ起動時: ローカルセッションを復元
+        // → 同一PCで永続利用、再認証不要
+        if let Some(session) = self.session_repo.get_active().await? {
+            let user = self.user_repo.get(&session.user_id).await?;
+            self.current_session = Some(session);
+            self.current_user = user;
+        }
+        Ok(())
+    }
+
+    async fn shutdown(&mut self) -> Result<()> {
+        // セッションはローカル永続なので何もしない
+        Ok(())
+    }
+
+    fn as_any(&self) -> &dyn std::any::Any { self }
+}
+```
+
+### 6.8 エディタ（Tauri / Axum）との統合
+
+```rust
+// apps/ars-editor/src-tauri/src/lib.rs
+
+pub fn run() {
+    let rt = tokio::runtime::Runtime::new().unwrap();
+    let host = rt.block_on(async {
+        let mut host = ModuleHost::new();
+
+        // App-scoped モジュール登録
+        let session_repo = Arc::new(LocalSessionRepository::with_defaults().unwrap());
+        let user_repo = Arc::new(LocalUserRepository::with_defaults().unwrap());
+        host.register_app_module(AuthModule::new(session_repo, user_repo));
+        host.register_app_module(ModuleRegistryModule::new());
+
+        // Project-scoped モジュール登録
+        host.register_project_module(AssemblyModule::new());
+        host.register_project_module(ResourceDepotModule::new());
+        host.register_project_module(DataOrganizerModule::new());
+        host.register_project_module(CollabModule::new());
+
+        // App起動
+        host.startup().await.expect("Module startup failed");
+        host
+    });
+
+    let host = Arc::new(RwLock::new(host));
+
+    tauri::Builder::default()
+        .manage(host.clone())
+        .invoke_handler(tauri::generate_handler![
+            cmd_open_project,
+            cmd_close_project,
+            cmd_save_project,
+            // Assembly commands
+            cmd_get_assembly_config,
+            cmd_add_core_assembly,
+            // ...
+        ])
+        .on_window_event(move |_window, event| {
+            // ウィンドウ閉じる時にshutdown
+            if let tauri::WindowEvent::CloseRequested { .. } = event {
+                let host = host.clone();
+                tokio::spawn(async move {
+                    let h = host.read().await;
+                    let _ = h.shutdown().await;
+                });
+            }
+        })
+        .run(tauri::generate_context!())
+        .expect("error");
+}
+```
+
+```rust
+// apps/ars-editor/src-tauri/src/commands.rs
+
+#[tauri::command]
+async fn cmd_open_project(
+    host: State<'_, Arc<RwLock<ModuleHost>>>,
+    project_path: String,
+    project_id: String,
+) -> Result<(), String> {
+    let mut h = host.write().await;
+    h.open_project(Path::new(&project_path), &project_id)
+        .await
+        .map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+async fn cmd_get_assembly_config(
+    host: State<'_, Arc<RwLock<ModuleHost>>>,
+) -> Result<ProjectAssemblyConfig, String> {
+    let h = host.read().await;
+    let module = h.get_project_module("assembly")
+        .ok_or("Assembly module not found")?;
+    let m = module.read().await;
+    let assembly = m.as_any().downcast_ref::<AssemblyModule>()
+        .ok_or("Type mismatch")?;
+    assembly.service()
+        .ok_or("No project open".to_string())?
+        .get_config()
+        .cloned()
+        .ok_or("No config".to_string())
+}
+```
+
+### 6.9 ライフサイクルイベントとフロントエンド
+
+```
+Rust (ModuleHost)                    TypeScript (Zustand)
+─────────────────                    ────────────────────
+App startup                          ─
+  ├ auth.initialize()
+  └ module-registry.initialize()
+                                     App mount
+                                       └ authStore.restoreSession()
+─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─
+cmd_open_project()                   invoke('cmd_open_project')
+  ├ assembly.on_project_open()         ├ projectStore.loadProject()
+  ├ resource-depot.on_project_open()   ├ editorStore.reset()
+  ├ data-organizer.on_project_open()   └ (各featureのstoreが初期化)
+  └ collab.on_project_open()
+─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─
+  (ユーザーが作業)                    (ユーザーが作業)
+─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─
+cmd_save_project()                   invoke('cmd_save_project')
+  ├ assembly.on_project_save()         └ projectStore.markSaved()
+  ├ resource-depot.on_project_save()
+  └ data-organizer.on_project_save()
+─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─
+cmd_close_project()                  invoke('cmd_close_project')
+  ├ collab.on_project_close()          ├ editorStore.reset()
+  ├ data-organizer.on_project_close()  └ projectStore.clear()
+  ├ resource-depot.on_project_close()
+  └ assembly.on_project_close()
+─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─
+Window close                         ─
+  ├ host.close_project()
+  └ host.shutdown()
+```
+
+### 6.10 イベントバス（モジュール間通信）
+
+モジュール同士が直接参照せず、イベントで疎結合にやりとりする。
+
+```rust
+// crates/ars-core/src/event.rs
+
+#[derive(Debug, Clone)]
+pub enum ArsEvent {
+    // Project lifecycle
+    ProjectOpened { project_id: String, project_root: PathBuf },
+    ProjectClosed { project_id: String },
+    ProjectSaved { project_id: String },
+
+    // Scene editing
+    SceneActivated { scene_id: String },
+    ActorAdded { scene_id: String, actor_id: String },
+    ActorRemoved { scene_id: String, actor_id: String },
+    ComponentAttached { actor_id: String, component_id: String },
+
+    // Assembly
+    AssemblyConfigChanged,
+    PlatformChanged { platform: BackendPlatform },
+
+    // Resource
+    ResourceImported { resource_id: String },
+
+    // Auth
+    UserLoggedIn { user_id: String },
+    UserLoggedOut,
+}
+
+/// イベントバス: tokio broadcast channel ベース
+pub struct EventBus {
+    sender: broadcast::Sender<ArsEvent>,
+}
+
+impl EventBus {
+    pub fn new() -> Self {
+        let (sender, _) = broadcast::channel(256);
+        Self { sender }
+    }
+
+    pub fn emit(&self, event: ArsEvent) {
+        let _ = self.sender.send(event);
+    }
+
+    pub fn subscribe(&self) -> broadcast::Receiver<ArsEvent> {
+        self.sender.subscribe()
+    }
+}
+```
+
+**使用例: プラットフォーム変更 → コード生成モジュールが反応**
+
+```rust
+// AssemblyModule 内
+fn set_platform(&self, platform: BackendPlatform, event_bus: &EventBus) {
+    self.service.set_backend_platform(platform.clone());
+    event_bus.emit(ArsEvent::PlatformChanged { platform });
+}
+
+// CodegenModule 内（subscribe側）
+async fn handle_events(&self, mut rx: broadcast::Receiver<ArsEvent>) {
+    while let Ok(event) = rx.recv().await {
+        match event {
+            ArsEvent::PlatformChanged { platform } => {
+                self.regenerate_templates(platform);
+            }
+            _ => {}
+        }
+    }
+}
+```
+
+### 6.11 Plugin のライフサイクル
+
+外部ソリューション Plugin (Unity, Ergo, Pictor) は **ProjectModule** として登録。
+ただし依存は `ars-core` の trait のみ。
+
+```rust
+// plugins/ars-plugin-ergo/src/module.rs
+
+pub struct ErgoModule {
+    codegen: Option<ErgoCodegen>,
+}
+
+#[async_trait]
+impl ProjectModule for ErgoModule {
+    fn info(&self) -> ModuleInfo {
+        ModuleInfo {
+            id: "plugin-ergo",
+            name: "Ergo Code Generator",
+            scope: ModuleScope::Project,
+            depends_on: &["assembly"],  // platform情報が必要
+        }
+    }
+
+    async fn on_project_open(&mut self, project_root: &Path, _project_id: &str) -> Result<()> {
+        self.codegen = Some(ErgoCodegen::new(project_root));
+        Ok(())
+    }
+
+    async fn on_project_close(&mut self) -> Result<()> {
+        self.codegen = None;
+        Ok(())
+    }
+
+    async fn on_project_save(&mut self) -> Result<()> { Ok(()) }
+    fn as_any(&self) -> &dyn std::any::Any { self }
+}
+```
+
+```rust
+// エディタの main.rs で、プラットフォーム設定に応じてPluginを登録
+match project_platform {
+    BackendPlatform::ArsNative => {
+        host.register_project_module(ErgoModule::new());
+        host.register_project_module(PictorModule::new());
+    }
+    BackendPlatform::Unity => {
+        host.register_project_module(UnityModule::new());
+    }
+    // ...
+}
+```
+
+### 6.12 まとめ: ライフサイクル全体像
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│ ModuleHost                                                       │
+│                                                                  │
+│  ┌─ App-scoped ──────────────────────────────────────────────┐  │
+│  │  auth → secrets → module-registry → git                   │  │
+│  │  (起動時 initialize、終了時 shutdown)                      │  │
+│  └───────────────────────────────────────────────────────────┘  │
+│                                                                  │
+│  ┌─ Project-scoped (Open/Close で生死) ──────────────────────┐  │
+│  │  assembly → resource-depot → data-organizer → collab      │  │
+│  │  + plugin-ergo, plugin-pictor (platform依存)              │  │
+│  │                                                           │  │
+│  │  on_project_open()  ← depends_on 順                      │  │
+│  │  on_project_save()  ← 全モジュール並列OK                  │  │
+│  │  on_project_close() ← depends_on 逆順                    │  │
+│  └───────────────────────────────────────────────────────────┘  │
+│                                                                  │
+│  ┌─ EventBus ────────────────────────────────────────────────┐  │
+│  │  broadcast channel: モジュール間の疎結合イベント通知       │  │
+│  │  PlatformChanged → Ergo/Pictor が反応                     │  │
+│  │  SceneActivated → Collab がロック情報を配信               │  │
+│  └───────────────────────────────────────────────────────────┘  │
+└─────────────────────────────────────────────────────────────────┘
+```
