@@ -3,6 +3,7 @@ import { cn } from '@/lib/utils';
 import type { Scene } from '@/types/domain';
 import { useCollabStore } from '@/stores/collabStore';
 import { useAuthStore } from '@/stores/authStore';
+import { useI18n } from '@/hooks/useI18n';
 
 interface SceneItemProps {
   scene: Scene;
@@ -13,6 +14,7 @@ interface SceneItemProps {
 }
 
 export function SceneItem({ scene, isActive, onSelect, onRename, onDelete }: SceneItemProps) {
+  const { t } = useI18n();
   const [isEditing, setIsEditing] = useState(false);
   const [editName, setEditName] = useState(scene.name);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -116,11 +118,11 @@ export function SceneItem({ scene, isActive, onSelect, onRename, onDelete }: Sce
         )}
         onClick={(e) => {
           e.stopPropagation();
-          if (confirm(`Delete scene "${scene.name}"?`)) {
+          if (confirm(t('sceneManager.deleteConfirm', { name: scene.name }))) {
             onDelete();
           }
         }}
-        title="Delete scene"
+        title={t('sceneManager.deleteTitle')}
       >
         ✕
       </button>

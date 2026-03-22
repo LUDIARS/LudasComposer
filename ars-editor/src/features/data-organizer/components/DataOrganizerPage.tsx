@@ -1,9 +1,11 @@
 import { useCallback, useEffect, useState } from 'react';
+import { useI18n } from '@/hooks/useI18n';
 import { dataApi, type DataSchema, type MasterDataEntry, type UserVariable } from '@/lib/data-api';
 
 type Tab = 'schemas' | 'variables';
 
 export function DataOrganizerPage() {
+  const { t } = useI18n();
   const [tab, setTab] = useState<Tab>('schemas');
   const [schemas, setSchemas] = useState<DataSchema[]>([]);
   const [selectedSchema, setSelectedSchema] = useState<DataSchema | null>(null);
@@ -134,19 +136,19 @@ export function DataOrganizerPage() {
     <div className="flex flex-col h-full">
       {/* Header */}
       <div className="flex items-center gap-4 px-4 py-3 border-b border-zinc-700">
-        <h2 className="text-sm font-semibold text-white whitespace-nowrap">Data Organizer</h2>
+        <h2 className="text-sm font-semibold text-white whitespace-nowrap">{t('dataOrganizer.title')}</h2>
         <div className="flex-1" />
         <button
           onClick={handleExport}
           className="px-3 py-1 text-xs text-zinc-300 bg-zinc-800 hover:bg-zinc-700 rounded transition-colors"
         >
-          Export
+          {t('dataOrganizer.export')}
         </button>
         <button
           onClick={handleImport}
           className="px-3 py-1 text-xs text-zinc-300 bg-zinc-800 hover:bg-zinc-700 rounded transition-colors"
         >
-          Import
+          {t('dataOrganizer.import')}
         </button>
       </div>
 
@@ -158,7 +160,7 @@ export function DataOrganizerPage() {
             tab === 'schemas' ? 'text-blue-400 border-b-2 border-blue-400' : 'text-zinc-400 hover:text-zinc-200'
           }`}
         >
-          Master Data ({schemas.length})
+          {t('dataOrganizer.masterData', { count: schemas.length })}
         </button>
         <button
           onClick={() => setTab('variables')}
@@ -166,14 +168,14 @@ export function DataOrganizerPage() {
             tab === 'variables' ? 'text-blue-400 border-b-2 border-blue-400' : 'text-zinc-400 hover:text-zinc-200'
           }`}
         >
-          User Variables ({variables.length})
+          {t('dataOrganizer.userVariables', { count: variables.length })}
         </button>
       </div>
 
       {error && (
         <div className="px-4 py-2 bg-red-500/10 text-red-400 text-xs flex items-center gap-2">
           <span>{error}</span>
-          <button onClick={() => setError(null)} className="text-red-300 hover:text-white">dismiss</button>
+          <button onClick={() => setError(null)} className="text-red-300 hover:text-white">{t('dataOrganizer.dismiss')}</button>
         </div>
       )}
 
@@ -183,7 +185,7 @@ export function DataOrganizerPage() {
           <>
             {/* Schema List (sidebar) */}
             <div className="w-52 border-r border-zinc-700 overflow-y-auto">
-              {loading && <div className="p-3 text-zinc-500 text-xs">Loading...</div>}
+              {loading && <div className="p-3 text-zinc-500 text-xs">{t('dataOrganizer.loading')}</div>}
               {schemas.map(s => (
                 <button
                   key={s.id}
@@ -199,7 +201,7 @@ export function DataOrganizerPage() {
                 </button>
               ))}
               {schemas.length === 0 && !loading && (
-                <div className="p-3 text-zinc-500 text-xs text-center">No schemas</div>
+                <div className="p-3 text-zinc-500 text-xs text-center">{t('dataOrganizer.noSchemas')}</div>
               )}
             </div>
 
@@ -217,15 +219,15 @@ export function DataOrganizerPage() {
                       onClick={handleAddEntry}
                       className="px-2 py-1 text-xs text-blue-400 hover:text-blue-300 hover:bg-zinc-800 rounded transition-colors"
                     >
-                      + Add Entry
+                      {t('dataOrganizer.addEntry')}
                     </button>
                   </div>
                   <div className="flex-1 overflow-auto">
                     <table className="w-full text-xs">
                       <thead className="sticky top-0 bg-zinc-900 text-zinc-400">
                         <tr>
-                          <th className="text-left px-3 py-2 font-medium border-b border-zinc-700">Entry ID</th>
-                          <th className="text-left px-3 py-2 font-medium border-b border-zinc-700">Actor</th>
+                          <th className="text-left px-3 py-2 font-medium border-b border-zinc-700">{t('dataOrganizer.entryId')}</th>
+                          <th className="text-left px-3 py-2 font-medium border-b border-zinc-700">{t('dataOrganizer.actor')}</th>
                           {exposedFields.map(f => (
                             <th key={f.name} className="text-left px-3 py-2 font-medium border-b border-zinc-700">
                               <div>{f.name}</div>
@@ -275,14 +277,14 @@ export function DataOrganizerPage() {
                       </tbody>
                     </table>
                     {entries.length === 0 && (
-                      <div className="p-4 text-zinc-500 text-xs text-center">No entries. Click "+ Add Entry" to create one.</div>
+                      <div className="p-4 text-zinc-500 text-xs text-center">{t('dataOrganizer.noEntries')}</div>
                     )}
                   </div>
                 </>
               )}
               {!selectedSchema && (
                 <div className="flex-1 flex items-center justify-center text-zinc-500 text-sm">
-                  Select a schema
+                  {t('dataOrganizer.selectSchema')}
                 </div>
               )}
             </div>
@@ -294,12 +296,12 @@ export function DataOrganizerPage() {
             <table className="w-full text-xs">
               <thead className="sticky top-0 bg-zinc-900 text-zinc-400">
                 <tr>
-                  <th className="text-left px-4 py-2 font-medium">Name</th>
-                  <th className="text-left px-4 py-2 font-medium">Type</th>
-                  <th className="text-left px-4 py-2 font-medium">Value</th>
-                  <th className="text-left px-4 py-2 font-medium">Persistence</th>
-                  <th className="text-left px-4 py-2 font-medium">Actor</th>
-                  <th className="text-left px-4 py-2 font-medium">Description</th>
+                  <th className="text-left px-4 py-2 font-medium">{t('dataOrganizer.name')}</th>
+                  <th className="text-left px-4 py-2 font-medium">{t('dataOrganizer.type')}</th>
+                  <th className="text-left px-4 py-2 font-medium">{t('dataOrganizer.value')}</th>
+                  <th className="text-left px-4 py-2 font-medium">{t('dataOrganizer.persistence')}</th>
+                  <th className="text-left px-4 py-2 font-medium">{t('dataOrganizer.actor')}</th>
+                  <th className="text-left px-4 py-2 font-medium">{t('dataOrganizer.description')}</th>
                 </tr>
               </thead>
               <tbody>
@@ -324,7 +326,7 @@ export function DataOrganizerPage() {
               </tbody>
             </table>
             {variables.length === 0 && (
-              <div className="p-4 text-zinc-500 text-xs text-center">No user variables</div>
+              <div className="p-4 text-zinc-500 text-xs text-center">{t('dataOrganizer.noVariables')}</div>
             )}
           </div>
         )}

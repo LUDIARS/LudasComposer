@@ -1,6 +1,7 @@
 import { useState, useMemo } from 'react';
 import { useProjectStore } from '@/stores/projectStore';
 import { useEditorStore } from '@/stores/editorStore';
+import { useI18n } from '@/hooks/useI18n';
 import { ComponentCard } from './ComponentCard';
 import { HelpTooltip } from '@/components/HelpTooltip';
 import { helpContent } from '@/lib/help-content';
@@ -9,6 +10,7 @@ import type { ComponentCategory } from '@/types/domain';
 const CATEGORIES: ComponentCategory[] = ['UI', 'Logic', 'System', 'GameObject'];
 
 export function ComponentPicker() {
+  const { t } = useI18n();
   const targetActorId = useEditorStore((s) => s.componentPickerTarget);
   const closeComponentPicker = useEditorStore((s) => s.closeComponentPicker);
   const project = useProjectStore((s) => s.project);
@@ -71,8 +73,8 @@ export function ComponentPicker() {
         <div className="flex items-center justify-between px-4 py-3 border-b border-zinc-700">
           <div className="flex items-center gap-2">
             <div>
-              <h3 className="text-white font-semibold">Component Picker</h3>
-              <p className="text-xs text-zinc-400">Actor: {actor.name}</p>
+              <h3 className="text-white font-semibold">{t('componentPicker.title')}</h3>
+              <p className="text-xs text-zinc-400">{t('componentPicker.actor', { name: actor.name })}</p>
             </div>
             <HelpTooltip content={helpContent.componentPicker} position="bottom" />
           </div>
@@ -88,7 +90,7 @@ export function ComponentPicker() {
         <div className="px-4 py-2 space-y-2 border-b border-zinc-700">
           <input
             className="w-full bg-zinc-800 text-white text-sm px-3 py-1.5 rounded border border-zinc-600 outline-none focus:border-blue-500"
-            placeholder="Search components..."
+            placeholder={t('componentPicker.searchPlaceholder')}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
           />
@@ -101,7 +103,7 @@ export function ComponentPicker() {
               }`}
               onClick={() => setCategoryFilter(null)}
             >
-              All
+              {t('componentPicker.all')}
             </button>
             {CATEGORIES.map((cat) => (
               <button
@@ -124,8 +126,8 @@ export function ComponentPicker() {
           {filteredComponents.length === 0 ? (
             <p className="text-zinc-500 text-sm text-center py-4">
               {allComponents.length === 0
-                ? 'No components defined yet. Create one in the Component Editor.'
-                : 'No matching components'}
+                ? t('componentPicker.noComponents')
+                : t('componentPicker.noMatching')}
             </p>
           ) : (
             filteredComponents.map((comp) => {
@@ -139,7 +141,7 @@ export function ComponentPicker() {
                   />
                   {warnings.length > 0 && actor.components.includes(comp.id) && (
                     <div className="ml-8 mt-1 text-xs text-amber-400">
-                      ⚠ Missing dependencies: {warnings.join(', ')}
+                      {t('componentPicker.missingDeps')}{warnings.join(', ')}
                     </div>
                   )}
                 </div>

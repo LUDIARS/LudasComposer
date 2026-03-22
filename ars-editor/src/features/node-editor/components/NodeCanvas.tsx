@@ -13,6 +13,7 @@ import '@xyflow/react/dist/style.css';
 import { useNodeEditor } from '../hooks/useNodeEditor';
 import { useUndoRedo } from '../hooks/useUndoRedo';
 import { useEditorStore } from '@/stores/editorStore';
+import { useI18n } from '@/hooks/useI18n';
 import { useProjectStore } from '@/stores/projectStore';
 import { useCollabStore } from '@/stores/collabStore';
 import { ActorNode } from './ActorNode';
@@ -36,6 +37,7 @@ const edgeTypes = {
 };
 
 export function NodeCanvas() {
+  const { t } = useI18n();
   const { nodes, edges, onNodesChange, onEdgesChange, onConnect, activeScene } =
     useNodeEditor();
   useUndoRedo();
@@ -94,7 +96,7 @@ export function NodeCanvas() {
   if (!activeScene) {
     return (
       <div className="flex-1 flex items-center justify-center text-zinc-500 text-lg">
-        Select or create a scene to start editing
+        {t('nodeCanvas.emptyPrompt')}
       </div>
     );
   }

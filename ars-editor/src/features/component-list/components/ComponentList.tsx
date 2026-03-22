@@ -1,6 +1,7 @@
 import { useState, useMemo } from 'react';
 import { useProjectStore } from '@/stores/projectStore';
 import { useEditorStore } from '@/stores/editorStore';
+import { useI18n } from '@/hooks/useI18n';
 import { HelpTooltip } from '@/components/HelpTooltip';
 import { helpContent } from '@/lib/help-content';
 import type { ComponentCategory } from '@/types/domain';
@@ -15,6 +16,7 @@ const CATEGORY_ICONS: Record<string, string> = {
 };
 
 export function ComponentList() {
+  const { t } = useI18n();
   const project = useProjectStore((s) => s.project);
   const deleteComponent = useProjectStore((s) => s.deleteComponent);
   const openComponentEditor = useEditorStore((s) => s.openComponentEditor);
@@ -56,12 +58,12 @@ export function ComponentList() {
     <div className="flex flex-col h-full">
       <div className="px-3 py-2 border-b border-zinc-700">
         <h2 className="text-xs font-semibold uppercase tracking-wider text-zinc-400 mb-2 flex items-center gap-1.5">
-          Components ({allComponents.length})
+          {t('componentList.title', { count: allComponents.length })}
           <HelpTooltip content={helpContent.componentList} position="right" highlightSelector='[data-help-target="componentList"]' />
         </h2>
         <input
           className="w-full bg-zinc-800 text-white text-sm px-2 py-1 rounded border border-zinc-600 outline-none focus:border-blue-500 mb-2"
-          placeholder="Search..."
+          placeholder={t('componentList.searchPlaceholder')}
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
         />
@@ -74,7 +76,7 @@ export function ComponentList() {
             }`}
             onClick={() => setCategoryFilter(null)}
           >
-            All
+            {t('componentList.all')}
           </button>
           {CATEGORIES.map((cat) => (
             <button
@@ -95,7 +97,7 @@ export function ComponentList() {
       <div className="flex-1 overflow-y-auto p-2 space-y-1">
         {filteredComponents.length === 0 ? (
           <p className="text-zinc-500 text-sm text-center py-4">
-            {allComponents.length === 0 ? 'No components defined yet' : 'No matching components'}
+            {allComponents.length === 0 ? t('componentList.noComponents') : t('componentList.noMatching')}
           </p>
         ) : (
           Object.entries(groupedByCategory).map(([category, comps]) => (
@@ -120,9 +122,9 @@ export function ComponentList() {
                         e.stopPropagation();
                         openComponentEditor(comp.id);
                       }}
-                      title="Edit"
+                      title={t('componentList.edit')}
                     >
-                      Edit
+                      {t('componentList.edit')}
                     </button>
                     <button
                       className="text-xs text-red-400 hover:text-red-300 opacity-0 group-hover:opacity-100 transition-opacity"
@@ -130,9 +132,9 @@ export function ComponentList() {
                         e.stopPropagation();
                         handleDelete(comp.id, comp.name);
                       }}
-                      title="Delete"
+                      title={t('componentList.delete')}
                     >
-                      Del
+                      {t('componentList.del')}
                     </button>
                   </div>
 
@@ -141,7 +143,7 @@ export function ComponentList() {
                       {/* Variables */}
                       {comp.variables.length > 0 && (
                         <div>
-                          <div className="text-xs text-zinc-500 font-medium">Variables</div>
+                          <div className="text-xs text-zinc-500 font-medium">{t('componentList.variables')}</div>
                           {comp.variables.map((v) => (
                             <div key={`${comp.id}-var-${v.name}`} className="text-xs text-zinc-400 pl-2">
                               {v.name}: <span className="text-zinc-500">{v.type}</span>
@@ -156,7 +158,7 @@ export function ComponentList() {
                       {/* Tasks */}
                       {comp.tasks.length > 0 && (
                         <div>
-                          <div className="text-xs text-zinc-500 font-medium">Tasks</div>
+                          <div className="text-xs text-zinc-500 font-medium">{t('componentList.tasks')}</div>
                           {comp.tasks.map((t) => (
                             <div key={`${comp.id}-task-${t.name}`} className="text-xs text-zinc-400 pl-2">
                               <span className="text-zinc-300">{t.name}</span>
@@ -178,7 +180,7 @@ export function ComponentList() {
                       {/* Dependencies */}
                       {comp.dependencies.length > 0 && (
                         <div>
-                          <div className="text-xs text-zinc-500 font-medium">Dependencies</div>
+                          <div className="text-xs text-zinc-500 font-medium">{t('componentList.dependencies')}</div>
                           {comp.dependencies.map((depId) => {
                             const dep = project.components[depId];
                             return (
@@ -203,7 +205,7 @@ export function ComponentList() {
           className="w-full text-xs text-blue-400 hover:text-blue-300 hover:bg-zinc-800 py-2 rounded transition-colors"
           onClick={() => openComponentEditor(null)}
         >
-          + New Component
+          {t('componentList.newComponent')}
         </button>
       </div>
     </div>

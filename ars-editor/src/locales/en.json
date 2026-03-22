@@ -1,0 +1,534 @@
+{
+  "app": {
+    "name": "ARS",
+    "nav": {
+      "editor": "Editor",
+      "depot": "Resource Depot",
+      "data": "Data Organizer"
+    },
+    "auth": {
+      "logout": "Logout",
+      "signInGithub": "Sign in with GitHub",
+      "loginGithub": "Login with GitHub",
+      "signOut": "Sign out",
+      "signInPrompt": "Sign in with GitHub to manage projects."
+    }
+  },
+  "toolbar": {
+    "new": "New",
+    "open": "Open",
+    "save": "Save",
+    "undo": "Undo",
+    "redo": "Redo",
+    "push": "Push",
+    "pushing": "...",
+    "unsaved": "(unsaved)",
+    "unsavedMark": " *",
+    "scenes": "Scenes",
+    "components": "Components",
+    "prefabs": "Prefabs",
+    "behavior": "Behavior",
+    "preview": "Preview",
+    "projects": "Projects",
+    "help": "? Help",
+    "newProject": "New Project",
+    "openProject": "Open Project",
+    "saveProject": "Save Project (Ctrl+S)",
+    "undoAction": "Undo (Ctrl+Z)",
+    "redoAction": "Redo (Ctrl+Y)",
+    "toggleComponentList": "Toggle Component List",
+    "togglePrefabList": "Toggle Prefab List",
+    "toggleBehaviorEditor": "Toggle Behavior Editor",
+    "togglePreview": "Toggle Preview",
+    "togglePanel": "Toggle Panel",
+    "pushToRepo": "Push to {{repo}}",
+    "pushToGithub": "Push to GitHub",
+    "projectManager": "Project Manager",
+    "gettingStarted": "Getting Started Guide",
+    "lastSaved": "Last saved: {{time}}",
+    "toast": {
+      "saved": "Saved!",
+      "downloaded": "Downloaded!",
+      "loaded": "Loaded!",
+      "loadFailed": "Load failed",
+      "invalidFile": "Invalid file",
+      "newProject": "New project",
+      "pushingGithub": "Pushing to GitHub...",
+      "pushed": "Pushed!",
+      "pushFailed": "Push failed"
+    },
+    "confirmNew": "Create a new project? Unsaved changes will be lost.",
+    "defaultProjectName": "Untitled Project",
+    "enterProjectPath": "Enter project file path:"
+  },
+  "contextMenu": {
+    "addNode": "Add Node",
+    "addActor": "Add Actor",
+    "addSequence": "Add Sequence",
+    "pasteActor": "Paste Actor ({{count}})",
+    "fromPrefab": "From Prefab"
+  },
+  "sceneManager": {
+    "scenes": "Scenes",
+    "newScenePlaceholder": "New scene name...",
+    "noScenes": "No scenes yet",
+    "deleteConfirm": "Delete scene \"{{name}}\"?",
+    "deleteTitle": "Delete scene"
+  },
+  "nodeCanvas": {
+    "emptyPrompt": "Select or create a scene to start editing"
+  },
+  "actorNode": {
+    "prefab": "Prefab: {{name}}",
+    "components": "Components:",
+    "noComponents": "No components",
+    "addComponent": "[+ Add]",
+    "sequences": "Sequences:",
+    "editSequences": "[Edit]",
+    "moreSequences": "...+{{count}} more",
+    "subScene": "SubScene: ",
+    "none": "None",
+    "setSubScene": "[Set]",
+    "copyActor": "Copy Actor",
+    "copy": "Copy",
+    "duplicateActor": "Duplicate Actor",
+    "duplicate": "Duplicate",
+    "savePrefab": "Save as Prefab",
+    "savePrefabBtn": "Save Prefab",
+    "prefabNamePrompt": "Prefab name:"
+  },
+  "componentPicker": {
+    "title": "Component Picker",
+    "actor": "Actor: {{name}}",
+    "searchPlaceholder": "Search components...",
+    "all": "All",
+    "noComponents": "No components defined yet. Create one in the Component Editor.",
+    "noMatching": "No matching components",
+    "missingDeps": "⚠ Missing dependencies: "
+  },
+  "componentEditor": {
+    "editTitle": "Edit Component",
+    "newTitle": "New Component",
+    "name": "Name",
+    "namePlaceholder": "Component name",
+    "nameRequired": "Name is required",
+    "category": "Category",
+    "invalidCategory": "Invalid category",
+    "domain": "Domain",
+    "domainPlaceholder": "e.g. Physics, Rendering, Input",
+    "domainRequired": "Domain is required",
+    "taskRequired": "At least one task is required",
+    "dependencies": "Dependencies",
+    "noDependencies": "No other components available",
+    "cancel": "Cancel",
+    "save": "Save"
+  },
+  "componentList": {
+    "title": "Components ({{count}})",
+    "searchPlaceholder": "Search...",
+    "all": "All",
+    "noComponents": "No components defined yet",
+    "noMatching": "No matching components",
+    "edit": "Edit",
+    "delete": "Delete",
+    "del": "Del",
+    "variables": "Variables",
+    "tasks": "Tasks",
+    "dependencies": "Dependencies",
+    "newComponent": "+ New Component"
+  },
+  "taskEditor": {
+    "tasks": "Tasks",
+    "addTask": "+ Add Task",
+    "noTasks": "No tasks defined (at least 1 required)",
+    "taskNamePlaceholder": "Task name",
+    "descriptionPlaceholder": "Description...",
+    "inputs": "Inputs",
+    "outputs": "Outputs",
+    "portNamePlaceholder": "Port name",
+    "typePlaceholder": "Type"
+  },
+  "variableEditor": {
+    "variables": "Variables",
+    "addVariable": "+ Add Variable",
+    "noVariables": "No variables defined",
+    "namePlaceholder": "Name",
+    "typePlaceholder": "Type",
+    "defaultPlaceholder": "Default"
+  },
+  "testCaseEditor": {
+    "testCases": "Test Cases",
+    "noTestCases": "No test cases",
+    "descriptionPlaceholder": "Test case description..."
+  },
+  "prefabList": {
+    "title": "Prefabs",
+    "empty": "No prefabs yet. Save an Actor as a Prefab to reuse it.",
+    "addToScene": "Add to scene",
+    "deleteConfirm": "Delete prefab \"{{name}}\"?",
+    "deleteTitle": "Delete prefab"
+  },
+  "preview": {
+    "title": "Preview",
+    "selectScene": "Select a scene to preview",
+    "actors": "{{count}} actors",
+    "connections": "{{count}} connections",
+    "components": "{{count}} components",
+    "noActors": "No actors in this scene",
+    "copyJson": "Copy Scene JSON"
+  },
+  "sequenceEditor": {
+    "title": "Sequences - {{name}}",
+    "noSequences": "No sequences defined",
+    "moveUp": "Move up",
+    "moveDown": "Move down",
+    "remove": "Remove",
+    "descriptionPlaceholder": "Description...",
+    "addStepLabel": "Add Step:",
+    "stepNamePlaceholder": "Step name...",
+    "stepDescPlaceholder": "Description (optional)...",
+    "addStep": "+ Add Step"
+  },
+  "subScenePicker": {
+    "title": "Set SubScene - {{name}}",
+    "none": "(None)",
+    "noScenes": "No other scenes available. Create another scene first."
+  },
+  "behaviorEditor": {
+    "title": "Behavior Editor",
+    "sceneStates": "{{scene}} - {{count}} state(s)",
+    "newStatePlaceholder": "New state...",
+    "addStatePrompt": "Add a state to define key behaviors",
+    "bindings": "({{count}} bindings)",
+    "deleteState": "Delete State",
+    "noBindings": "No key bindings yet. Add one below.",
+    "addKeyBinding": "Add Key Binding",
+    "keyPlaceholder": "Key (e.g., W, Space)",
+    "pressKey": "Press a key...",
+    "capture": "Capture",
+    "cancelCapture": "Cancel",
+    "list": "List",
+    "descPlaceholder": "Description (e.g., Move player forward)",
+    "targetActor": "Target Actor (auto-connect)",
+    "addBinding": "+ Add Binding",
+    "target": "Target:",
+    "targetNone": "None"
+  },
+  "projectManager": {
+    "title": "Project Manager",
+    "tabs": {
+      "repos": "GitHub Repos",
+      "local": "Cloned Projects",
+      "new": "New Repository"
+    },
+    "repos": {
+      "loading": "Loading repositories...",
+      "noRepos": "No repositories found.",
+      "private": "private",
+      "clone": "Clone"
+    },
+    "local": {
+      "noProjects": "No cloned projects. Clone a repository first.",
+      "noProjectJson": "(no project.json)",
+      "load": "Load",
+      "push": "Push"
+    },
+    "newRepo": {
+      "description": "Create a new GitHub repository and save the current project to it.",
+      "repoName": "Repository Name",
+      "repoNamePlaceholder": "my-ars-project",
+      "repoDesc": "Description (optional)",
+      "repoDescPlaceholder": "Ars Editor project",
+      "privateRepo": "Private repository",
+      "createSave": "Create & Save Project"
+    },
+    "footer": {
+      "active": "Active: ",
+      "pushCurrent": "Push Current Project"
+    },
+    "toast": {
+      "cloning": "Cloning {{name}}...",
+      "cloneComplete": "Clone complete!",
+      "projectLoaded": "Project loaded!",
+      "clonedNoProject": "Cloned (no project.json found)",
+      "cloneFailed": "Clone failed: {{error}}",
+      "loadingProject": "Loading project...",
+      "noProjectJson": "No project.json in this repository",
+      "loadFailed": "Load failed: {{error}}",
+      "pushing": "Pushing to GitHub...",
+      "pushed": "Pushed successfully!",
+      "pushFailed": "Push failed: {{error}}",
+      "creating": "Creating repository...",
+      "repoCreated": "Repository created!",
+      "savedToRepo": "Project saved to new repo!",
+      "createFailed": "Failed: {{error}}"
+    }
+  },
+  "userMenu": {
+    "projects": "Projects"
+  },
+  "helpTooltip": {
+    "clickToClose": "Click to close",
+    "help": "Help"
+  },
+  "dataOrganizer": {
+    "title": "Data Organizer",
+    "export": "Export",
+    "import": "Import",
+    "masterData": "Master Data ({{count}})",
+    "userVariables": "User Variables ({{count}})",
+    "dismiss": "dismiss",
+    "loading": "Loading...",
+    "noSchemas": "No schemas",
+    "addEntry": "+ Add Entry",
+    "entryId": "Entry ID",
+    "actor": "Actor",
+    "noEntries": "No entries. Click \"+ Add Entry\" to create one.",
+    "selectSchema": "Select a schema",
+    "name": "Name",
+    "type": "Type",
+    "value": "Value",
+    "persistence": "Persistence",
+    "description": "Description",
+    "noVariables": "No user variables"
+  },
+  "resourceDepot": {
+    "title": "Resource Depot",
+    "readOnly": "Read-only",
+    "tabs": {
+      "resources": "Resources",
+      "bonePatterns": "Bone Patterns",
+      "motionGroups": "Motion Groups",
+      "textureGroups": "Texture Groups"
+    },
+    "searchPlaceholder": "Search...",
+    "all": "All",
+    "categories": {
+      "model": "Model",
+      "texture": "Texture",
+      "motion": "Motion",
+      "font": "Font",
+      "sound": "Sound"
+    },
+    "loading": "Loading...",
+    "noResources": "No resources found",
+    "table": {
+      "filename": "Filename",
+      "original": "Original",
+      "category": "Category",
+      "role": "Role",
+      "size": "Size",
+      "status": "Status"
+    },
+    "noBonePatterns": "No bone patterns",
+    "id": "ID: ",
+    "required": "Required: ",
+    "optional": "Optional: ",
+    "noMotionGroups": "No motion groups",
+    "motionInfo": "{{count}} motion(s) | Pattern: {{pattern}}",
+    "noTextureGroups": "No texture groups",
+    "textureInfo": "{{count}} texture(s) | Atlas: {{width}}x{{height}}",
+    "detail": {
+      "title": "Resource Detail",
+      "id": "ID",
+      "filename": "Filename",
+      "original": "Original",
+      "category": "Category",
+      "role": "Role",
+      "size": "Size",
+      "hash": "Hash",
+      "status": "Status",
+      "localPath": "Local Path",
+      "metadata": "Metadata"
+    }
+  },
+  "gettingStarted": {
+    "title": "Getting Started",
+    "subtitle": "5 steps to create a sample game",
+    "steps": "Steps",
+    "tips": "Tips",
+    "clickToClose": "Click to close",
+    "previous": "Previous",
+    "next": "Next",
+    "start": "Start!",
+    "step1": {
+      "title": "Define Scenes",
+      "description": "Scenes are the top-level unit for managing each screen or stage of your game.",
+      "details": [
+        "Enter a scene name in the Scene List panel and click \"+\" to create a new scene.",
+        "Switch between scenes by clicking their names.",
+        "You can rename a scene by double-clicking it."
+      ],
+      "tips": [
+        "Use clear names like \"TitleScreen\", \"Stage1\", \"GameOver\" to organize your game."
+      ]
+    },
+    "step2": {
+      "title": "Define Actors",
+      "description": "Actors are the objects in your game – characters, enemies, backgrounds, UI elements, etc.",
+      "details": [
+        "Right-click on the Node Canvas to add a new actor.",
+        "Drag between actor nodes to create data-flow connections.",
+        "Click an actor to open the Component Picker."
+      ],
+      "tips": [
+        "Use Ctrl+D to quickly duplicate actors.",
+        "Save frequently-used actors as Prefabs for reuse."
+      ]
+    },
+    "step3": {
+      "title": "Select & Define Modules",
+      "description": "Modules (Components) define an actor's capabilities – physics, rendering, input handling, etc.",
+      "details": [
+        "Click an actor to open the Component Picker and attach modules.",
+        "Use the Component Editor to define new custom modules.",
+        "Each module has Variables (state), Tasks (behavior), and Dependencies."
+      ],
+      "tips": [
+        "Filter by category (UI, Logic, System, GameObject) to find modules faster.",
+        "Check dependencies to ensure required modules are attached."
+      ]
+    },
+    "step4": {
+      "title": "Implement Code",
+      "description": "Generate code from your actor/component definitions using AI assistance.",
+      "details": [
+        "Use the code generation feature to produce implementation code.",
+        "The MCP Server can assist with code review and refinement.",
+        "Preview generated code before applying it."
+      ],
+      "tips": [
+        "Use the MCP Server for iterative code improvements.",
+        "Preview changes before applying them."
+      ]
+    },
+    "step5": {
+      "title": "Run & Test",
+      "description": "Test your game by running and iterating on the generated output.",
+      "details": [
+        "Build and run your project to test functionality.",
+        "Use the Preview panel to verify scene structure.",
+        "Iterate on components and re-generate code as needed."
+      ],
+      "tips": [
+        "Use the Preview panel to verify your actor hierarchy.",
+        "Save reusable configurations as Prefabs."
+      ]
+    }
+  },
+  "settings": {
+    "title": "Settings",
+    "language": "Language",
+    "languageDescription": "Select the display language for the editor.",
+    "languages": {
+      "en": "English",
+      "ja": "日本語"
+    },
+    "close": "Close"
+  },
+  "help": {
+    "sceneList": {
+      "description": "Scenes are the top-level unit for managing each screen or stage of your game.",
+      "item1": "Enter a name and click \"+\" to create a new scene",
+      "item2": "Click a scene name to select and switch editing target",
+      "item3": "Double-click to rename a scene",
+      "item4": "Click \"✕\" to delete a scene"
+    },
+    "nodeCanvas": {
+      "description": "The main editor area for visually placing and connecting actors (game objects).",
+      "item1": "Right-click to add actors from the context menu",
+      "item2": "Drag between nodes to connect data flows",
+      "item3": "Mouse wheel to zoom, drag to pan",
+      "item4": "Select node + Delete to remove",
+      "item5": "Ctrl+C / Ctrl+V to copy & paste",
+      "item6": "Ctrl+D to duplicate selected actors",
+      "item7": "Click an actor to open the Component Picker"
+    },
+    "componentEditor": {
+      "description": "A panel for defining and editing component (module) details.",
+      "item1": "Set the component name",
+      "item2": "Select a category: UI / Logic / System / GameObject",
+      "item3": "Set the domain (Physics, Rendering, etc.)",
+      "item4": "\"+ Variable\" to add state variables (name, type, default)",
+      "item5": "\"+ Task\" to add tasks (define input/output ports)",
+      "item6": "Check dependencies on other components",
+      "item7": "Save to apply, Cancel to discard changes"
+    },
+    "componentList": {
+      "description": "A panel for listing and managing all components in the project.",
+      "item1": "Type in the search bar to filter by name or domain",
+      "item2": "Use category buttons to filter by category",
+      "item3": "Click an item to expand and view variables, tasks, and dependencies",
+      "item4": "\"Edit\" button to open the Component Editor",
+      "item5": "\"Duplicate\" button to duplicate a component",
+      "item6": "\"Delete\" button to delete a component",
+      "item7": "\"+ New Component\" to create a new component"
+    },
+    "prefabList": {
+      "description": "A panel for managing reusable actor templates (prefabs).",
+      "item1": "Right-click an actor on Canvas → \"Save as Prefab\" to register",
+      "item2": "Double-click to rename a prefab",
+      "item3": "\"+\" button to place an instance in the active scene",
+      "item4": "\"✕\" button to delete a prefab"
+    },
+    "preview": {
+      "description": "A preview panel to inspect the actor hierarchy and connections in the current scene.",
+      "item1": "Visualize the actor tree structure",
+      "item2": "View connections at a glance"
+    },
+    "toolbar": {
+      "title": "Toolbar",
+      "description": "The menu bar for project operations and panel visibility toggles.",
+      "item1": "New – Create a new project (current project is discarded)",
+      "item2": "Open – Load a saved project",
+      "item3": "Save (Ctrl+S) – Save the project",
+      "item4": "Undo (Ctrl+Z) – Undo the last action",
+      "item5": "Redo (Ctrl+Y) – Redo the undone action",
+      "item6": "Panel toggles – Show/hide Components / Prefabs / Behavior / Preview",
+      "item7": "Push – Push changes to a GitHub repository"
+    },
+    "componentPicker": {
+      "description": "A dialog for selecting components to attach to an actor.",
+      "item1": "Click checkboxes to attach/detach components",
+      "item2": "Type in the search bar to filter by name or domain",
+      "item3": "Use category buttons to filter by category",
+      "item4": "⚠ Dependency warnings appear when required components are missing"
+    },
+    "sequenceEditor": {
+      "title": "Sequence Editor",
+      "description": "An editor for defining ordered steps in a sequence actor.",
+      "item1": "Enter a step name and click \"+ Add Step\"",
+      "item2": "Use ↑↓ buttons to reorder steps",
+      "item3": "Click a step name to edit it inline",
+      "item4": "Add a description for each step",
+      "item5": "Click ✕ to delete a step"
+    },
+    "behaviorEditor": {
+      "description": "An editor for defining scene states and key bindings.",
+      "item1": "Enter a name and click \"+\" to create a new state",
+      "item2": "Click a state tab to switch the active state",
+      "item3": "Capture button – directly input a keyboard key",
+      "item4": "List button – select from a list of common keys",
+      "item5": "Description – describe the action in natural language",
+      "item6": "Target Actor – specify the target actor for the key action",
+      "item7": "Delete State – delete the current state"
+    },
+    "subScenePicker": {
+      "title": "SubScene Picker",
+      "description": "A dialog for assigning a sub-scene to a scene actor.",
+      "item1": "Click a scene name to set it as the sub-scene",
+      "item2": "Select (None) to clear the sub-scene assignment"
+    }
+  },
+  "common": {
+    "cancel": "Cancel",
+    "save": "Save",
+    "delete": "Delete",
+    "edit": "Edit",
+    "close": "Close",
+    "search": "Search",
+    "loading": "Loading...",
+    "all": "All",
+    "none": "None"
+  }
+}
