@@ -49,7 +49,7 @@ export function registerTranslations(locale: string, translations: TranslationDi
  */
 export function registerTranslation(locale: string, key: string, value: string): void {
   const parts = key.split('.');
-  let dict: TranslationDict = {};
+  const dict: TranslationDict = {};
   let cur = dict;
   for (let i = 0; i < parts.length - 1; i++) {
     const child: TranslationDict = {};
