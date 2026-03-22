@@ -30,4 +30,10 @@ services:
       - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID:-}
       - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY:-}
       - AWS_REGION=${AWS_REGION:-ap-northeast-1}
+      - SURREALDB_DATA_DIR=/app/data/surrealdb
+    volumes:
+      - ars-data:/app/data
     restart: unless-stopped
+
+volumes:
+  ars-data:

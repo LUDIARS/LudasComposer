@@ -23,6 +23,12 @@ RUN npm run build
 # ----- Stage 2: Rust web server build -----
 FROM rust:1-bookworm AS server-builder
 
+# SurrealDB (RocksDB) のビルドに必要なシステムライブラリ
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    clang \
+    libclang-dev \
+    && rm -rf /var/lib/apt/lists/*
+
 WORKDIR /app
 
 # モジュールクレートをコピー
@@ -57,10 +63,14 @@ WORKDIR /app
 COPY --from=server-builder /app/ars-editor/src-tauri/target/release/ars-web-server ./ars-web-server
 COPY --from=frontend-builder /app/dist ./dist
 
-RUN chown -R ars:ars /app
+# SurrealDB データディレクトリ
+RUN mkdir -p /app/data/surrealdb && chown -R ars:ars /app
 USER ars
 
 ENV PORT=5173
+ENV SURREALDB_DATA_DIR=/app/data/surrealdb
 EXPOSE 5173
+
+VOLUME ["/app/data"]
 
 CMD ["./ars-web-server", "./dist"]
