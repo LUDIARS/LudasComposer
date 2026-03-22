@@ -4,7 +4,8 @@
     "nav": {
       "editor": "Editor",
       "depot": "Resource Depot",
-      "data": "Data Organizer"
+      "data": "Data Organizer",
+      "settings": "Settings"
     },
     "auth": {
       "logout": "Logout",

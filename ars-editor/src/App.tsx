@@ -21,7 +21,7 @@ function App() {
     { key: 'editor', label: t('app.nav.editor') },
     { key: 'depot', label: t('app.nav.depot') },
     { key: 'data', label: t('app.nav.data') },
-    { key: 'settings', label: t('app.nav.settings', 'Settings') },
+    { key: 'settings', label: t('app.nav.settings') },
   ];
   const [page, setPage] = useState<Page>('editor');
   const [showLanguageSettings, setShowLanguageSettings] = useState(false);
