@@ -8,6 +8,7 @@ import * as backend from '@/lib/backend';
 import * as authApi from '@/lib/auth-api';
 import { UserMenu } from './UserMenu';
 import { ProjectManager } from './ProjectManager';
+import { ProjectWizard } from './ProjectWizard';
 import { GettingStartedGuide } from './GettingStartedGuide';
 import { HelpTooltip } from './HelpTooltip';
 import { helpContent } from '@/lib/help-content';
@@ -32,6 +33,7 @@ export function Toolbar() {
   const [status, setStatus] = useState<string>('');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [showProjectManager, setShowProjectManager] = useState(false);
+  const [showWizard, setShowWizard] = useState(false);
   const [showGuide, setShowGuide] = useState(false);
   const [pushing, setPushing] = useState(false);
   const isMobile = useIsMobile();
@@ -103,18 +105,8 @@ export function Toolbar() {
 
   const handleNew = useCallback(() => {
     if (isDirty && !confirm('Create a new project? Unsaved changes will be lost.')) return;
-    loadProject({
-      name: 'Untitled Project',
-      scenes: {},
-      components: {},
-      prefabs: {},
-      activeSceneId: null,
-    });
-    clearHistory();
-    setProjectPath(null);
-    markSaved();
-    showStatus('New project');
-  }, [loadProject, setProjectPath, markSaved, isDirty]);
+    setShowWizard(true);
+  }, [isDirty]);
 
   const handleGitPush = useCallback(async () => {
     if (!activeGitRepo) return;
@@ -307,6 +299,9 @@ export function Toolbar() {
         {showProjectManager && (
           <ProjectManager onClose={() => setShowProjectManager(false)} />
         )}
+        {showWizard && (
+          <ProjectWizard onClose={() => setShowWizard(false)} />
+        )}
         {showGuide && (
           <GettingStartedGuide onClose={() => setShowGuide(false)} />
         )}
@@ -452,6 +447,9 @@ export function Toolbar() {
       </button>
       {showProjectManager && (
         <ProjectManager onClose={() => setShowProjectManager(false)} />
+      )}
+      {showWizard && (
+        <ProjectWizard onClose={() => setShowWizard(false)} />
       )}
       {showGuide && (
         <GettingStartedGuide onClose={() => setShowGuide(false)} />
