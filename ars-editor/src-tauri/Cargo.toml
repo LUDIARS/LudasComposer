@@ -35,6 +35,7 @@ web-server = [
     "dep:futures",
     "dep:dashmap",
     "dep:surrealdb",
+    "dep:redis",
     "resource-depot/web-server",
     "data-organizer/web-server",
 ]
@@ -79,3 +80,5 @@ futures = { version = "0.3", optional = true }
 dashmap = { version = "6", optional = true }
 # Local embedded database (SurrealDB)
 surrealdb = { version = "2", optional = true, features = ["kv-rocksdb"] }
+# Redis (session management)
+redis = { version = "0.27", features = ["tokio-comp", "connection-manager"], optional = true }

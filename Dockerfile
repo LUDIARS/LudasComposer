@@ -63,12 +63,13 @@ WORKDIR /app
 COPY --from=server-builder /app/ars-editor/src-tauri/target/release/ars-web-server ./ars-web-server
 COPY --from=frontend-builder /app/dist ./dist
 
-# SurrealDB データディレクトリ
+# SurrealDB データディレクトリ（グラフDB: ユーザー・プロジェクト）
 RUN mkdir -p /app/data/surrealdb && chown -R ars:ars /app
 USER ars
 
 ENV PORT=5173
 ENV SURREALDB_DATA_DIR=/app/data/surrealdb
+ENV REDIS_URL=redis://redis:6379
 EXPOSE 5173
 
 VOLUME ["/app/data"]

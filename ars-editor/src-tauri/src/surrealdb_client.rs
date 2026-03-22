@@ -1,13 +1,13 @@
-/// SurrealDB 組み込みデータベースサービス
+/// SurrealDB グラフデータベースサービス
 ///
-/// プロジェクト設定、ユーザー認証、セッション管理、クラウドプロジェクトを
-/// SurrealDBで一元管理する。RocksDBバックエンドで永続化。
+/// ユーザー、プロジェクト、設定をSurrealDBのグラフ機能（RELATE）で管理する。
+/// セッション管理はRedisに移行済み。
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use surrealdb::engine::local::RocksDb;
 use surrealdb::Surreal;
 
-use crate::auth::{Session, User};
+use crate::auth::User;
 use crate::models::Project;
 
 #[derive(Clone)]
@@ -42,7 +42,7 @@ impl SurrealClient {
             .await
             .map_err(|e| format!("SurrealDB namespace setup failed: {}", e))?;
 
-        // インデックス定義
+        // テーブル・インデックス定義
         db.query("DEFINE INDEX IF NOT EXISTS idx_setting_lookup ON project_setting FIELDS project_id, setting_key UNIQUE")
             .await
             .map_err(|e| format!("SurrealDB index creation failed: {}", e))?;
@@ -54,6 +54,23 @@ impl SurrealClient {
         db.query("DEFINE INDEX IF NOT EXISTS idx_cloud_project_user ON cloud_project FIELDS user_id")
             .await
             .map_err(|e| format!("SurrealDB index creation failed: {}", e))?;
+
+        // グラフ関係テーブル定義: user -[owns_project]-> cloud_project
+        db.query("DEFINE TABLE IF NOT EXISTS owns_project SCHEMAFULL TYPE RELATION IN user OUT cloud_project")
+            .await
+            .map_err(|e| format!("SurrealDB relation table creation failed: {}", e))?;
+
+        db.query("DEFINE FIELD IF NOT EXISTS in ON owns_project TYPE record<user>")
+            .await
+            .map_err(|e| format!("SurrealDB field creation failed: {}", e))?;
+
+        db.query("DEFINE FIELD IF NOT EXISTS out ON owns_project TYPE record<cloud_project>")
+            .await
+            .map_err(|e| format!("SurrealDB field creation failed: {}", e))?;
+
+        db.query("DEFINE FIELD IF NOT EXISTS created_at ON owns_project TYPE string")
+            .await
+            .map_err(|e| format!("SurrealDB field creation failed: {}", e))?;
 
         Ok(Self { db })
     }
@@ -148,7 +165,7 @@ impl SurrealClient {
         Ok(())
     }
 
-    // ========== User operations ==========
+    // ========== User operations (Graph node) ==========
 
     pub async fn put_user(&self, user: &User) -> Result<(), String> {
         self.db
@@ -194,67 +211,42 @@ impl SurrealClient {
         Ok(rows.into_iter().next().map(|r| r.into_user()))
     }
 
-    // ========== Session operations ==========
-
-    pub async fn put_session(&self, session: &Session) -> Result<(), String> {
-        self.db
-            .query("INSERT INTO session (id, user_id, expires_at, created_at, access_token) VALUES ($id, $user_id, $expires_at, $created_at, $access_token) ON DUPLICATE KEY UPDATE expires_at = $expires_at, access_token = $access_token")
-            .bind(("id", session.id.clone()))
-            .bind(("user_id", session.user_id.clone()))
-            .bind(("expires_at", session.expires_at.clone()))
-            .bind(("created_at", session.created_at.clone()))
-            .bind(("access_token", session.access_token.clone()))
-            .await
-            .map_err(|e| format!("SurrealDB put_session failed: {}", e))?;
-        Ok(())
-    }
-
-    pub async fn get_session(&self, session_id: &str) -> Result<Option<Session>, String> {
-        let mut result = self.db
-            .query("SELECT * FROM session WHERE id = $session_id LIMIT 1")
-            .bind(("session_id", session_id.to_string()))
-            .await
-            .map_err(|e| format!("SurrealDB get_session failed: {}", e))?;
-
-        let rows: Vec<SessionRecord> = result
-            .take(0)
-            .map_err(|e| format!("SurrealDB deserialize failed: {}", e))?;
-
-        Ok(rows.into_iter().next().map(|r| r.into_session()))
-    }
-
-    pub async fn delete_session(&self, session_id: &str) -> Result<(), String> {
-        self.db
-            .query("DELETE FROM session WHERE id = $session_id")
-            .bind(("session_id", session_id.to_string()))
-            .await
-            .map_err(|e| format!("SurrealDB delete_session failed: {}", e))?;
-        Ok(())
-    }
-
-    // ========== Cloud project operations ==========
+    // ========== Cloud project operations (Graph: user -[owns_project]-> cloud_project) ==========
 
     pub async fn save_project(&self, user_id: &str, project_id: &str, project: &Project) -> Result<(), String> {
         let project_json = serde_json::to_string(project)
             .map_err(|e| format!("Failed to serialize project: {}", e))?;
         let now = chrono::Utc::now().to_rfc3339();
 
+        // プロジェクトレコードをupsert
         self.db
             .query("INSERT INTO cloud_project (id, user_id, name, data, updated_at) VALUES ($id, $user_id, $name, $data, $updated_at) ON DUPLICATE KEY UPDATE name = $name, data = $data, updated_at = $updated_at")
             .bind(("id", project_id.to_string()))
             .bind(("user_id", user_id.to_string()))
             .bind(("name", project.name.clone()))
             .bind(("data", project_json))
-            .bind(("updated_at", now))
+            .bind(("updated_at", now.clone()))
             .await
             .map_err(|e| format!("SurrealDB save_project failed: {}", e))?;
+
+        // グラフ関係を作成（既存なら無視）
+        self.db
+            .query("IF (SELECT count() FROM owns_project WHERE in = type::thing('user', $user_id) AND out = type::thing('cloud_project', $project_id) GROUP ALL)[0].count = 0 THEN (RELATE type::thing('user', $user_id)->owns_project->type::thing('cloud_project', $project_id) SET created_at = $now) END")
+            .bind(("user_id", user_id.to_string()))
+            .bind(("project_id", project_id.to_string()))
+            .bind(("now", now))
+            .await
+            .map_err(|e| format!("SurrealDB relate owns_project failed: {}", e))?;
+
         Ok(())
     }
 
     pub async fn load_project(&self, user_id: &str, project_id: &str) -> Result<Option<Project>, String> {
+        // グラフ走査でユーザーが所有するプロジェクトを取得
         let mut result = self.db
-            .query("SELECT * FROM cloud_project WHERE id = $project_id LIMIT 1")
+            .query("SELECT data FROM cloud_project WHERE id = $project_id AND id IN (SELECT VALUE out FROM owns_project WHERE in = type::thing('user', $user_id)) LIMIT 1")
             .bind(("project_id", project_id.to_string()))
+            .bind(("user_id", user_id.to_string()))
             .await
             .map_err(|e| format!("SurrealDB load_project failed: {}", e))?;
 
@@ -264,9 +256,6 @@ impl SurrealClient {
 
         match rows.into_iter().next() {
             Some(record) => {
-                if record.user_id != user_id {
-                    return Err("Access denied".to_string());
-                }
                 let project: Project = serde_json::from_str(&record.data)
                     .map_err(|e| format!("Failed to parse project: {}", e))?;
                 Ok(Some(project))
@@ -276,8 +265,9 @@ impl SurrealClient {
     }
 
     pub async fn list_user_projects(&self, user_id: &str) -> Result<Vec<ProjectSummary>, String> {
+        // グラフ走査でユーザーの全プロジェクトを取得
         let mut result = self.db
-            .query("SELECT id, name, updated_at FROM cloud_project WHERE user_id = $user_id ORDER BY updated_at DESC")
+            .query("SELECT id, name, updated_at FROM cloud_project WHERE id IN (SELECT VALUE out FROM owns_project WHERE in = type::thing('user', $user_id)) ORDER BY updated_at DESC")
             .bind(("user_id", user_id.to_string()))
             .await
             .map_err(|e| format!("SurrealDB list_user_projects failed: {}", e))?;
@@ -294,31 +284,37 @@ impl SurrealClient {
     }
 
     pub async fn delete_project(&self, user_id: &str, project_id: &str) -> Result<(), String> {
-        // Verify ownership
+        // グラフ走査で所有権を確認
         let mut result = self.db
-            .query("SELECT user_id FROM cloud_project WHERE id = $project_id LIMIT 1")
+            .query("SELECT count() FROM owns_project WHERE in = type::thing('user', $user_id) AND out = type::thing('cloud_project', $project_id) GROUP ALL")
+            .bind(("user_id", user_id.to_string()))
             .bind(("project_id", project_id.to_string()))
             .await
-            .map_err(|e| format!("SurrealDB get_project failed: {}", e))?;
+            .map_err(|e| format!("SurrealDB ownership check failed: {}", e))?;
 
-        let rows: Vec<OwnerRecord> = result
+        let rows: Vec<CountRecord> = result
             .take(0)
             .map_err(|e| format!("SurrealDB deserialize failed: {}", e))?;
 
-        match rows.into_iter().next() {
-            Some(record) => {
-                if record.user_id != user_id {
-                    return Err("Access denied".to_string());
-                }
-            }
-            None => return Err("Project not found".to_string()),
+        let count = rows.into_iter().next().map(|r| r.count).unwrap_or(0);
+        if count == 0 {
+            return Err("Access denied or project not found".to_string());
         }
+
+        // 関係とプロジェクトを削除
+        self.db
+            .query("DELETE FROM owns_project WHERE in = type::thing('user', $user_id) AND out = type::thing('cloud_project', $project_id)")
+            .bind(("user_id", user_id.to_string()))
+            .bind(("project_id", project_id.to_string()))
+            .await
+            .map_err(|e| format!("SurrealDB delete relation failed: {}", e))?;
 
         self.db
             .query("DELETE FROM cloud_project WHERE id = $project_id")
             .bind(("project_id", project_id.to_string()))
             .await
             .map_err(|e| format!("SurrealDB delete_project failed: {}", e))?;
+
         Ok(())
     }
 }
@@ -353,29 +349,7 @@ impl UserRecord {
 }
 
 #[derive(Debug, Deserialize)]
-struct SessionRecord {
-    id: String,
-    user_id: String,
-    expires_at: String,
-    created_at: String,
-    access_token: String,
-}
-
-impl SessionRecord {
-    fn into_session(self) -> Session {
-        Session {
-            id: self.id,
-            user_id: self.user_id,
-            expires_at: self.expires_at,
-            created_at: self.created_at,
-            access_token: self.access_token,
-        }
-    }
-}
-
-#[derive(Debug, Deserialize)]
 struct CloudProjectRecord {
-    user_id: String,
     data: String,
 }
 
@@ -387,6 +361,6 @@ struct ProjectSummaryRecord {
 }
 
 #[derive(Debug, Deserialize)]
-struct OwnerRecord {
-    user_id: String,
+struct CountRecord {
+    count: i64,
 }

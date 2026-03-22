@@ -14,6 +14,8 @@ pub mod web_modules;
 pub mod collab;
 #[cfg(feature = "web-server")]
 pub mod surrealdb_client;
+#[cfg(feature = "web-server")]
+pub mod redis_client;
 
 #[cfg(feature = "tauri-app")]
 pub fn run() {

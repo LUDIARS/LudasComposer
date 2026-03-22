@@ -154,7 +154,7 @@ pub async fn github_callback(
         created_at: now,
         access_token: token_data.access_token.clone(),
     };
-    state.surreal.put_session(&session).await
+    state.redis.put_session(&session).await
         .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, format!("Failed to create session: {}", e)))?;
 
     let cookie = Cookie::build((SESSION_COOKIE, session.id))
@@ -181,7 +181,7 @@ pub async fn logout(
     jar: CookieJar,
 ) -> Result<(CookieJar, Json<()>), (StatusCode, String)> {
     if let Some(session_id) = jar.get(SESSION_COOKIE).map(|c| c.value().to_string()) {
-        let _ = state.surreal.delete_session(&session_id).await;
+        let _ = state.redis.delete_session(&session_id).await;
     }
     let cookie = Cookie::build((SESSION_COOKIE, ""))
         .path("/")
@@ -189,7 +189,7 @@ pub async fn logout(
     Ok((jar.remove(cookie), Json(())))
 }
 
-/// Extract session from cookie
+/// Extract session from cookie (Redis)
 pub async fn extract_session(state: &AppState, jar: &CookieJar) -> Result<Session, (StatusCode, String)> {
     let session_id = jar
         .get(SESSION_COOKIE)
@@ -197,7 +197,7 @@ pub async fn extract_session(state: &AppState, jar: &CookieJar) -> Result<Sessio
         .ok_or((StatusCode::UNAUTHORIZED, "Not authenticated".to_string()))?;
 
     let session = state
-        .surreal
+        .redis
         .get_session(&session_id)
         .await
         .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, format!("Session lookup failed: {}", e)))?
@@ -206,14 +206,14 @@ pub async fn extract_session(state: &AppState, jar: &CookieJar) -> Result<Sessio
     let expires_at = chrono::DateTime::parse_from_rfc3339(&session.expires_at)
         .map_err(|_| (StatusCode::INTERNAL_SERVER_ERROR, "Invalid session expiry".to_string()))?;
     if Utc::now() > expires_at {
-        let _ = state.surreal.delete_session(&session_id).await;
+        let _ = state.redis.delete_session(&session_id).await;
         return Err((StatusCode::UNAUTHORIZED, "Session expired".to_string()));
     }
 
     Ok(session)
 }
 
-/// Extract user from session cookie
+/// Extract user from session cookie (Redis + SurrealDB)
 pub async fn extract_user(state: &AppState, jar: &CookieJar) -> Result<User, (StatusCode, String)> {
     let session_id = jar
         .get(SESSION_COOKIE)
@@ -221,7 +221,7 @@ pub async fn extract_user(state: &AppState, jar: &CookieJar) -> Result<User, (St
         .ok_or((StatusCode::UNAUTHORIZED, "Not authenticated".to_string()))?;
 
     let session = state
-        .surreal
+        .redis
         .get_session(&session_id)
         .await
         .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, format!("Session lookup failed: {}", e)))?
@@ -231,7 +231,7 @@ pub async fn extract_user(state: &AppState, jar: &CookieJar) -> Result<User, (St
     let expires_at = chrono::DateTime::parse_from_rfc3339(&session.expires_at)
         .map_err(|_| (StatusCode::INTERNAL_SERVER_ERROR, "Invalid session expiry".to_string()))?;
     if Utc::now() > expires_at {
-        let _ = state.surreal.delete_session(&session_id).await;
+        let _ = state.redis.delete_session(&session_id).await;
         return Err((StatusCode::UNAUTHORIZED, "Session expired".to_string()));
     }
 
