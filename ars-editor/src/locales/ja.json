@@ -1,0 +1,534 @@
+{
+  "app": {
+    "name": "ARS",
+    "nav": {
+      "editor": "エディタ",
+      "depot": "リソースデポ",
+      "data": "データオーガナイザ"
+    },
+    "auth": {
+      "logout": "ログアウト",
+      "signInGithub": "GitHubでサインイン",
+      "loginGithub": "GitHubでログイン",
+      "signOut": "サインアウト",
+      "signInPrompt": "GitHubにサインインしてプロジェクトを管理します。"
+    }
+  },
+  "toolbar": {
+    "new": "新規",
+    "open": "開く",
+    "save": "保存",
+    "undo": "元に戻す",
+    "redo": "やり直し",
+    "push": "プッシュ",
+    "pushing": "...",
+    "unsaved": "(未保存)",
+    "unsavedMark": " *",
+    "scenes": "シーン",
+    "components": "コンポーネント",
+    "prefabs": "プレハブ",
+    "behavior": "ビヘイビア",
+    "preview": "プレビュー",
+    "projects": "プロジェクト",
+    "help": "? ヘルプ",
+    "newProject": "新規プロジェクト",
+    "openProject": "プロジェクトを開く",
+    "saveProject": "プロジェクトを保存 (Ctrl+S)",
+    "undoAction": "元に戻す (Ctrl+Z)",
+    "redoAction": "やり直し (Ctrl+Y)",
+    "toggleComponentList": "コンポーネント一覧の表示切替",
+    "togglePrefabList": "プレハブ一覧の表示切替",
+    "toggleBehaviorEditor": "ビヘイビアエディタの表示切替",
+    "togglePreview": "プレビューの表示切替",
+    "togglePanel": "パネル切替",
+    "pushToRepo": "{{repo}} にプッシュ",
+    "pushToGithub": "GitHubにプッシュ",
+    "projectManager": "プロジェクトマネージャ",
+    "gettingStarted": "はじめにガイド",
+    "lastSaved": "最終保存: {{time}}",
+    "toast": {
+      "saved": "保存しました！",
+      "downloaded": "ダウンロードしました！",
+      "loaded": "読み込みました！",
+      "loadFailed": "読み込み失敗",
+      "invalidFile": "無効なファイル",
+      "newProject": "新規プロジェクト",
+      "pushingGithub": "GitHubにプッシュ中...",
+      "pushed": "プッシュしました！",
+      "pushFailed": "プッシュ失敗"
+    },
+    "confirmNew": "新規プロジェクトを作成しますか？未保存の変更は失われます。",
+    "defaultProjectName": "無題のプロジェクト",
+    "enterProjectPath": "プロジェクトファイルのパスを入力:"
+  },
+  "contextMenu": {
+    "addNode": "ノードを追加",
+    "addActor": "アクターを追加",
+    "addSequence": "シーケンスを追加",
+    "pasteActor": "アクターを貼り付け ({{count}})",
+    "fromPrefab": "プレハブから"
+  },
+  "sceneManager": {
+    "scenes": "シーン",
+    "newScenePlaceholder": "新しいシーン名...",
+    "noScenes": "シーンがありません",
+    "deleteConfirm": "シーン「{{name}}」を削除しますか？",
+    "deleteTitle": "シーンを削除"
+  },
+  "nodeCanvas": {
+    "emptyPrompt": "シーンを選択または作成して編集を開始してください"
+  },
+  "actorNode": {
+    "prefab": "プレハブ: {{name}}",
+    "components": "コンポーネント:",
+    "noComponents": "コンポーネントなし",
+    "addComponent": "[+ 追加]",
+    "sequences": "シーケンス:",
+    "editSequences": "[編集]",
+    "moreSequences": "...+{{count}} 件",
+    "subScene": "サブシーン: ",
+    "none": "なし",
+    "setSubScene": "[設定]",
+    "copyActor": "アクターをコピー",
+    "copy": "コピー",
+    "duplicateActor": "アクターを複製",
+    "duplicate": "複製",
+    "savePrefab": "プレハブとして保存",
+    "savePrefabBtn": "プレハブ保存",
+    "prefabNamePrompt": "プレハブ名:"
+  },
+  "componentPicker": {
+    "title": "コンポーネントピッカー",
+    "actor": "アクター: {{name}}",
+    "searchPlaceholder": "コンポーネントを検索...",
+    "all": "すべて",
+    "noComponents": "コンポーネントがまだありません。コンポーネントエディタで作成してください。",
+    "noMatching": "一致するコンポーネントがありません",
+    "missingDeps": "⚠ 不足している依存関係: "
+  },
+  "componentEditor": {
+    "editTitle": "コンポーネント編集",
+    "newTitle": "新規コンポーネント",
+    "name": "名前",
+    "namePlaceholder": "コンポーネント名",
+    "nameRequired": "名前は必須です",
+    "category": "カテゴリ",
+    "invalidCategory": "無効なカテゴリ",
+    "domain": "ドメイン",
+    "domainPlaceholder": "例: Physics, Rendering, Input",
+    "domainRequired": "ドメインは必須です",
+    "taskRequired": "タスクが少なくとも1つ必要です",
+    "dependencies": "依存関係",
+    "noDependencies": "利用可能なコンポーネントがありません",
+    "cancel": "キャンセル",
+    "save": "保存"
+  },
+  "componentList": {
+    "title": "コンポーネント ({{count}})",
+    "searchPlaceholder": "検索...",
+    "all": "すべて",
+    "noComponents": "コンポーネントがまだ定義されていません",
+    "noMatching": "一致するコンポーネントがありません",
+    "edit": "編集",
+    "delete": "削除",
+    "del": "削除",
+    "variables": "変数",
+    "tasks": "タスク",
+    "dependencies": "依存関係",
+    "newComponent": "+ 新規コンポーネント"
+  },
+  "taskEditor": {
+    "tasks": "タスク",
+    "addTask": "+ タスク追加",
+    "noTasks": "タスクが未定義です（最低1つ必要）",
+    "taskNamePlaceholder": "タスク名",
+    "descriptionPlaceholder": "説明...",
+    "inputs": "入力",
+    "outputs": "出力",
+    "portNamePlaceholder": "ポート名",
+    "typePlaceholder": "型"
+  },
+  "variableEditor": {
+    "variables": "変数",
+    "addVariable": "+ 変数追加",
+    "noVariables": "変数が定義されていません",
+    "namePlaceholder": "名前",
+    "typePlaceholder": "型",
+    "defaultPlaceholder": "既定値"
+  },
+  "testCaseEditor": {
+    "testCases": "テストケース",
+    "noTestCases": "テストケースなし",
+    "descriptionPlaceholder": "テストケースの説明..."
+  },
+  "prefabList": {
+    "title": "プレハブ",
+    "empty": "プレハブがありません。アクターをプレハブとして保存して再利用できます。",
+    "addToScene": "シーンに追加",
+    "deleteConfirm": "プレハブ「{{name}}」を削除しますか？",
+    "deleteTitle": "プレハブを削除"
+  },
+  "preview": {
+    "title": "プレビュー",
+    "selectScene": "プレビューするシーンを選択してください",
+    "actors": "{{count}} アクター",
+    "connections": "{{count}} 接続",
+    "components": "{{count}} コンポーネント",
+    "noActors": "このシーンにアクターがありません",
+    "copyJson": "シーンJSONをコピー"
+  },
+  "sequenceEditor": {
+    "title": "シーケンス - {{name}}",
+    "noSequences": "シーケンスが定義されていません",
+    "moveUp": "上へ移動",
+    "moveDown": "下へ移動",
+    "remove": "削除",
+    "descriptionPlaceholder": "説明...",
+    "addStepLabel": "ステップ追加:",
+    "stepNamePlaceholder": "ステップ名...",
+    "stepDescPlaceholder": "説明（任意）...",
+    "addStep": "+ ステップ追加"
+  },
+  "subScenePicker": {
+    "title": "サブシーン設定 - {{name}}",
+    "none": "(なし)",
+    "noScenes": "他のシーンがありません。先に別のシーンを作成してください。"
+  },
+  "behaviorEditor": {
+    "title": "ビヘイビアエディタ",
+    "sceneStates": "{{scene}} - {{count}} 状態",
+    "newStatePlaceholder": "新しい状態...",
+    "addStatePrompt": "状態を追加してキーの動作を定義してください",
+    "bindings": "({{count}} バインディング)",
+    "deleteState": "状態を削除",
+    "noBindings": "キーバインディングがありません。下から追加してください。",
+    "addKeyBinding": "キーバインディング追加",
+    "keyPlaceholder": "キー（例: W, Space）",
+    "pressKey": "キーを押してください...",
+    "capture": "キャプチャ",
+    "cancelCapture": "キャンセル",
+    "list": "一覧",
+    "descPlaceholder": "説明（例: プレイヤーを前に移動）",
+    "targetActor": "ターゲットアクター（自動接続）",
+    "addBinding": "+ バインディング追加",
+    "target": "ターゲット:",
+    "targetNone": "なし"
+  },
+  "projectManager": {
+    "title": "プロジェクトマネージャ",
+    "tabs": {
+      "repos": "GitHubリポジトリ",
+      "local": "クローン済みプロジェクト",
+      "new": "新規リポジトリ"
+    },
+    "repos": {
+      "loading": "リポジトリを読み込み中...",
+      "noRepos": "リポジトリが見つかりません。",
+      "private": "非公開",
+      "clone": "クローン"
+    },
+    "local": {
+      "noProjects": "クローン済みプロジェクトがありません。先にリポジトリをクローンしてください。",
+      "noProjectJson": "(project.jsonなし)",
+      "load": "読み込み",
+      "push": "プッシュ"
+    },
+    "newRepo": {
+      "description": "新しいGitHubリポジトリを作成して現在のプロジェクトを保存します。",
+      "repoName": "リポジトリ名",
+      "repoNamePlaceholder": "my-ars-project",
+      "repoDesc": "説明（任意）",
+      "repoDescPlaceholder": "Ars Editor プロジェクト",
+      "privateRepo": "非公開リポジトリ",
+      "createSave": "作成して保存"
+    },
+    "footer": {
+      "active": "アクティブ: ",
+      "pushCurrent": "現在のプロジェクトをプッシュ"
+    },
+    "toast": {
+      "cloning": "{{name}} をクローン中...",
+      "cloneComplete": "クローン完了！",
+      "projectLoaded": "プロジェクトを読み込みました！",
+      "clonedNoProject": "クローン済み（project.jsonが見つかりません）",
+      "cloneFailed": "クローン失敗: {{error}}",
+      "loadingProject": "プロジェクトを読み込み中...",
+      "noProjectJson": "このリポジトリにproject.jsonがありません",
+      "loadFailed": "読み込み失敗: {{error}}",
+      "pushing": "GitHubにプッシュ中...",
+      "pushed": "プッシュ成功！",
+      "pushFailed": "プッシュ失敗: {{error}}",
+      "creating": "リポジトリを作成中...",
+      "repoCreated": "リポジトリを作成しました！",
+      "savedToRepo": "新しいリポジトリにプロジェクトを保存しました！",
+      "createFailed": "失敗: {{error}}"
+    }
+  },
+  "userMenu": {
+    "projects": "プロジェクト"
+  },
+  "helpTooltip": {
+    "clickToClose": "クリックで閉じる",
+    "help": "ヘルプ"
+  },
+  "dataOrganizer": {
+    "title": "データオーガナイザ",
+    "export": "エクスポート",
+    "import": "インポート",
+    "masterData": "マスタデータ ({{count}})",
+    "userVariables": "ユーザー変数 ({{count}})",
+    "dismiss": "閉じる",
+    "loading": "読み込み中...",
+    "noSchemas": "スキーマなし",
+    "addEntry": "+ エントリ追加",
+    "entryId": "エントリID",
+    "actor": "アクター",
+    "noEntries": "エントリがありません。「+ エントリ追加」をクリックして作成してください。",
+    "selectSchema": "スキーマを選択",
+    "name": "名前",
+    "type": "型",
+    "value": "値",
+    "persistence": "永続化",
+    "description": "説明",
+    "noVariables": "ユーザー変数なし"
+  },
+  "resourceDepot": {
+    "title": "リソースデポ",
+    "readOnly": "読み取り専用",
+    "tabs": {
+      "resources": "リソース",
+      "bonePatterns": "ボーンパターン",
+      "motionGroups": "モーショングループ",
+      "textureGroups": "テクスチャグループ"
+    },
+    "searchPlaceholder": "検索...",
+    "all": "すべて",
+    "categories": {
+      "model": "モデル",
+      "texture": "テクスチャ",
+      "motion": "モーション",
+      "font": "フォント",
+      "sound": "サウンド"
+    },
+    "loading": "読み込み中...",
+    "noResources": "リソースが見つかりません",
+    "table": {
+      "filename": "ファイル名",
+      "original": "元ファイル名",
+      "category": "カテゴリ",
+      "role": "ロール",
+      "size": "サイズ",
+      "status": "ステータス"
+    },
+    "noBonePatterns": "ボーンパターンなし",
+    "id": "ID: ",
+    "required": "必須: ",
+    "optional": "任意: ",
+    "noMotionGroups": "モーショングループなし",
+    "motionInfo": "{{count}} モーション | パターン: {{pattern}}",
+    "noTextureGroups": "テクスチャグループなし",
+    "textureInfo": "{{count}} テクスチャ | アトラス: {{width}}x{{height}}",
+    "detail": {
+      "title": "リソース詳細",
+      "id": "ID",
+      "filename": "ファイル名",
+      "original": "元ファイル名",
+      "category": "カテゴリ",
+      "role": "ロール",
+      "size": "サイズ",
+      "hash": "ハッシュ",
+      "status": "ステータス",
+      "localPath": "ローカルパス",
+      "metadata": "メタデータ"
+    }
+  },
+  "gettingStarted": {
+    "title": "はじめに",
+    "subtitle": "サンプルゲームを作るための5つのステップ",
+    "steps": "手順",
+    "tips": "ヒント",
+    "clickToClose": "クリックで閉じる",
+    "previous": "前へ",
+    "next": "次へ",
+    "start": "開始！",
+    "step1": {
+      "title": "シーンの定義",
+      "description": "シーンはゲームの各画面やステージを管理する最上位の単位です。",
+      "details": [
+        "シーンリストパネルでシーン名を入力し「+」をクリックして新しいシーンを作成します。",
+        "シーン名をクリックしてシーンを切り替えます。",
+        "ダブルクリックでシーン名を変更できます。"
+      ],
+      "tips": [
+        "「TitleScreen」「Stage1」「GameOver」のようなわかりやすい名前を使いましょう。"
+      ]
+    },
+    "step2": {
+      "title": "アクターの定義",
+      "description": "アクターはゲーム内のオブジェクト（キャラクター、敵、背景、UI要素など）です。",
+      "details": [
+        "ノードキャンバスを右クリックして新しいアクターを追加します。",
+        "アクターノード間をドラッグしてデータフロー接続を作成します。",
+        "アクターをクリックしてコンポーネントピッカーを開きます。"
+      ],
+      "tips": [
+        "Ctrl+Dでアクターを素早く複製できます。",
+        "よく使うアクターはプレハブとして保存して再利用しましょう。"
+      ]
+    },
+    "step3": {
+      "title": "モジュールの選択と定義",
+      "description": "モジュール（コンポーネント）はアクターの機能を定義します（物理、描画、入力処理など）。",
+      "details": [
+        "アクターをクリックしてコンポーネントピッカーを開き、モジュールをアタッチします。",
+        "コンポーネントエディタで新しいカスタムモジュールを定義できます。",
+        "各モジュールには変数（状態）、タスク（動作）、依存関係があります。"
+      ],
+      "tips": [
+        "カテゴリ（UI、Logic、System、GameObject）でフィルタリングしてモジュールを素早く見つけられます。",
+        "依存関係を確認して必要なモジュールがアタッチされているか確認してください。"
+      ]
+    },
+    "step4": {
+      "title": "コードの実装",
+      "description": "アクター/コンポーネント定義からAIアシスタンスを使ってコードを生成します。",
+      "details": [
+        "コード生成機能を使って実装コードを生成します。",
+        "MCPサーバーでコードレビューと改善を支援できます。",
+        "生成されたコードを適用前にプレビューできます。"
+      ],
+      "tips": [
+        "MCPサーバーを使って反復的にコードを改善できます。",
+        "適用前に変更内容をプレビューしてください。"
+      ]
+    },
+    "step5": {
+      "title": "実行とテスト",
+      "description": "生成した出力を実行してゲームをテストし、反復改善します。",
+      "details": [
+        "プロジェクトをビルド・実行して機能をテストします。",
+        "プレビューパネルでシーン構造を確認します。",
+        "コンポーネントを反復改善してコードを再生成します。"
+      ],
+      "tips": [
+        "プレビューパネルでアクター階層を確認してください。",
+        "再利用する設定はプレハブとして保存しましょう。"
+      ]
+    }
+  },
+  "settings": {
+    "title": "設定",
+    "language": "言語",
+    "languageDescription": "エディタの表示言語を選択します。",
+    "languages": {
+      "en": "English",
+      "ja": "日本語"
+    },
+    "close": "閉じる"
+  },
+  "help": {
+    "sceneList": {
+      "description": "シーンはゲームの各画面やステージを管理する最上位の単位です。",
+      "item1": "シーン名を入力 → 「+」 → 新しいシーンを作成",
+      "item2": "シーン名をクリック → 選択・編集対象を切り替え",
+      "item3": "ダブルクリック → シーン名を変更",
+      "item4": "「✕」ボタン → シーンを削除"
+    },
+    "nodeCanvas": {
+      "description": "アクター（ゲームオブジェクト）をビジュアルに配置・接続するメインのエディタ領域です。",
+      "item1": "右クリック → コンテキストメニューからアクターを追加",
+      "item2": "ノード間をドラッグ → データフローを接続",
+      "item3": "マウスホイール → ズーム、ドラッグ → パン",
+      "item4": "ノード選択 → Delete → ノードを削除",
+      "item5": "Ctrl+C / Ctrl+V → コピー＆ペースト",
+      "item6": "Ctrl+D → 選択中のアクターを複製",
+      "item7": "アクターをクリック → Component Picker を開く"
+    },
+    "componentEditor": {
+      "description": "コンポーネント（モジュール）の詳細を定義・編集するパネルです。",
+      "item1": "コンポーネント名を設定",
+      "item2": "カテゴリ選択: UI / Logic / System / GameObject",
+      "item3": "ドメインを設定（Physics, Rendering 等）",
+      "item4": "「+ Variable」→ 状態変数を追加（名前・型・初期値）",
+      "item5": "「+ Task」→ タスクを追加（入出力ポートを定義）",
+      "item6": "依存する他コンポーネントをチェック",
+      "item7": "Save → 変更を保存、Cancel → 変更を破棄"
+    },
+    "componentList": {
+      "description": "プロジェクト内の全コンポーネントを一覧・管理するパネルです。",
+      "item1": "検索バーに入力 → 名前やドメインで絞り込み",
+      "item2": "カテゴリボタン → カテゴリ別にフィルタリング",
+      "item3": "項目をクリック → 展開して変数・タスク・依存関係を確認",
+      "item4": "「Edit」ボタン → Component Editor を開いて編集",
+      "item5": "「Duplicate」ボタン → コンポーネントを複製",
+      "item6": "「Delete」ボタン → コンポーネントを削除",
+      "item7": "「+ New Component」→ 新しいコンポーネントを作成"
+    },
+    "prefabList": {
+      "description": "再利用可能なアクターテンプレート（プレハブ）を管理するパネルです。",
+      "item1": "Canvas でアクター右クリック → 「Save as Prefab」→ プレハブを登録",
+      "item2": "ダブルクリック → プレハブ名を変更",
+      "item3": "「+」ボタン → アクティブシーンにインスタンスを配置",
+      "item4": "「✕」ボタン → プレハブを削除"
+    },
+    "preview": {
+      "description": "現在のシーンのアクター階層と接続を確認できるプレビューパネルです。",
+      "item1": "アクターのツリー構造を可視化",
+      "item2": "接続関係を一覧で確認"
+    },
+    "toolbar": {
+      "title": "ツールバー",
+      "description": "プロジェクトの操作とパネルの表示切替を行うメニューバーです。",
+      "item1": "New → 新規プロジェクトを作成（現在のプロジェクトは破棄）",
+      "item2": "Open → 保存済みプロジェクトを読み込み",
+      "item3": "Save (Ctrl+S) → プロジェクトを保存",
+      "item4": "Undo (Ctrl+Z) → 直前の操作を取消",
+      "item5": "Redo (Ctrl+Y) → 取り消した操作をやり直し",
+      "item6": "パネルトグル → Components / Prefabs / Behavior / Preview の表示切替",
+      "item7": "Push → GitHub リポジトリに変更をプッシュ"
+    },
+    "componentPicker": {
+      "description": "アクターにアタッチするコンポーネントを選択するダイアログです。",
+      "item1": "チェックボックスをクリック → コンポーネントをアタッチ/解除",
+      "item2": "検索バーに入力 → コンポーネントを名前・ドメインで絞り込み",
+      "item3": "カテゴリボタン → カテゴリ別にフィルタリング",
+      "item4": "⚠ 依存関係の警告 → 必要なコンポーネントが不足している場合に表示"
+    },
+    "sequenceEditor": {
+      "title": "シーケンスエディタ",
+      "description": "シーケンスアクターのステップを順序付きで定義するエディタです。",
+      "item1": "ステップ名を入力 → 「+ Add Step」でステップを追加",
+      "item2": "↑↓ ボタン → ステップの実行順序を並べ替え",
+      "item3": "ステップ名をクリック → 名前をインライン編集",
+      "item4": "Description 欄 → ステップの説明を追加",
+      "item5": "✕ ボタン → ステップを削除"
+    },
+    "behaviorEditor": {
+      "description": "シーンの状態（State）とキーバインディングを定義するエディタです。",
+      "item1": "新しい状態名を入力 → 「+」→ 新しい状態を作成",
+      "item2": "状態タブをクリック → アクティブな状態を切り替え",
+      "item3": "Capture ボタン → キーボードのキーを直接入力して登録",
+      "item4": "List ボタン → よく使うキーの一覧から選択",
+      "item5": "Description 入力 → キーを押したときの動作を自然言語で記述",
+      "item6": "Target Actor 選択 → キー操作の対象アクターを指定",
+      "item7": "Delete State → 現在の状態を削除"
+    },
+    "subScenePicker": {
+      "title": "サブシーンピッカー",
+      "description": "シーンアクターにサブシーンを割り当てるダイアログです。",
+      "item1": "シーン名をクリック → そのシーンをサブシーンとして設定",
+      "item2": "(None) を選択 → サブシーンの割り当てを解除"
+    }
+  },
+  "common": {
+    "cancel": "キャンセル",
+    "save": "保存",
+    "delete": "削除",
+    "edit": "編集",
+    "close": "閉じる",
+    "search": "検索",
+    "loading": "読み込み中...",
+    "all": "すべて",
+    "none": "なし"
+  }
+}

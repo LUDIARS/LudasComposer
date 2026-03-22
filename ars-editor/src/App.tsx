@@ -5,22 +5,26 @@ import { ResourceDepotPage } from './features/resource-depot';
 import { DataOrganizerPage } from './features/data-organizer';
 import { ProjectSettingsPage } from './features/project-settings';
 import { CollabPresence } from './features/node-editor/components/CollabPresence';
+import { LanguageSettings } from './components/LanguageSettings';
 import { useAuthStore } from './stores/authStore';
 import { useCollabStore } from './stores/collabStore';
 import { useProjectStore } from './stores/projectStore';
 import { isTauri } from './lib/backend';
+import { useI18n } from '@/hooks/useI18n';
 
 type Page = 'editor' | 'depot' | 'data' | 'settings';
 
-const NAV_ITEMS: { key: Page; label: string }[] = [
-  { key: 'editor', label: 'Editor' },
-  { key: 'depot', label: 'Resource Depot' },
-  { key: 'data', label: 'Data Organizer' },
-  { key: 'settings', label: 'Settings' },
-];
-
 function App() {
+  const { t, locale } = useI18n();
+
+  const NAV_ITEMS: { key: Page; label: string }[] = [
+    { key: 'editor', label: t('app.nav.editor') },
+    { key: 'depot', label: t('app.nav.depot') },
+    { key: 'data', label: t('app.nav.data') },
+    { key: 'settings', label: t('app.nav.settings', 'Settings') },
+  ];
   const [page, setPage] = useState<Page>('editor');
+  const [showLanguageSettings, setShowLanguageSettings] = useState(false);
   const user = useAuthStore((s) => s.user);
   const fetchUser = useAuthStore((s) => s.fetchUser);
   const logout = useAuthStore((s) => s.logout);
@@ -67,8 +71,15 @@ function App() {
           </button>
         ))}
 
-        {/* 右側: コラボプレゼンス + ユーザー情報 */}
+        {/* 右側: コラボプレゼンス + 言語設定 + ユーザー情報 */}
         <div className="ml-auto flex items-center gap-3">
+          <button
+            onClick={() => setShowLanguageSettings(true)}
+            className="text-[10px] text-zinc-500 hover:text-zinc-300 transition-colors px-1"
+            title={t('settings.language')}
+          >
+            {locale === 'ja' ? '🇯🇵' : '🇺🇸'}
+          </button>
           {collabConnected && collabUsers.size > 0 && (
             <div className="flex items-center gap-1.5">
               <div className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
@@ -89,7 +100,7 @@ function App() {
                   onClick={logout}
                   className="text-[10px] text-zinc-500 hover:text-zinc-300 transition-colors"
                 >
-                  Logout
+                  {t('app.auth.logout')}
                 </button>
               </div>
             ) : (
@@ -97,7 +108,7 @@ function App() {
                 href="/auth/github/login"
                 className="text-xs text-blue-400 hover:text-blue-300 transition-colors"
               >
-                Sign in with GitHub
+                {t('app.auth.signInGithub')}
               </a>
             )
           )}
@@ -115,6 +126,9 @@ function App() {
         {page === 'data' && <DataOrganizerPage />}
         {page === 'settings' && <ProjectSettingsPage />}
       </div>
+      {showLanguageSettings && (
+        <LanguageSettings onClose={() => setShowLanguageSettings(false)} />
+      )}
     </div>
   );
 }

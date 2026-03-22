@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect, useCallback, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
+import { useI18n } from '@/hooks/useI18n';
 
 interface HelpTooltipProps {
   content: ReactNode;
@@ -18,6 +19,7 @@ export function HelpTooltip({
   highlightSelector,
   highlightRef,
 }: HelpTooltipProps) {
+  const { t } = useI18n();
   const [isOpen, setIsOpen] = useState(false);
   const [overlayMode, setOverlayMode] = useState(false);
   const containerRef = useRef<HTMLSpanElement>(null);
@@ -217,7 +219,7 @@ export function HelpTooltip({
               </button>
             </div>
             <div className="text-[10px] text-zinc-500 mt-3 pt-2 border-t border-zinc-700">
-              クリックで閉じる
+              {t('helpTooltip.clickToClose')}
             </div>
           </div>
         </div>,
@@ -239,7 +241,7 @@ export function HelpTooltip({
             ? 'border-blue-400 text-blue-400 bg-blue-400/20'
             : 'border-zinc-500 text-zinc-400 hover:border-blue-400 hover:text-blue-400 hover:bg-blue-400/10'
         }`}
-        aria-label="Help"
+        aria-label={t('helpTooltip.help')}
       >
         ?
       </button>

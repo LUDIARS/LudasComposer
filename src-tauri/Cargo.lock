@@ -53,6 +53,7 @@ version = "0.1.0"
 dependencies = [
  "dirs",
  "git2",
+ "once_cell",
  "regex",
  "serde",
  "serde_json",

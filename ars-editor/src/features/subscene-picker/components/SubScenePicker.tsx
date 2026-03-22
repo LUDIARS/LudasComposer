@@ -1,9 +1,11 @@
 import { useEditorStore } from '@/stores/editorStore';
 import { useProjectStore } from '@/stores/projectStore';
+import { useI18n } from '@/hooks/useI18n';
 import { HelpTooltip } from '@/components/HelpTooltip';
 import { helpContent } from '@/lib/help-content';
 
 export function SubScenePicker() {
+  const { t } = useI18n();
   const actorId = useEditorStore((s) => s.subScenePickerTarget);
   const closeSubScenePicker = useEditorStore((s) => s.closeSubScenePicker);
   const activeSceneId = useProjectStore((s) => s.project.activeSceneId);
@@ -33,7 +35,7 @@ export function SubScenePicker() {
         {/* Header */}
         <div className="flex items-center justify-between px-4 py-3 border-b border-zinc-700">
           <h2 className="text-sm font-semibold text-white flex items-center gap-1.5">
-            Set SubScene - {actor.name}
+            {t('subScenePicker.title', { name: actor.name })}
             <HelpTooltip content={helpContent.subScenePicker} position="bottom" />
           </h2>
           <button
@@ -55,12 +57,12 @@ export function SubScenePicker() {
             }`}
             onClick={() => handleSelect(null)}
           >
-            (None)
+            {t('subScenePicker.none')}
           </button>
 
           {availableScenes.length === 0 ? (
             <div className="text-zinc-500 text-sm text-center py-4">
-              No other scenes available. Create another scene first.
+              {t('subScenePicker.noScenes')}
             </div>
           ) : (
             availableScenes.map((s) => (

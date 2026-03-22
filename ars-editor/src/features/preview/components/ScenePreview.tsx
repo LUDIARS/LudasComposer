@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 import { useProjectStore } from '@/stores/projectStore';
+import { useI18n } from '@/hooks/useI18n';
 import { HelpTooltip } from '@/components/HelpTooltip';
 import { helpContent } from '@/lib/help-content';
 
@@ -106,6 +107,7 @@ function ActorPreviewNode({
 }
 
 export function ScenePreview() {
+  const { t } = useI18n();
   const project = useProjectStore((s) => s.project);
   const activeScene = project.activeSceneId
     ? project.scenes[project.activeSceneId]
@@ -135,11 +137,11 @@ export function ScenePreview() {
       <div className="flex flex-col h-full">
         <div className="px-3 py-2 border-b border-zinc-700">
           <h2 className="text-xs font-semibold uppercase tracking-wider text-zinc-400">
-            Preview
+            {t('preview.title')}
           </h2>
         </div>
         <div className="flex-1 flex items-center justify-center text-zinc-500 text-sm">
-          Select a scene to preview
+          {t('preview.selectScene')}
         </div>
       </div>
     );
@@ -149,22 +151,22 @@ export function ScenePreview() {
     <div className="flex flex-col h-full">
       <div className="px-3 py-2 border-b border-zinc-700">
         <h2 className="text-xs font-semibold uppercase tracking-wider text-zinc-400 flex items-center gap-1.5">
-          Preview
+          {t('preview.title')}
           <HelpTooltip content={helpContent.preview} position="left" highlightSelector='[data-help-target="preview"]' />
         </h2>
         <div className="text-sm text-white mt-1">{activeScene.name}</div>
         {stats && (
           <div className="flex gap-3 mt-1 text-xs text-zinc-500">
-            <span>{stats.actorCount} actors</span>
-            <span>{stats.connectionCount} connections</span>
-            <span>{stats.componentCount} components</span>
+            <span>{t('preview.actors', { count: stats.actorCount })}</span>
+            <span>{t('preview.connections', { count: stats.connectionCount })}</span>
+            <span>{t('preview.components', { count: stats.componentCount })}</span>
           </div>
         )}
       </div>
 
       <div className="flex-1 overflow-y-auto p-3 space-y-1">
         {rootActors.length === 0 ? (
-          <p className="text-zinc-500 text-sm text-center py-4">No actors in this scene</p>
+          <p className="text-zinc-500 text-sm text-center py-4">{t('preview.noActors')}</p>
         ) : (
           rootActors.map((actor) => (
             <ActorPreviewNode
@@ -187,7 +189,7 @@ export function ScenePreview() {
           }}
           title="Copy scene JSON to clipboard"
         >
-          Copy Scene JSON
+          {t('preview.copyJson')}
         </button>
       </div>
     </div>

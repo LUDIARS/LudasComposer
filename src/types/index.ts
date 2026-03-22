@@ -4,3 +4,4 @@ export * from './assembly';
 export * from './scripting';
 export * from './emscripten-bridge';
 export * from './app-components';
+export * from './lookdev-config';

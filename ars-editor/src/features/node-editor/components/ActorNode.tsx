@@ -2,6 +2,7 @@ import { memo } from 'react';
 import { Handle, Position, type NodeProps } from '@xyflow/react';
 import { useProjectStore } from '@/stores/projectStore';
 import { useEditorStore } from '@/stores/editorStore';
+import { useI18n } from '@/hooks/useI18n';
 import type { ActorNodeData } from '../types/nodes';
 import { ROLE_COLORS } from '../types/nodes';
 import { cn } from '@/lib/utils';
@@ -14,6 +15,7 @@ const CATEGORY_ICONS: Record<string, string> = {
 };
 
 export const ActorNode = memo(function ActorNode({ data, selected }: NodeProps) {
+  const { t } = useI18n();
   const nodeData = data as unknown as ActorNodeData;
   const components = useProjectStore((s) => s.project.components);
   const scenes = useProjectStore((s) => s.project.scenes);
@@ -74,13 +76,13 @@ export const ActorNode = memo(function ActorNode({ data, selected }: NodeProps) 
       {/* Prefab indicator */}
       {prefabName && (
         <div className="px-3 py-1 border-t border-zinc-700">
-          <div className="text-purple-400 text-[10px]">Prefab: {prefabName}</div>
+          <div className="text-purple-400 text-[10px]">{t('actorNode.prefab', { name: prefabName })}</div>
         </div>
       )}
 
       {/* Components */}
       <div className="px-3 py-2 border-t border-zinc-700">
-        <div className="text-zinc-400 text-xs mb-1">Components:</div>
+        <div className="text-zinc-400 text-xs mb-1">{t('actorNode.components')}</div>
         {attachedComponents.length > 0 ? (
           <div className="space-y-1">
             {attachedComponents.map((comp) => (
@@ -92,7 +94,7 @@ export const ActorNode = memo(function ActorNode({ data, selected }: NodeProps) 
             ))}
           </div>
         ) : (
-          <div className="text-zinc-600 text-xs italic">No components</div>
+          <div className="text-zinc-600 text-xs italic">{t('actorNode.noComponents')}</div>
         )}
         <button
           className="mt-1 text-xs text-blue-400 hover:text-blue-300 transition-colors"
@@ -101,7 +103,7 @@ export const ActorNode = memo(function ActorNode({ data, selected }: NodeProps) 
             openComponentPicker(nodeData.actorId);
           }}
         >
-          [+ Add]
+          {t('actorNode.addComponent')}
         </button>
       </div>
 
@@ -109,7 +111,7 @@ export const ActorNode = memo(function ActorNode({ data, selected }: NodeProps) 
       <div className="px-3 py-2 border-t border-zinc-700">
         <div className="flex items-center justify-between">
           <div className="text-zinc-400 text-xs">
-            Sequences: {sequenceCount > 0 ? `(${sequenceCount})` : ''}
+            {t('actorNode.sequences')} {sequenceCount > 0 ? `(${sequenceCount})` : ''}
           </div>
           <button
             className="text-xs text-orange-400 hover:text-orange-300 transition-colors"
@@ -118,7 +120,7 @@ export const ActorNode = memo(function ActorNode({ data, selected }: NodeProps) 
               openSequenceEditor(nodeData.actorId);
             }}
           >
-            [Edit]
+            {t('actorNode.editSequences')}
           </button>
         </div>
         {sequenceCount > 0 && actor?.sequences && (
@@ -129,7 +131,7 @@ export const ActorNode = memo(function ActorNode({ data, selected }: NodeProps) 
               </div>
             ))}
             {sequenceCount > 3 && (
-              <div className="text-[10px] text-zinc-600">...+{sequenceCount - 3} more</div>
+              <div className="text-[10px] text-zinc-600">{t('actorNode.moreSequences', { count: sequenceCount - 3 })}</div>
             )}
           </div>
         )}
@@ -139,7 +141,7 @@ export const ActorNode = memo(function ActorNode({ data, selected }: NodeProps) 
       <div className="px-3 py-1.5 border-t border-zinc-700">
         <div className="flex items-center justify-between">
           <div className="text-zinc-400 text-xs">
-            SubScene: {subSceneName ? <span className="text-cyan-400">{subSceneName}</span> : <span className="text-zinc-600 italic">None</span>}
+            {t('actorNode.subScene')} {subSceneName ? <span className="text-cyan-400">{subSceneName}</span> : <span className="text-zinc-600 italic">{t('actorNode.none')}</span>}
           </div>
           <button
             className="text-xs text-cyan-400 hover:text-cyan-300 transition-colors"
@@ -148,7 +150,7 @@ export const ActorNode = memo(function ActorNode({ data, selected }: NodeProps) 
               openSubScenePicker(nodeData.actorId);
             }}
           >
-            [Set]
+            {t('actorNode.setSubScene')}
           </button>
         </div>
       </div>
@@ -161,9 +163,9 @@ export const ActorNode = memo(function ActorNode({ data, selected }: NodeProps) 
             e.stopPropagation();
             if (actor) copyToClipboard([actor]);
           }}
-          title="Copy Actor"
+          title={t('actorNode.copyActor')}
         >
-          Copy
+          {t('actorNode.copy')}
         </button>
         <button
           className="text-[10px] text-zinc-400 hover:text-white bg-zinc-800 hover:bg-zinc-700 px-1.5 py-0.5 rounded transition-colors"
@@ -171,22 +173,22 @@ export const ActorNode = memo(function ActorNode({ data, selected }: NodeProps) 
             e.stopPropagation();
             if (activeSceneId) duplicateActor(activeSceneId, nodeData.actorId);
           }}
-          title="Duplicate Actor"
+          title={t('actorNode.duplicateActor')}
         >
-          Duplicate
+          {t('actorNode.duplicate')}
         </button>
         <button
           className="text-[10px] text-purple-400 hover:text-purple-300 bg-zinc-800 hover:bg-zinc-700 px-1.5 py-0.5 rounded transition-colors"
           onClick={(e) => {
             e.stopPropagation();
             if (activeSceneId) {
-              const name = prompt('Prefab name:', nodeData.name);
+              const name = prompt(t('actorNode.prefabNamePrompt'), nodeData.name);
               if (name) createPrefab(name, activeSceneId, nodeData.actorId);
             }
           }}
-          title="Save as Prefab"
+          title={t('actorNode.savePrefab')}
         >
-          Save Prefab
+          {t('actorNode.savePrefabBtn')}
         </button>
       </div>
 

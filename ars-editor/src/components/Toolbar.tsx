@@ -4,15 +4,18 @@ import { useEditorStore } from '@/stores/editorStore';
 import { useAuthStore } from '@/stores/authStore';
 import { canUndo, canRedo, undo, redo, clearHistory } from '@/stores/historyMiddleware';
 import { useIsMobile } from '@/hooks/useIsMobile';
+import { useI18n } from '@/hooks/useI18n';
 import * as backend from '@/lib/backend';
 import * as authApi from '@/lib/auth-api';
 import { UserMenu } from './UserMenu';
 import { ProjectManager } from './ProjectManager';
+import { ProjectWizard } from './ProjectWizard';
 import { GettingStartedGuide } from './GettingStartedGuide';
 import { HelpTooltip } from './HelpTooltip';
 import { helpContent } from '@/lib/help-content';
 
 export function Toolbar() {
+  const { t } = useI18n();
   const project = useProjectStore((s) => s.project);
   const loadProject = useProjectStore((s) => s.loadProject);
   const isDirty = useEditorStore((s) => s.isDirty);
@@ -32,6 +35,7 @@ export function Toolbar() {
   const [status, setStatus] = useState<string>('');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [showProjectManager, setShowProjectManager] = useState(false);
+  const [showWizard, setShowWizard] = useState(false);
   const [showGuide, setShowGuide] = useState(false);
   const [pushing, setPushing] = useState(false);
   const isMobile = useIsMobile();
@@ -50,7 +54,7 @@ export function Toolbar() {
       }
       await backend.saveProject(path, project);
       markSaved(path);
-      showStatus('Saved!');
+      showStatus(t('toolbar.toast.saved'));
     } catch {
       const json = JSON.stringify(project, null, 2);
       const blob = new Blob([json], { type: 'application/json' });
@@ -61,23 +65,23 @@ export function Toolbar() {
       a.click();
       URL.revokeObjectURL(url);
       markSaved();
-      showStatus('Downloaded!');
+      showStatus(t('toolbar.toast.downloaded'));
     }
   }, [project, projectPath, markSaved]);
 
   const handleLoad = useCallback(async () => {
     if (backend.isTauri()) {
       try {
-        const input = prompt('Enter project file path:');
+        const input = prompt(t('toolbar.enterProjectPath'));
         if (!input) return;
         const loaded = await backend.loadProject(input);
         loadProject(loaded);
         clearHistory();
         setProjectPath(input);
         markSaved(input);
-        showStatus('Loaded!');
+        showStatus(t('toolbar.toast.loaded'));
       } catch {
-        showStatus('Load failed');
+        showStatus(t('toolbar.toast.loadFailed'));
       }
     } else {
       const input = document.createElement('input');
@@ -92,9 +96,9 @@ export function Toolbar() {
           loadProject(parsed);
           clearHistory();
           markSaved();
-          showStatus('Loaded!');
+          showStatus(t('toolbar.toast.loaded'));
         } catch {
-          showStatus('Invalid file');
+          showStatus(t('toolbar.toast.invalidFile'));
         }
       };
       input.click();
@@ -102,37 +106,27 @@ export function Toolbar() {
   }, [loadProject, setProjectPath, markSaved]);
 
   const handleNew = useCallback(() => {
-    if (isDirty && !confirm('Create a new project? Unsaved changes will be lost.')) return;
-    loadProject({
-      name: 'Untitled Project',
-      scenes: {},
-      components: {},
-      prefabs: {},
-      activeSceneId: null,
-    });
-    clearHistory();
-    setProjectPath(null);
-    markSaved();
-    showStatus('New project');
-  }, [loadProject, setProjectPath, markSaved, isDirty]);
+    if (isDirty && !confirm(t('toolbar.confirmNew'))) return;
+    setShowWizard(true);
+  }, [isDirty, t]);
 
   const handleGitPush = useCallback(async () => {
     if (!activeGitRepo) return;
     setPushing(true);
-    showStatus('Pushing to GitHub...');
+    showStatus(t('toolbar.toast.pushingGithub'));
     try {
       await authApi.pushGitProject(activeGitRepo, project);
       markSaved();
-      showStatus('Pushed!');
+      showStatus(t('toolbar.toast.pushed'));
     } catch {
-      showStatus('Push failed');
+      showStatus(t('toolbar.toast.pushFailed'));
     } finally {
       setPushing(false);
     }
   }, [activeGitRepo, project, markSaved]);
 
   const lastSavedLabel = lastSavedAt
-    ? `Last saved: ${new Date(lastSavedAt).toLocaleTimeString()}`
+    ? t('toolbar.lastSaved', { time: new Date(lastSavedAt).toLocaleTimeString() })
     : '';
 
   // --- Mobile Toolbar ---
@@ -143,7 +137,7 @@ export function Toolbar() {
         <button
           onClick={() => setMobileSceneMenu(true)}
           className="px-2 py-1 text-zinc-300 hover:bg-zinc-700 rounded transition-colors text-base"
-          title="Scenes"
+          title={t('toolbar.scenes')}
         >
           ☰
         </button>
@@ -152,9 +146,9 @@ export function Toolbar() {
         <button
           onClick={handleSave}
           className="px-2 py-1 text-zinc-300 hover:bg-zinc-700 rounded transition-colors"
-          title="Save"
+          title={t('toolbar.save')}
         >
-          Save{isDirty ? ' *' : ''}
+          {t('toolbar.save')}{isDirty ? t('toolbar.unsavedMark') : ''}
         </button>
 
         {/* Undo/Redo */}
@@ -162,7 +156,7 @@ export function Toolbar() {
           onClick={() => { if (isGenerating) abortGeneration(); undo(); markDirty(); }}
           disabled={!canUndo()}
           className="px-2 py-1 text-zinc-300 hover:bg-zinc-700 rounded transition-colors disabled:opacity-30"
-          title="Undo"
+          title={t('toolbar.undo')}
         >
           ↩
         </button>
@@ -170,7 +164,7 @@ export function Toolbar() {
           onClick={() => { redo(); markDirty(); }}
           disabled={!canRedo()}
           className="px-2 py-1 text-zinc-300 hover:bg-zinc-700 rounded transition-colors disabled:opacity-30"
-          title="Redo"
+          title={t('toolbar.redo')}
         >
           ↪
         </button>
@@ -183,7 +177,7 @@ export function Toolbar() {
               ? 'bg-blue-600 text-white'
               : 'text-zinc-300 hover:bg-zinc-700'
           }`}
-          title="Toggle Panel"
+          title={t('toolbar.togglePanel')}
         >
           ▤
         </button>
@@ -214,13 +208,13 @@ export function Toolbar() {
                 onClick={() => { handleNew(); setMobileMenuOpen(false); }}
                 className="w-full text-left px-3 py-2 text-zinc-300 hover:bg-zinc-700 transition-colors"
               >
-                New Project
+                {t('toolbar.newProject')}
               </button>
               <button
                 onClick={() => { handleLoad(); setMobileMenuOpen(false); }}
                 className="w-full text-left px-3 py-2 text-zinc-300 hover:bg-zinc-700 transition-colors"
               >
-                Open Project
+                {t('toolbar.openProject')}
               </button>
               <div className="h-px bg-zinc-700 my-1" />
               <button
@@ -233,7 +227,7 @@ export function Toolbar() {
                   panelVisibility.componentList ? 'text-blue-400' : 'text-zinc-300 hover:bg-zinc-700'
                 }`}
               >
-                Components
+                {t('toolbar.components')}
               </button>
               <button
                 onClick={() => {
@@ -245,7 +239,7 @@ export function Toolbar() {
                   panelVisibility.prefabList ? 'text-purple-400' : 'text-zinc-300 hover:bg-zinc-700'
                 }`}
               >
-                Prefabs
+                {t('toolbar.prefabs')}
               </button>
               <button
                 onClick={() => {
@@ -257,7 +251,7 @@ export function Toolbar() {
                   panelVisibility.behaviorEditor ? 'text-cyan-400' : 'text-zinc-300 hover:bg-zinc-700'
                 }`}
               >
-                Behavior
+                {t('toolbar.behavior')}
               </button>
               <button
                 onClick={() => {
@@ -269,7 +263,7 @@ export function Toolbar() {
                   panelVisibility.preview ? 'text-blue-400' : 'text-zinc-300 hover:bg-zinc-700'
                 }`}
               >
-                Preview
+                {t('toolbar.preview')}
               </button>
               <div className="h-px bg-zinc-700 my-1" />
               {!backend.isTauri() && (
@@ -277,7 +271,7 @@ export function Toolbar() {
                   onClick={() => { setShowProjectManager(true); setMobileMenuOpen(false); }}
                   className="w-full text-left px-3 py-2 text-zinc-300 hover:bg-zinc-700 transition-colors"
                 >
-                  Projects
+                  {t('toolbar.projects')}
                 </button>
               )}
               {activeGitRepo && (
@@ -286,7 +280,7 @@ export function Toolbar() {
                   disabled={pushing}
                   className="w-full text-left px-3 py-2 text-green-400 hover:bg-zinc-700 transition-colors disabled:opacity-50"
                 >
-                  Push to GitHub
+                  {t('toolbar.pushToGithub')}
                 </button>
               )}
               <div className="h-px bg-zinc-700 my-1" />
@@ -294,7 +288,7 @@ export function Toolbar() {
                 onClick={() => { setShowGuide(true); setMobileMenuOpen(false); }}
                 className="w-full text-left px-3 py-2 text-amber-400 hover:bg-zinc-700 transition-colors"
               >
-                ? Help
+                {t('toolbar.help')}
               </button>
               <div className="h-px bg-zinc-700 my-1" />
               <div className="px-3 py-2 text-zinc-500 truncate">
@@ -306,6 +300,9 @@ export function Toolbar() {
         )}
         {showProjectManager && (
           <ProjectManager onClose={() => setShowProjectManager(false)} />
+        )}
+        {showWizard && (
+          <ProjectWizard onClose={() => setShowWizard(false)} />
         )}
         {showGuide && (
           <GettingStartedGuide onClose={() => setShowGuide(false)} />
@@ -321,23 +318,23 @@ export function Toolbar() {
       <button
         onClick={handleNew}
         className="px-2 py-1 text-zinc-300 hover:bg-zinc-700 rounded transition-colors"
-        title="New Project"
+        title={t('toolbar.newProject')}
       >
-        New
+        {t('toolbar.new')}
       </button>
       <button
         onClick={handleLoad}
         className="px-2 py-1 text-zinc-300 hover:bg-zinc-700 rounded transition-colors"
-        title="Open Project"
+        title={t('toolbar.openProject')}
       >
-        Open
+        {t('toolbar.open')}
       </button>
       <button
         onClick={handleSave}
         className="px-2 py-1 text-zinc-300 hover:bg-zinc-700 rounded transition-colors"
-        title="Save Project (Ctrl+S)"
+        title={t('toolbar.saveProject')}
       >
-        Save{isDirty ? ' *' : ''}
+        {t('toolbar.save')}{isDirty ? t('toolbar.unsavedMark') : ''}
       </button>
 
       <div className="w-px h-4 bg-zinc-600 mx-1" />
@@ -347,17 +344,17 @@ export function Toolbar() {
         onClick={() => { undo(); markDirty(); }}
         disabled={!canUndo()}
         className="px-2 py-1 text-zinc-300 hover:bg-zinc-700 rounded transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
-        title="Undo (Ctrl+Z)"
+        title={t('toolbar.undoAction')}
       >
-        Undo
+        {t('toolbar.undo')}
       </button>
       <button
         onClick={() => { redo(); markDirty(); }}
         disabled={!canRedo()}
         className="px-2 py-1 text-zinc-300 hover:bg-zinc-700 rounded transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
-        title="Redo (Ctrl+Y)"
+        title={t('toolbar.redoAction')}
       >
-        Redo
+        {t('toolbar.redo')}
       </button>
 
       <div className="w-px h-4 bg-zinc-600 mx-1" />
@@ -370,9 +367,9 @@ export function Toolbar() {
             ? 'bg-blue-600 text-white'
             : 'text-zinc-300 hover:bg-zinc-700'
         }`}
-        title="Toggle Component List"
+        title={t('toolbar.toggleComponentList')}
       >
-        Components
+        {t('toolbar.components')}
       </button>
       <button
         onClick={() => togglePanel('prefabList')}
@@ -381,9 +378,9 @@ export function Toolbar() {
             ? 'bg-purple-600 text-white'
             : 'text-zinc-300 hover:bg-zinc-700'
         }`}
-        title="Toggle Prefab List"
+        title={t('toolbar.togglePrefabList')}
       >
-        Prefabs
+        {t('toolbar.prefabs')}
       </button>
       <button
         onClick={() => togglePanel('behaviorEditor')}
@@ -392,9 +389,9 @@ export function Toolbar() {
             ? 'bg-cyan-600 text-white'
             : 'text-zinc-300 hover:bg-zinc-700'
         }`}
-        title="Toggle Behavior Editor"
+        title={t('toolbar.toggleBehaviorEditor')}
       >
-        Behavior
+        {t('toolbar.behavior')}
       </button>
       <button
         onClick={() => togglePanel('preview')}
@@ -403,9 +400,9 @@ export function Toolbar() {
             ? 'bg-blue-600 text-white'
             : 'text-zinc-300 hover:bg-zinc-700'
         }`}
-        title="Toggle Preview"
+        title={t('toolbar.togglePreview')}
       >
-        Preview
+        {t('toolbar.preview')}
       </button>
 
       {/* Project name & status */}
@@ -415,7 +412,7 @@ export function Toolbar() {
       )}
       <span className="text-zinc-500 truncate max-w-[200px]">
         {project.name}
-        {isDirty && <span className="text-amber-400 ml-1">(unsaved)</span>}
+        {isDirty && <span className="text-amber-400 ml-1">{t('toolbar.unsaved')}</span>}
       </span>
       {status && (
         <span className="text-green-400 ml-2">{status}</span>
@@ -426,18 +423,18 @@ export function Toolbar() {
           onClick={handleGitPush}
           disabled={pushing}
           className="px-2 py-1 text-green-400 hover:bg-zinc-700 rounded transition-colors disabled:opacity-50"
-          title={`Push to ${activeGitRepo}`}
+          title={t('toolbar.pushToRepo', { repo: activeGitRepo })}
         >
-          Push{pushing ? '...' : ''}
+          {t('toolbar.push')}{pushing ? t('toolbar.pushing') : ''}
         </button>
       )}
       {!backend.isTauri() && (
         <button
           onClick={() => setShowProjectManager(true)}
           className="px-2 py-1 text-zinc-300 hover:bg-zinc-700 rounded transition-colors"
-          title="Project Manager"
+          title={t('toolbar.projectManager')}
         >
-          Projects
+          {t('toolbar.projects')}
         </button>
       )}
       <UserMenu onOpenProjectManager={() => setShowProjectManager(true)} />
@@ -446,12 +443,15 @@ export function Toolbar() {
       <button
         onClick={() => setShowGuide(true)}
         className="px-2 py-1 text-amber-400 hover:bg-zinc-700 rounded transition-colors font-medium"
-        title="Getting Started Guide"
+        title={t('toolbar.gettingStarted')}
       >
-        ? Help
+        {t('toolbar.help')}
       </button>
       {showProjectManager && (
         <ProjectManager onClose={() => setShowProjectManager(false)} />
+      )}
+      {showWizard && (
+        <ProjectWizard onClose={() => setShowWizard(false)} />
       )}
       {showGuide && (
         <GettingStartedGuide onClose={() => setShowGuide(false)} />

@@ -1,10 +1,12 @@
 import { useState } from 'react';
 import { useEditorStore } from '@/stores/editorStore';
 import { useProjectStore } from '@/stores/projectStore';
+import { useI18n } from '@/hooks/useI18n';
 import { HelpTooltip } from '@/components/HelpTooltip';
 import { helpContent } from '@/lib/help-content';
 
 export function SequenceEditor() {
+  const { t } = useI18n();
   const actorId = useEditorStore((s) => s.sequenceEditorTarget);
   const closeSequenceEditor = useEditorStore((s) => s.closeSequenceEditor);
   const activeSceneId = useProjectStore((s) => s.project.activeSceneId);
@@ -64,7 +66,7 @@ export function SequenceEditor() {
         {/* Header */}
         <div className="flex items-center justify-between px-4 py-3 border-b border-zinc-700">
           <h2 className="text-sm font-semibold text-white flex items-center gap-1.5">
-            Sequences - {actor.name}
+            {t('sequenceEditor.title', { name: actor.name })}
             <HelpTooltip content={helpContent.sequenceEditor} position="bottom" />
           </h2>
           <button
@@ -78,7 +80,7 @@ export function SequenceEditor() {
         {/* Sequence list */}
         <div className="flex-1 overflow-y-auto p-4 space-y-2">
           {sorted.length === 0 ? (
-            <div className="text-zinc-500 text-sm text-center py-4">No sequences defined</div>
+            <div className="text-zinc-500 text-sm text-center py-4">{t('sequenceEditor.noSequences')}</div>
           ) : (
             sorted.map((step, idx) => (
               <div
@@ -103,7 +105,7 @@ export function SequenceEditor() {
                       className="text-zinc-500 hover:text-white text-xs px-1"
                       onClick={() => handleMoveUp(idx)}
                       disabled={idx === 0}
-                      title="Move up"
+                      title={t('sequenceEditor.moveUp')}
                     >
                       ↑
                     </button>
@@ -111,14 +113,14 @@ export function SequenceEditor() {
                       className="text-zinc-500 hover:text-white text-xs px-1"
                       onClick={() => handleMoveDown(idx)}
                       disabled={idx === sorted.length - 1}
-                      title="Move down"
+                      title={t('sequenceEditor.moveDown')}
                     >
                       ↓
                     </button>
                     <button
                       className="text-red-400 hover:text-red-300 text-xs px-1"
                       onClick={() => removeSequenceStep(activeSceneId, actorId, step.id)}
-                      title="Remove"
+                      title={t('sequenceEditor.remove')}
                     >
                       ✕
                     </button>
@@ -127,7 +129,7 @@ export function SequenceEditor() {
                 <input
                   className="w-full bg-transparent text-zinc-400 text-xs outline-none border-b border-transparent focus:border-zinc-500"
                   value={step.description}
-                  placeholder="Description..."
+                  placeholder={t('sequenceEditor.descriptionPlaceholder')}
                   onChange={(e) =>
                     updateSequenceStep(activeSceneId, actorId, step.id, {
                       description: e.target.value,
@@ -141,10 +143,10 @@ export function SequenceEditor() {
 
         {/* Add new step */}
         <div className="border-t border-zinc-700 p-4 space-y-2">
-          <div className="text-xs text-zinc-400 mb-1">Add Step:</div>
+          <div className="text-xs text-zinc-400 mb-1">{t('sequenceEditor.addStepLabel')}</div>
           <input
             className="w-full bg-zinc-900 text-white text-sm px-3 py-1.5 rounded border border-zinc-600 outline-none focus:border-orange-500"
-            placeholder="Step name..."
+            placeholder={t('sequenceEditor.stepNamePlaceholder')}
             value={newName}
             onChange={(e) => setNewName(e.target.value)}
             onKeyDown={(e) => {
@@ -153,7 +155,7 @@ export function SequenceEditor() {
           />
           <input
             className="w-full bg-zinc-900 text-white text-sm px-3 py-1.5 rounded border border-zinc-600 outline-none focus:border-orange-500"
-            placeholder="Description (optional)..."
+            placeholder={t('sequenceEditor.stepDescPlaceholder')}
             value={newDesc}
             onChange={(e) => setNewDesc(e.target.value)}
             onKeyDown={(e) => {
@@ -165,7 +167,7 @@ export function SequenceEditor() {
             onClick={handleAdd}
             disabled={!newName.trim()}
           >
-            + Add Step
+            {t('sequenceEditor.addStep')}
           </button>
         </div>
       </div>

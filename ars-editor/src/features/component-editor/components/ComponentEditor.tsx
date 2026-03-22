@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useProjectStore } from '@/stores/projectStore';
 import { useEditorStore } from '@/stores/editorStore';
+import { useI18n } from '@/hooks/useI18n';
 import { VariableEditor } from './VariableEditor';
 import { TaskEditor } from './TaskEditor';
 import { HelpTooltip } from '@/components/HelpTooltip';
@@ -23,6 +24,7 @@ function createEmptyComponent(): Component {
 }
 
 export function ComponentEditor() {
+  const { t } = useI18n();
   const componentEditorTarget = useEditorStore((s) => s.componentEditorTarget);
   const closeComponentEditor = useEditorStore((s) => s.closeComponentEditor);
   const project = useProjectStore((s) => s.project);
@@ -60,10 +62,10 @@ export function ComponentEditor() {
 
   const validate = (): boolean => {
     const newErrors: Record<string, string> = {};
-    if (!draft.name.trim()) newErrors['name'] = 'Name is required';
-    if (!draft.domain.trim()) newErrors['domain'] = 'Domain is required';
-    if (!CATEGORIES.includes(draft.category)) newErrors['category'] = 'Invalid category';
-    if (draft.tasks.length === 0) newErrors['tasks'] = 'At least one task is required';
+    if (!draft.name.trim()) newErrors['name'] = t('componentEditor.nameRequired');
+    if (!draft.domain.trim()) newErrors['domain'] = t('componentEditor.domainRequired');
+    if (!CATEGORIES.includes(draft.category)) newErrors['category'] = t('componentEditor.invalidCategory');
+    if (draft.tasks.length === 0) newErrors['tasks'] = t('componentEditor.taskRequired');
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -85,7 +87,7 @@ export function ComponentEditor() {
     <div className="flex flex-col h-full">
       <div className="flex items-center justify-between px-4 py-2 border-b border-zinc-700">
         <h2 className="text-sm font-semibold text-white flex items-center gap-1.5">
-          {existingComponent ? 'Edit Component' : 'New Component'}
+          {existingComponent ? t('componentEditor.editTitle') : t('componentEditor.newTitle')}
           {isDirty && <span className="text-amber-400 ml-1">*</span>}
           <HelpTooltip content={helpContent.componentEditor} position="left" highlightSelector='[data-help-target="componentEditor"]' />
         </h2>
@@ -100,10 +102,10 @@ export function ComponentEditor() {
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
         {/* Name */}
         <div>
-          <label className="text-sm font-medium text-zinc-300 block mb-1">Name</label>
+          <label className="text-sm font-medium text-zinc-300 block mb-1">{t('componentEditor.name')}</label>
           <input
             className="w-full bg-zinc-800 text-white text-sm px-3 py-1.5 rounded border border-zinc-600 outline-none focus:border-blue-500"
-            placeholder="Component name"
+            placeholder={t('componentEditor.namePlaceholder')}
             value={draft.name}
             onChange={(e) => updateField('name', e.target.value)}
           />
@@ -112,7 +114,7 @@ export function ComponentEditor() {
 
         {/* Category */}
         <div>
-          <label className="text-sm font-medium text-zinc-300 block mb-1">Category</label>
+          <label className="text-sm font-medium text-zinc-300 block mb-1">{t('componentEditor.category')}</label>
           <select
             className="w-full bg-zinc-800 text-white text-sm px-3 py-1.5 rounded border border-zinc-600 outline-none focus:border-blue-500"
             value={draft.category}
@@ -129,10 +131,10 @@ export function ComponentEditor() {
 
         {/* Domain */}
         <div>
-          <label className="text-sm font-medium text-zinc-300 block mb-1">Domain</label>
+          <label className="text-sm font-medium text-zinc-300 block mb-1">{t('componentEditor.domain')}</label>
           <input
             className="w-full bg-zinc-800 text-white text-sm px-3 py-1.5 rounded border border-zinc-600 outline-none focus:border-blue-500"
-            placeholder="e.g. Physics, Rendering, Input"
+            placeholder={t('componentEditor.domainPlaceholder')}
             value={draft.domain}
             onChange={(e) => updateField('domain', e.target.value)}
           />
@@ -154,9 +156,9 @@ export function ComponentEditor() {
 
         {/* Dependencies */}
         <div className="space-y-2">
-          <label className="text-sm font-medium text-zinc-300">Dependencies</label>
+          <label className="text-sm font-medium text-zinc-300">{t('componentEditor.dependencies')}</label>
           {allComponents.filter((c) => c.id !== draft.id).length === 0 ? (
-            <p className="text-xs text-zinc-500 italic">No other components available</p>
+            <p className="text-xs text-zinc-500 italic">{t('componentEditor.noDependencies')}</p>
           ) : (
             <div className="space-y-1 max-h-[120px] overflow-y-auto">
               {allComponents
@@ -187,14 +189,14 @@ export function ComponentEditor() {
           onClick={closeComponentEditor}
           className="text-sm px-3 py-1.5 rounded bg-zinc-700 text-zinc-300 hover:bg-zinc-600 transition-colors"
         >
-          Cancel
+          {t('componentEditor.cancel')}
         </button>
         <button
           onClick={handleSave}
           disabled={!isDirty}
           className="text-sm px-3 py-1.5 rounded bg-blue-600 text-white hover:bg-blue-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          Save
+          {t('componentEditor.save')}
         </button>
       </div>
     </div>
