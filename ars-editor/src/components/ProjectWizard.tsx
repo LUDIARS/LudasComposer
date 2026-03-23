@@ -47,6 +47,8 @@ function createSceneWithRoot(sceneName: string): Scene {
         position: { x: 250, y: 50 },
         parentId: null,
         sequences: [],
+        subSceneId: null,
+        prefabId: null,
       },
     },
     connections: [],
@@ -65,6 +67,8 @@ function createActor(name: string, role: Actor['role'], x: number, y: number, pa
     position: { x, y },
     parentId: parentId ?? null,
     sequences: [],
+    subSceneId: null,
+    prefabId: null,
   };
 }
 
@@ -77,6 +81,7 @@ function createComponent(name: string, category: Component['category'], domain: 
     variables: [],
     tasks: [],
     dependencies: [],
+    sourceModuleId: null,
   };
 }
 
@@ -173,7 +178,7 @@ const templates: ProjectTemplate[] = [
         { name: 'label', type: 'string', defaultValue: 'Click' },
         { name: 'disabled', type: 'boolean', defaultValue: false },
       ];
-      button.tasks = [{ name: 'onClick', description: 'Fired when the button is pressed', inputs: [], outputs: [] }];
+      button.tasks = [{ name: 'onClick', description: 'Fired when the button is pressed', inputs: [], outputs: [], testCases: null }];
 
       const text = createComponent('Text', 'UI', 'UI');
       text.variables = [
