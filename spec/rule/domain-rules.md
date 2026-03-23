@@ -15,9 +15,54 @@ Ars のモジュール間関係を統制するルール。
 | カテゴリ | リポジトリ | 依存先 |
 |---------|-----------|--------|
 | コア | `Ars` (monorepo) | — |
+| 汎用モジュール | `Ars-Module` (ブランチ別管理) | なし or `ars-core` |
 | プラグイン | 各独立リポジトリ (`ars-plugin-*`) | `ars-core` のみ |
-| 外部ツール | 各独立リポジトリ (`ars-musa`) | なし |
-| プラットフォームブリッジ | `ars-platform-plugin` | `ars-core` のみ |
+| 外部ツール | `Ars-Musa` | なし |
+| プラットフォームブリッジ | `Ars-PlatformPlugin` | `ars-core` のみ |
+
+## Ars-Module 運用ルール
+
+汎用モジュール（auth, collab, git 等）は `Ars-Module` リポジトリに **ブランチ別** で管理する。
+
+### ブランチ命名
+
+- `module/<name>` 形式（例: `module/auth`, `module/collab`, `module/git`）
+- 各ブランチは独立したモジュールを持ち、他ブランチのコードを含まない
+
+### ディレクトリ構成
+
+各ブランチのルートに `<name>/` ディレクトリを配置する:
+
+```
+module/auth ブランチ:
+  auth/
+  ├── Cargo.toml
+  └── src/
+      └── lib.rs
+
+module/collab ブランチ:
+  collab/
+  ├── Cargo.toml
+  └── src/
+      └── lib.rs
+```
+
+### 依存解決
+
+使用側の `Cargo.toml` で git 依存 + ブランチ + subdirectory を指定する（Cargo 1.82+ 必須）:
+
+```toml
+[dependencies]
+ars-collab = { git = "https://github.com/LUDIARS/Ars-Module.git", branch = "module/collab", subdirectory = "collab" }
+ars-auth   = { git = "https://github.com/LUDIARS/Ars-Module.git", branch = "module/auth", subdirectory = "auth" }
+ars-git    = { git = "https://github.com/LUDIARS/Ars-Module.git", branch = "module/git", subdirectory = "git" }
+```
+
+### 設計原則
+
+- モジュールはアプリ固有の型（AppState 等）に依存しない
+- 外部依存の注入は trait（例: `AuthStore`）で行う
+- App 層（ars-editor / ars-web-server）が具体実装を注入して結合する
 
 ## EventBus ルール
 
