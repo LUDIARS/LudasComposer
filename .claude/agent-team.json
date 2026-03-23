@@ -1,0 +1,172 @@
+{
+  "$schema": "./agent-team.schema.json",
+  "version": "1.0.0",
+  "description": "Ars マルチエージェントチーム構成",
+  "instructionMode": "cli",
+  "instructionModes": {
+    "cli": {
+      "description": "Claude Code CLI経由でエージェントを起動",
+      "command": "claude",
+      "args": ["--print", "--output-format", "text", "--max-turns", "50"]
+    },
+    "api": {
+      "description": "Anthropic API経由でエージェントを起動",
+      "sdk": "@anthropic-ai/sdk",
+      "model": "claude-sonnet-4-20250514",
+      "maxTokens": 8192
+    }
+  },
+  "team": {
+    "leader": {
+      "role": "リーダー / アーキテクト",
+      "responsibilities": [
+        "実装タスクの分解と各エージェントへの割り当て",
+        "各エージェントの成果物レビュー",
+        "アーキテクチャ整合性の維持",
+        "テスト結果の最終確認",
+        "マージ判定"
+      ],
+      "reviewChecklist": [
+        "Arsフォーマット準拠",
+        "型安全性 (TypeScript strict / Rust clippy)",
+        "テストカバレッジ",
+        "セキュリティ (OWASP Top 10)",
+        "パフォーマンス影響",
+        "既存機能への影響"
+      ]
+    },
+    "agents": [
+      {
+        "id": "frontend-agent",
+        "name": "フロントエンドエージェント",
+        "section": "ars-editor",
+        "responsibilities": [
+          "React/TypeScript UIコンポーネント実装",
+          "React Flow ノードエディタ機能",
+          "Zustand ストア実装",
+          "Tailwind CSS スタイリング"
+        ],
+        "workingDir": "ars-editor",
+        "testCommand": "npm run lint && npx tsc -b && npx vitest run",
+        "filePatterns": ["ars-editor/src/**/*.{ts,tsx,css}"]
+      },
+      {
+        "id": "backend-agent",
+        "name": "バックエンドエージェント",
+        "section": "src-tauri",
+        "responsibilities": [
+          "Tauri コマンド実装",
+          "Rust サービス・モデル実装",
+          "ファイルI/O・永続化",
+          "Web サーバーモード対応"
+        ],
+        "workingDir": "ars-editor/src-tauri",
+        "testCommand": "cargo clippy --features web-server --no-default-features --bin ars-web-server -- -D warnings && cargo test",
+        "filePatterns": ["src-tauri/src/**/*.rs", "ars-editor/src-tauri/src/**/*.rs"]
+      },
+      {
+        "id": "data-agent",
+        "name": "データエージェント",
+        "section": "data-organizer",
+        "responsibilities": [
+          "マスターデータ・ユーザーデータ管理",
+          "スキーマ定義・バリデーション",
+          "Blackboard アーキテクチャ",
+          "Web API エンドポイント"
+        ],
+        "workingDir": "data-organizer",
+        "testCommand": "cargo test && cargo clippy -- -D warnings",
+        "filePatterns": ["data-organizer/src/**/*.rs"]
+      },
+      {
+        "id": "resource-agent",
+        "name": "リソースエージェント",
+        "section": "resource-depot",
+        "responsibilities": [
+          "リソース管理 (テクスチャ, モーション, ボーンパターン)",
+          "クラウドストレージ連携",
+          "Tauri コマンド (Rust 側)",
+          "TypeScript API クライアント"
+        ],
+        "workingDir": "resource-depot",
+        "testCommand": "cd src-tauri && cargo test && cargo clippy -- -D warnings",
+        "filePatterns": ["resource-depot/**/*.{ts,rs}"]
+      },
+      {
+        "id": "codegen-agent",
+        "name": "コード生成エージェント",
+        "section": "ars-codegen",
+        "responsibilities": [
+          "プラットフォーム別コード生成",
+          "プロンプトテンプレート管理",
+          "セッション管理",
+          "マルチプラットフォーム対応"
+        ],
+        "workingDir": "ars-codegen",
+        "testCommand": "npx tsc -b && npx vitest run",
+        "filePatterns": ["ars-codegen/src/**/*.ts"]
+      },
+      {
+        "id": "mcp-agent",
+        "name": "MCPエージェント",
+        "section": "mcp-server",
+        "responsibilities": [
+          "MCP ツール・リソース・プロンプト実装",
+          "Claude Code 統合",
+          "プロジェクトファイル操作API"
+        ],
+        "workingDir": "mcp-server",
+        "testCommand": "npx tsc -b && npx vitest run",
+        "filePatterns": ["mcp-server/src/**/*.ts"]
+      },
+      {
+        "id": "types-agent",
+        "name": "型定義エージェント",
+        "section": "src/types",
+        "responsibilities": [
+          "共有型定義の管理",
+          "型の一貫性維持",
+          "サービスインターフェース定義",
+          "型の重複排除"
+        ],
+        "workingDir": "src",
+        "testCommand": "npx tsc -b",
+        "filePatterns": ["src/**/*.ts"]
+      }
+    ]
+  },
+  "workflow": {
+    "steps": [
+      {
+        "name": "設計分析",
+        "actor": "leader",
+        "action": "Arsフォーマット定義書を分析し、実装タスクに分解"
+      },
+      {
+        "name": "タスク割り当て",
+        "actor": "leader",
+        "action": "各エージェントに担当セクションのタスクを割り当て"
+      },
+      {
+        "name": "並列実装",
+        "actor": "agents",
+        "action": "各エージェントが担当セクションを実装（テスト必須）"
+      },
+      {
+        "name": "テスト実行",
+        "actor": "agents",
+        "action": "各エージェントが自セクションのテストを実行・通過確認"
+      },
+      {
+        "name": "レビュー",
+        "actor": "leader",
+        "action": "全エージェントの成果物をレビュー、フィードバック"
+      },
+      {
+        "name": "統合テスト",
+        "actor": "leader",
+        "action": "CI チェック実行、全体の整合性確認"
+      }
+    ]
+  }
+}
