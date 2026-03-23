@@ -36,8 +36,6 @@ web-server = [
     "dep:dirs",
     "dep:futures",
     "dep:dashmap",
-    "resource-depot/web-server",
-    "data-organizer/web-server",
 ]
 
 [[bin]]
@@ -79,9 +77,6 @@ aws-config = { version = "1", optional = true }
 aws-sdk-dynamodb = { version = "1", optional = true }
 # Git operations
 git2 = { version = "0.19", optional = true }
-# Module crates
-resource-depot = { path = "../../resource-depot/src-tauri", default-features = false, optional = true }
-data-organizer = { path = "../../data-organizer", default-features = false, optional = true }
 dirs = { version = "6", optional = true }
 # Collaboration (WebSocket + shared state)
 futures = { version = "0.3", optional = true }

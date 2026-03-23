@@ -1,4 +1,4 @@
-use std::any::{Any, TypeId};
+use std::any::Any;
 use std::fmt::Debug;
 
 /// 全イベントが実装する基底 trait

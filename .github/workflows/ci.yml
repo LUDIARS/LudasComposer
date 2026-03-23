@@ -58,7 +58,6 @@ jobs:
         with:
           workspaces: |
             ars-editor/src-tauri -> target
-            data-organizer -> target
 
       - name: Clippy (web-server)
         working-directory: ars-editor/src-tauri
@@ -68,6 +67,3 @@ jobs:
         working-directory: ars-editor/src-tauri
         run: cargo build --features web-server --no-default-features --bin ars-web-server
 
-      - name: Test (data-organizer)
-        working-directory: data-organizer
-        run: cargo test

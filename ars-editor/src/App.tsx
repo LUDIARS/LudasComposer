@@ -1,8 +1,6 @@
 import { useState, useEffect } from 'react';
 import { ReactFlowProvider } from '@xyflow/react';
 import { EditorPage } from './features/editor-page';
-import { ResourceDepotPage } from './features/resource-depot';
-import { DataOrganizerPage } from './features/data-organizer';
 import { CollabPresence } from './features/node-editor/components/CollabPresence';
 import { LanguageSettings } from './components/LanguageSettings';
 import { useAuthStore } from './stores/authStore';
@@ -11,15 +9,13 @@ import { useProjectStore } from './stores/projectStore';
 import { isTauri } from './lib/backend';
 import { useI18n } from '@/hooks/useI18n';
 
-type Page = 'editor' | 'depot' | 'data';
+type Page = 'editor';
 
 function App() {
   const { t, locale } = useI18n();
 
   const NAV_ITEMS: { key: Page; label: string }[] = [
     { key: 'editor', label: t('app.nav.editor') },
-    { key: 'depot', label: t('app.nav.depot') },
-    { key: 'data', label: t('app.nav.data') },
   ];
   const [page, setPage] = useState<Page>('editor');
   const [showLanguageSettings, setShowLanguageSettings] = useState(false);
@@ -120,8 +116,6 @@ function App() {
             <EditorPage />
           </ReactFlowProvider>
         )}
-        {page === 'depot' && <ResourceDepotPage />}
-        {page === 'data' && <DataOrganizerPage />}
       </div>
       {showLanguageSettings && (
         <LanguageSettings onClose={() => setShowLanguageSettings(false)} />

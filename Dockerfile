@@ -25,10 +25,6 @@ FROM rust:1-bookworm AS server-builder
 
 WORKDIR /app
 
-# モジュールクレートをコピー
-COPY resource-depot/src-tauri/ resource-depot/src-tauri/
-COPY data-organizer/ data-organizer/
-
 # メインクレートの依存キャッシュ
 WORKDIR /app/ars-editor/src-tauri
 COPY ars-editor/src-tauri/Cargo.toml ars-editor/src-tauri/Cargo.lock* ./

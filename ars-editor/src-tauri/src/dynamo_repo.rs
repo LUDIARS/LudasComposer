@@ -29,14 +29,14 @@ impl ProjectRepository for DynamoProjectRepository {
         self.client
             .save_project(user_id, project_id, &local_project)
             .await
-            .map_err(|e| ArsError::Storage(e))
+            .map_err(ArsError::Storage)
     }
 
     async fn load(&self, user_id: &str, project_id: &str) -> Result<Option<core_models::Project>> {
         let result = self.client
             .load_project(user_id, project_id)
             .await
-            .map_err(|e| ArsError::Storage(e))?;
+            .map_err(ArsError::Storage)?;
         Ok(result.map(|p| to_core_project(&p)))
     }
 
@@ -44,7 +44,7 @@ impl ProjectRepository for DynamoProjectRepository {
         let summaries = self.client
             .list_user_projects(user_id)
             .await
-            .map_err(|e| ArsError::Storage(e))?;
+            .map_err(ArsError::Storage)?;
         Ok(summaries
             .into_iter()
             .map(|s| core_models::ProjectSummary {
@@ -59,7 +59,7 @@ impl ProjectRepository for DynamoProjectRepository {
         self.client
             .delete_project(user_id, project_id)
             .await
-            .map_err(|e| ArsError::Storage(e))
+            .map_err(ArsError::Storage)
     }
 }
 
@@ -82,14 +82,14 @@ impl UserRepository for DynamoUserRepository {
         self.client
             .put_user(&local_user)
             .await
-            .map_err(|e| ArsError::Storage(e))
+            .map_err(ArsError::Storage)
     }
 
     async fn get(&self, user_id: &str) -> Result<Option<core_models::User>> {
         let result = self.client
             .get_user(user_id)
             .await
-            .map_err(|e| ArsError::Storage(e))?;
+            .map_err(ArsError::Storage)?;
         Ok(result.map(|u| to_core_user(&u)))
     }
 
@@ -103,7 +103,7 @@ impl UserRepository for DynamoUserRepository {
         let result = self.client
             .get_user_by_github_id(github_id)
             .await
-            .map_err(|e| ArsError::Storage(e))?;
+            .map_err(ArsError::Storage)?;
         Ok(result.map(|u| to_core_user(&u)))
     }
 }
@@ -127,14 +127,14 @@ impl SessionRepository for DynamoSessionRepository {
         self.client
             .put_session(&local_session)
             .await
-            .map_err(|e| ArsError::Storage(e))
+            .map_err(ArsError::Storage)
     }
 
     async fn get(&self, session_id: &str) -> Result<Option<core_models::Session>> {
         let result = self.client
             .get_session(session_id)
             .await
-            .map_err(|e| ArsError::Storage(e))?;
+            .map_err(ArsError::Storage)?;
         Ok(result.map(|s| to_core_session(&s)))
     }
 
@@ -142,7 +142,7 @@ impl SessionRepository for DynamoSessionRepository {
         self.client
             .delete_session(session_id)
             .await
-            .map_err(|e| ArsError::Storage(e))
+            .map_err(ArsError::Storage)
     }
 
     async fn get_active(&self) -> Result<Option<core_models::Session>> {
