@@ -45,10 +45,10 @@ impl EventBus {
     pub async fn register_event<E: ArsEvent>(&self, source_module_id: &'static str) {
         let type_id = TypeId::of::<E>();
         let mut channels = self.inner.channels.write().await;
-        if !channels.contains_key(&type_id) {
+        channels.entry(type_id).or_insert_with(|| {
             let (tx, _) = broadcast::channel::<E>(self.inner.buffer_size);
-            channels.insert(type_id, Box::new(tx));
-        }
+            Box::new(tx)
+        });
         self.inner
             .event_sources
             .write()
