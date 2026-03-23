@@ -110,13 +110,155 @@ impl UserRepository for SurrealUserRepository {
 // ── 型変換ヘルパー ──────────────────────────────────
 
 fn to_local_project(p: &core_models::Project) -> crate::models::Project {
-    let json = serde_json::to_value(p).unwrap();
-    serde_json::from_value(json).unwrap()
+    crate::models::Project {
+        name: p.name.clone(),
+        scenes: p.scenes.iter().map(|(k, s)| (k.clone(), to_local_scene(s))).collect(),
+        components: p.components.iter().map(|(k, c)| (k.clone(), to_local_component(c))).collect(),
+        active_scene_id: p.active_scene_id.clone(),
+    }
 }
 
 fn to_core_project(p: &crate::models::Project) -> core_models::Project {
-    let json = serde_json::to_value(p).unwrap();
-    serde_json::from_value(json).unwrap()
+    core_models::Project {
+        name: p.name.clone(),
+        scenes: p.scenes.iter().map(|(k, s)| (k.clone(), to_core_scene(s))).collect(),
+        components: p.components.iter().map(|(k, c)| (k.clone(), to_core_component(c))).collect(),
+        active_scene_id: p.active_scene_id.clone(),
+    }
+}
+
+fn to_local_scene(s: &core_models::Scene) -> crate::models::Scene {
+    crate::models::Scene {
+        id: s.id.clone(),
+        name: s.name.clone(),
+        root_actor_id: s.root_actor_id.clone(),
+        actors: s.actors.iter().map(|(k, a)| (k.clone(), to_local_actor(a))).collect(),
+        connections: s.connections.iter().map(|c| crate::models::Connection {
+            id: c.id.clone(),
+            source_actor_id: c.source_actor_id.clone(),
+            source_port: c.source_port.clone(),
+            target_actor_id: c.target_actor_id.clone(),
+            target_port: c.target_port.clone(),
+        }).collect(),
+        states: s.states.iter().map(|st| crate::models::SceneState {
+            id: st.id.clone(),
+            name: st.name.clone(),
+            key_bindings: st.key_bindings.iter().map(|kb| crate::models::KeyBinding {
+                id: kb.id.clone(),
+                key: kb.key.clone(),
+                description: kb.description.clone(),
+                target_actor_id: kb.target_actor_id.clone(),
+            }).collect(),
+        }).collect(),
+        active_state_id: s.active_state_id.clone(),
+    }
+}
+
+fn to_core_scene(s: &crate::models::Scene) -> core_models::Scene {
+    core_models::Scene {
+        id: s.id.clone(),
+        name: s.name.clone(),
+        root_actor_id: s.root_actor_id.clone(),
+        actors: s.actors.iter().map(|(k, a)| (k.clone(), to_core_actor(a))).collect(),
+        connections: s.connections.iter().map(|c| core_models::Connection {
+            id: c.id.clone(),
+            source_actor_id: c.source_actor_id.clone(),
+            source_port: c.source_port.clone(),
+            target_actor_id: c.target_actor_id.clone(),
+            target_port: c.target_port.clone(),
+        }).collect(),
+        states: s.states.iter().map(|st| core_models::SceneState {
+            id: st.id.clone(),
+            name: st.name.clone(),
+            key_bindings: st.key_bindings.iter().map(|kb| core_models::KeyBinding {
+                id: kb.id.clone(),
+                key: kb.key.clone(),
+                description: kb.description.clone(),
+                target_actor_id: kb.target_actor_id.clone(),
+            }).collect(),
+        }).collect(),
+        active_state_id: s.active_state_id.clone(),
+    }
+}
+
+fn to_local_actor(a: &core_models::Actor) -> crate::models::Actor {
+    crate::models::Actor {
+        id: a.id.clone(),
+        name: a.name.clone(),
+        role: a.role.clone(),
+        components: a.components.clone(),
+        children: a.children.clone(),
+        position: crate::models::Position { x: a.position.x, y: a.position.y },
+        parent_id: a.parent_id.clone(),
+    }
+}
+
+fn to_core_actor(a: &crate::models::Actor) -> core_models::Actor {
+    core_models::Actor {
+        id: a.id.clone(),
+        name: a.name.clone(),
+        role: a.role.clone(),
+        components: a.components.clone(),
+        children: a.children.clone(),
+        position: core_models::Position { x: a.position.x, y: a.position.y },
+        parent_id: a.parent_id.clone(),
+    }
+}
+
+fn to_local_component(c: &core_models::Component) -> crate::models::Component {
+    crate::models::Component {
+        id: c.id.clone(),
+        name: c.name.clone(),
+        category: c.category.clone(),
+        domain: c.domain.clone(),
+        variables: c.variables.iter().map(|v| crate::models::Variable {
+            name: v.name.clone(),
+            var_type: v.var_type.clone(),
+            default_value: v.default_value.clone(),
+        }).collect(),
+        tasks: c.tasks.iter().map(|t| crate::models::Task {
+            name: t.name.clone(),
+            description: t.description.clone(),
+            inputs: t.inputs.iter().map(|p| crate::models::PortDefinition {
+                name: p.name.clone(),
+                port_type: p.port_type.clone(),
+            }).collect(),
+            outputs: t.outputs.iter().map(|p| crate::models::PortDefinition {
+                name: p.name.clone(),
+                port_type: p.port_type.clone(),
+            }).collect(),
+            test_cases: t.test_cases.clone(),
+        }).collect(),
+        dependencies: c.dependencies.clone(),
+    }
+}
+
+fn to_core_component(c: &crate::models::Component) -> core_models::Component {
+    core_models::Component {
+        id: c.id.clone(),
+        name: c.name.clone(),
+        category: c.category.clone(),
+        domain: c.domain.clone(),
+        variables: c.variables.iter().map(|v| core_models::Variable {
+            name: v.name.clone(),
+            var_type: v.var_type.clone(),
+            default_value: v.default_value.clone(),
+        }).collect(),
+        tasks: c.tasks.iter().map(|t| core_models::Task {
+            name: t.name.clone(),
+            description: t.description.clone(),
+            inputs: t.inputs.iter().map(|p| core_models::PortDefinition {
+                name: p.name.clone(),
+                port_type: p.port_type.clone(),
+            }).collect(),
+            outputs: t.outputs.iter().map(|p| core_models::PortDefinition {
+                name: p.name.clone(),
+                port_type: p.port_type.clone(),
+            }).collect(),
+            test_cases: t.test_cases.clone(),
+        }).collect(),
+        dependencies: c.dependencies.clone(),
+    }
 }
 
 fn to_local_user(u: &core_models::User) -> crate::auth::User {

@@ -11,6 +11,7 @@ use uuid::Uuid;
 use crate::app_state::AppState;
 
 const SESSION_COOKIE: &str = "ars_session";
+const CSRF_STATE_COOKIE: &str = "ars_oauth_state";
 const SESSION_TTL_SECS: i64 = 7 * 24 * 60 * 60; // 7 days
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -46,7 +47,6 @@ pub struct Session {
 #[derive(Debug, Deserialize)]
 pub struct OAuthCallbackQuery {
     pub code: String,
-    #[allow(dead_code)]
     pub state: Option<String>,
 }
 
@@ -64,22 +64,46 @@ struct GitHubUser {
     email: Option<String>,
 }
 
-/// GET /auth/github/login - Redirect to GitHub OAuth
-pub async fn github_login(State(state): State<AppState>) -> Redirect {
+/// GET /auth/github/login - Redirect to GitHub OAuth with CSRF state
+pub async fn github_login(
+    State(state): State<AppState>,
+    jar: CookieJar,
+) -> (CookieJar, Redirect) {
+    let csrf_state = Uuid::new_v4().to_string();
+
+    let state_cookie = Cookie::build((CSRF_STATE_COOKIE, csrf_state.clone()))
+        .path("/")
+        .http_only(true)
+        .max_age(time::Duration::minutes(10))
+        .same_site(axum_extra::extract::cookie::SameSite::Lax)
+        .secure(state.is_https());
+
     let url = format!(
-        "https://github.com/login/oauth/authorize?client_id={}&redirect_uri={}&scope=read:user%20user:email%20repo",
+        "https://github.com/login/oauth/authorize?client_id={}&redirect_uri={}&scope=read:user%20user:email%20repo&state={}",
         state.github_client_id,
         urlencoding::encode(&state.github_redirect_uri),
+        urlencoding::encode(&csrf_state),
     );
-    Redirect::temporary(&url)
+    (jar.add(state_cookie), Redirect::temporary(&url))
 }
 
-/// GET /auth/github/callback - Handle OAuth callback
+/// GET /auth/github/callback - Handle OAuth callback with CSRF validation
 pub async fn github_callback(
     State(state): State<AppState>,
     Query(query): Query<OAuthCallbackQuery>,
     jar: CookieJar,
 ) -> Result<(CookieJar, Redirect), (StatusCode, String)> {
+    // Validate CSRF state
+    let expected_state = jar
+        .get(CSRF_STATE_COOKIE)
+        .map(|c| c.value().to_string())
+        .ok_or((StatusCode::BAD_REQUEST, "Missing OAuth state cookie".to_string()))?;
+    let actual_state = query.state
+        .ok_or((StatusCode::BAD_REQUEST, "Missing state parameter".to_string()))?;
+    if expected_state != actual_state {
+        return Err((StatusCode::BAD_REQUEST, "Invalid OAuth state (CSRF check failed)".to_string()));
+    }
+
     // Exchange code for access token
     let client = reqwest::Client::new();
     let token_res = client
@@ -161,9 +185,15 @@ pub async fn github_callback(
         .path("/")
         .http_only(true)
         .max_age(time::Duration::seconds(SESSION_TTL_SECS))
-        .same_site(axum_extra::extract::cookie::SameSite::Lax);
+        .same_site(axum_extra::extract::cookie::SameSite::Lax)
+        .secure(state.is_https());
 
-    Ok((jar.add(cookie), Redirect::temporary("/")))
+    // Clear the CSRF state cookie
+    let clear_csrf = Cookie::build((CSRF_STATE_COOKIE, ""))
+        .path("/")
+        .max_age(time::Duration::seconds(0));
+
+    Ok((jar.add(cookie).remove(clear_csrf), Redirect::temporary("/")))
 }
 
 /// GET /auth/me - Get current user

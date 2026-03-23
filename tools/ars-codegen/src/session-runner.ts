@@ -149,13 +149,34 @@ export class SessionRunner {
 
       console.log(`  Claude Code 起動: claude ${args.slice(0, 4).join(' ')} ...`);
 
+      // セキュリティ: 必要な環境変数だけをホワイトリストで渡す。
+      // process.env 全体を展開すると API キー等の機密値が子プロセスに漏洩する。
+      const ALLOWED_ENV_KEYS = [
+        'PATH', 'HOME', 'USER', 'SHELL', 'LANG', 'LC_ALL', 'LC_CTYPE',
+        'TERM', 'TMPDIR', 'TMP', 'TEMP',
+        'NODE_ENV', 'NODE_PATH',
+        'XDG_CONFIG_HOME', 'XDG_DATA_HOME', 'XDG_CACHE_HOME',
+        // Windows
+        'SYSTEMROOT', 'APPDATA', 'LOCALAPPDATA', 'USERPROFILE', 'HOMEDRIVE', 'HOMEPATH',
+        'PROGRAMFILES', 'PROGRAMFILES(X86)', 'COMSPEC', 'PATHEXT',
+      ];
+      const safeEnv: Record<string, string> = {};
+      for (const key of ALLOWED_ENV_KEYS) {
+        if (process.env[key]) {
+          safeEnv[key] = process.env[key] as string;
+        }
+      }
+      // CLAUDE_ prefix の設定は渡す（CLIの設定用）
+      for (const [key, value] of Object.entries(process.env)) {
+        if (key.startsWith('CLAUDE_') && value) {
+          safeEnv[key] = value;
+        }
+      }
+      safeEnv['ARS_PROJECT_DIR'] = path.dirname(this.config.projectFile);
+
       const child = spawn('claude', args, {
         cwd: task.outputDir,
-        env: {
-          ...process.env,
-          // MCP サーバーを自動設定（Arsプロジェクトのコンテキストを提供）
-          ARS_PROJECT_DIR: path.dirname(this.config.projectFile),
-        },
+        env: safeEnv,
         stdio: ['pipe', 'pipe', 'pipe'],
       });
 

@@ -27,18 +27,27 @@ pub fn run() {
     use ars_core::repository::{ProjectRepository, SessionRepository, UserRepository};
 
     // ローカルファイルベースのRepository実装を注入
-    let project_repo: Arc<dyn ProjectRepository> = Arc::new(
-        ars_project::LocalProjectRepository::with_defaults()
-            .expect("Failed to initialize project repository"),
-    );
-    let user_repo: Arc<dyn UserRepository> = Arc::new(
-        ars_project::LocalUserRepository::with_defaults()
-            .expect("Failed to initialize user repository"),
-    );
-    let session_repo: Arc<dyn SessionRepository> = Arc::new(
-        ars_project::LocalSessionRepository::with_defaults()
-            .expect("Failed to initialize session repository"),
-    );
+    let project_repo: Arc<dyn ProjectRepository> = match ars_project::LocalProjectRepository::with_defaults() {
+        Ok(repo) => Arc::new(repo),
+        Err(e) => {
+            eprintln!("Failed to initialize project repository: {}", e);
+            std::process::exit(1);
+        }
+    };
+    let user_repo: Arc<dyn UserRepository> = match ars_project::LocalUserRepository::with_defaults() {
+        Ok(repo) => Arc::new(repo),
+        Err(e) => {
+            eprintln!("Failed to initialize user repository: {}", e);
+            std::process::exit(1);
+        }
+    };
+    let session_repo: Arc<dyn SessionRepository> = match ars_project::LocalSessionRepository::with_defaults() {
+        Ok(repo) => Arc::new(repo),
+        Err(e) => {
+            eprintln!("Failed to initialize session repository: {}", e);
+            std::process::exit(1);
+        }
+    };
 
     tauri::Builder::default()
         .setup(|app| {

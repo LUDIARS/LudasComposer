@@ -13,7 +13,7 @@ use crate::collab::{self, CollabState};
 use crate::web_modules;
 
 pub async fn serve(port: u16, static_dir: Option<String>) -> Result<(), Box<dyn std::error::Error>> {
-    let state = AppState::from_env().await;
+    let state = AppState::from_env().await?;
     let collab_state = CollabState::new();
 
     let editor_router = web_modules::editor::router(state);

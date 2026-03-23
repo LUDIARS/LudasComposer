@@ -35,8 +35,9 @@ pub struct Session {
     pub expires_at: Option<String>,
     #[serde(rename = "createdAt")]
     pub created_at: String,
-    /// アクセストークン（GitHub token等）。ネイティブではKeychainに移す想定だが、
-    /// 移行期はここに保持。
-    #[serde(rename = "accessToken", default, skip_serializing_if = "String::is_empty")]
+    /// アクセストークン（GitHub token等）。
+    /// セキュリティ注意: ファイルへの永続化時は serialize されない（skip_serializing）。
+    /// Web版ではRedisにのみ保持。ネイティブ版ではOS Keychainへの移行を予定。
+    #[serde(rename = "accessToken", default, skip_serializing)]
     pub access_token: String,
 }
