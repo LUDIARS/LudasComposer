@@ -112,4 +112,4 @@ jobs:
             -e "IMAGE=${env:IMAGE}" `
             -e "PLATFORMS=${platforms}" `
             -e "TAGS=${tags}" `
-            docker:24-cli sh /workspace/.github/scripts/docker-build.sh
+            docker:24-cli sh -c "sed -i 's/\r$//' /workspace/.github/scripts/docker-build.sh && sh /workspace/.github/scripts/docker-build.sh"
