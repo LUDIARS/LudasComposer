@@ -31,21 +31,23 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 WORKDIR /app
 
+# ワークスペースルートのCargo.tomlをコピー（workspace.dependenciesの解決に必要）
+COPY Cargo.toml ./
+
 # コアクレートをコピー
 COPY crates/ crates/
 
 # メインクレートの依存キャッシュ
-WORKDIR /app/ars-editor/src-tauri
-COPY ars-editor/src-tauri/Cargo.toml ars-editor/src-tauri/Cargo.lock* ./
-RUN mkdir -p src/commands src/models src/web_modules && \
-    echo "pub fn dummy() {}" > src/lib.rs && \
-    echo "fn main() {}" > src/web_main.rs && \
-    cargo build --features web-server --no-default-features --bin ars-web-server --release 2>/dev/null || true && \
-    rm -rf src
+COPY ars-editor/src-tauri/Cargo.toml ars-editor/src-tauri/Cargo.lock* ars-editor/src-tauri/
+RUN mkdir -p ars-editor/src-tauri/src/commands ars-editor/src-tauri/src/models ars-editor/src-tauri/src/web_modules && \
+    echo "pub fn dummy() {}" > ars-editor/src-tauri/src/lib.rs && \
+    echo "fn main() {}" > ars-editor/src-tauri/src/web_main.rs && \
+    cargo build --manifest-path ars-editor/src-tauri/Cargo.toml --features web-server --no-default-features --bin ars-web-server --release 2>/dev/null || true && \
+    rm -rf ars-editor/src-tauri/src
 
 # ソースコードをコピーしてビルド
-COPY ars-editor/src-tauri/ .
-RUN cargo build --features web-server --no-default-features --bin ars-web-server --release
+COPY ars-editor/src-tauri/ ars-editor/src-tauri/
+RUN cargo build --manifest-path ars-editor/src-tauri/Cargo.toml --features web-server --no-default-features --bin ars-web-server --release
 
 # ----- Stage 3: Runtime -----
 FROM debian:bookworm-slim
@@ -59,7 +61,7 @@ RUN useradd -r -s /bin/false ars
 
 WORKDIR /app
 
-COPY --from=server-builder /app/ars-editor/src-tauri/target/release/ars-web-server ./ars-web-server
+COPY --from=server-builder /app/target/release/ars-web-server ./ars-web-server
 COPY --from=frontend-builder /app/dist ./dist
 
 # SurrealDB データディレクトリ（グラフDB: ユーザー・プロジェクト）
