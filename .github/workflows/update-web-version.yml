@@ -21,7 +21,7 @@ permissions:
 
 jobs:
   update-version:
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     defaults:
       run:
         working-directory: ars-editor
