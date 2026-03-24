@@ -35,54 +35,17 @@ env:
 
 jobs:
   build:
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
     timeout-minutes: 60
 
     steps:
       - uses: actions/checkout@v4
 
-      - name: Ensure Docker is running (Windows)
-        if: runner.os == 'Windows'
-        shell: powershell
-        run: |
-          # Start Docker Desktop if not already running
-          $dockerDesktop = "C:\Program Files\Docker\Docker\Docker Desktop.exe"
-          if (Test-Path $dockerDesktop) {
-            $proc = Get-Process "Docker Desktop" -ErrorAction SilentlyContinue
-            if (-not $proc) {
-              Write-Host "Starting Docker Desktop..."
-              Start-Process $dockerDesktop
-            }
-          }
-          # Wait for Docker daemon to be ready (up to 120s)
-          $timeout = 120
-          $elapsed = 0
-          while ($elapsed -lt $timeout) {
-            $result = docker info 2>&1
-            if ($LASTEXITCODE -eq 0) {
-              Write-Host "Docker daemon is ready."
-              exit 0
-            }
-            Write-Host "Waiting for Docker daemon... ($elapsed s)"
-            Start-Sleep -Seconds 5
-            $elapsed += 5
-          }
-          Write-Error "Docker daemon did not start within ${timeout}s"
-          exit 1
-
       - name: Set up QEMU
-        if: runner.os == 'Linux'
         uses: docker/setup-qemu-action@v3
 
-      - name: Set up Docker Buildx (Linux)
-        if: runner.os == 'Linux'
+      - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
-
-      - name: Set up Docker Buildx (Windows)
-        if: runner.os == 'Windows'
-        uses: docker/setup-buildx-action@v3
-        with:
-          driver: docker
 
       - name: Log in to GHCR
         uses: docker/login-action@v3
@@ -105,7 +68,6 @@ jobs:
 
       - name: Resolve target platforms
         id: platforms
-        shell: bash
         run: |
           INPUT="${{ inputs.platform }}"
           if [ -z "$INPUT" ] || [ "$INPUT" = "all" ]; then
@@ -114,10 +76,7 @@ jobs:
             echo "platforms=$INPUT" >> "$GITHUB_OUTPUT"
           fi
 
-      # Linux: マルチプラットフォーム (amd64 + arm64)
-      - name: Build and push (Linux)
-        if: runner.os == 'Linux'
-        id: push-linux
+      - name: Build and push
         uses: docker/build-push-action@v6
         with:
           context: .
@@ -127,15 +86,3 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           provenance: true
           sbom: true
-
-      # Windows: docker ドライバー使用 (docker-container は Windows パイプ非対応)
-      - name: Build and push (Windows)
-        if: runner.os == 'Windows'
-        id: push-windows
-        uses: docker/build-push-action@v6
-        with:
-          context: .
-          platforms: ${{ steps.platforms.outputs.platforms }}
-          push: true
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
