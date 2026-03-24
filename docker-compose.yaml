@@ -15,11 +15,14 @@
 #
 # 環境変数:
 #   IMAGE_TAG (default: latest) - 使用するイメージのタグ
+#   DOCKER_PLATFORM (default: linux/arm64) - ターゲットプラットフォーム
+#     例: DOCKER_PLATFORM=linux/amd64 docker compose up -d --build
 # =============================================================================
 
 services:
   redis:
     image: redis:7-alpine
+    platform: ${DOCKER_PLATFORM:-linux/arm64}
     container_name: ars-redis
     ports:
       - "${REDIS_PORT:-6379}:6379"
@@ -30,7 +33,11 @@ services:
 
   ars:
     image: ghcr.io/ludiars/ars:${IMAGE_TAG:-latest}
-    build: .
+    build:
+      context: .
+      platforms:
+        - ${DOCKER_PLATFORM:-linux/arm64}
+    platform: ${DOCKER_PLATFORM:-linux/arm64}
     container_name: ars
     ports:
       - "${ARS_PORT:-5173}:5173"
