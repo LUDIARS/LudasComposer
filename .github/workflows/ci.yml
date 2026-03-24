@@ -52,6 +52,9 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '20'
+          # GitHub-hosted runner 向けキャッシュ高速化 (self-hosted では不要)
+          # cache: npm
+          # cache-dependency-path: ars-editor/package-lock.json
 
       - run: npm ci
 
@@ -74,6 +77,19 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
         with:
           components: clippy
+
+      # GitHub-hosted runner 向けキャッシュ高速化 (self-hosted では不要)
+      # - name: Cache system dependencies
+      #   uses: awalsh128/cache-apt-pkgs-action@latest
+      #   with:
+      #     packages: clang libclang-dev
+      #     version: 1.0
+      #
+      # - uses: Swatinem/rust-cache@v2
+      #   with:
+      #     workspaces: |
+      #       ars-editor/src-tauri -> target
+      #     shared-key: rust-clippy
 
       - name: Clippy (web-server)
         working-directory: ars-editor/src-tauri

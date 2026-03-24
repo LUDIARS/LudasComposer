@@ -66,12 +66,8 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=local,src=/tmp/.buildx-cache
-          cache-to: type=local,dest=/tmp/.buildx-cache-new,mode=max
+          # GitHub-hosted runner 向けキャッシュ高速化 (self-hosted では不要)
+          # cache-from: type=gha
+          # cache-to: type=gha,mode=max
           provenance: true
           sbom: true
-
-      - name: Rotate Buildx cache
-        run: |
-          rm -rf /tmp/.buildx-cache
-          mv /tmp/.buildx-cache-new /tmp/.buildx-cache
