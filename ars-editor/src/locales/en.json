@@ -521,6 +521,39 @@
       "item2": "Select (None) to clear the sub-scene assignment"
     }
   },
+  "setup": {
+    "title": "Initial Setup",
+    "subtitle": "Configure Infisical secrets management to get started.",
+    "steps": {
+      "connection": "Connection",
+      "credentials": "Credentials",
+      "verify": "Verify"
+    },
+    "host": "Infisical Host",
+    "hostPlaceholder": "https://app.infisical.com",
+    "hostHelp": "The URL of your Infisical instance.",
+    "environment": "Environment",
+    "environmentPlaceholder": "dev",
+    "environmentHelp": "Environment slug (e.g. dev, staging, production).",
+    "clientId": "Client ID",
+    "clientIdPlaceholder": "Machine Identity Client ID",
+    "clientSecret": "Client Secret",
+    "clientSecretPlaceholder": "Machine Identity Client Secret",
+    "projectId": "Project ID",
+    "projectIdPlaceholder": "Infisical workspace ID",
+    "credentialsHelp": "Create a Machine Identity with Universal Auth in Infisical Dashboard > Project Settings > Machine Identities.",
+    "validating": "Validating...",
+    "validate": "Validate Connection",
+    "validationSuccess": "Connection successful! Credentials are valid.",
+    "validationFailed": "Validation failed: {{error}}",
+    "saving": "Saving...",
+    "save": "Save & Start",
+    "saveSuccess": "Configuration saved to {{path}}. The server will restart automatically.",
+    "back": "Back",
+    "next": "Next",
+    "cancel": "Cancel",
+    "skipWarning": "Without Infisical configuration, cloud features (authentication, cloud save, etc.) will not be available."
+  },
   "common": {
     "cancel": "Cancel",
     "save": "Save",

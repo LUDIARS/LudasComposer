@@ -338,6 +338,7 @@ dependencies = [
 name = "ars-secrets"
 version = "0.1.0"
 dependencies = [
+ "dirs-next",
  "log",
  "reqwest 0.12.28",
  "serde",

@@ -3,16 +3,44 @@ import { ReactFlowProvider } from '@xyflow/react';
 import { EditorPage } from './features/editor-page';
 import { CollabPresence } from './features/node-editor/components/CollabPresence';
 import { LanguageSettings } from './components/LanguageSettings';
+import { InfisicalSetup } from './components/InfisicalSetup';
 import { useAuthStore } from './stores/authStore';
 import { useCollabStore } from './stores/collabStore';
 import { useProjectStore } from './stores/projectStore';
 import { isTauri } from './lib/backend';
+import { getSetupStatus } from './lib/setup-api';
 import { useI18n } from '@/hooks/useI18n';
 
 type Page = 'editor';
 
 function App() {
   const { t, locale } = useI18n();
+  const [needsSetup, setNeedsSetup] = useState<boolean | null>(null);
+
+  // Web版のみ: セットアップ状態を確認
+  useEffect(() => {
+    if (isTauri()) {
+      setNeedsSetup(false);
+      return;
+    }
+    getSetupStatus()
+      .then((status) => setNeedsSetup(status.needs_setup))
+      .catch(() => setNeedsSetup(false));
+  }, []);
+
+  // セットアップが必要な場合はウィザードを表示
+  if (needsSetup === true) {
+    return <InfisicalSetup />;
+  }
+
+  // ロード中
+  if (needsSetup === null && !isTauri()) {
+    return (
+      <div className="flex items-center justify-center h-screen w-screen bg-zinc-900 text-zinc-400 text-sm">
+        Loading...
+      </div>
+    );
+  }
 
   const NAV_ITEMS: { key: Page; label: string }[] = [
     { key: 'editor', label: t('app.nav.editor') },

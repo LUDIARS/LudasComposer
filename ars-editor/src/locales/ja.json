@@ -521,6 +521,39 @@
       "item2": "(None) を選択 → サブシーンの割り当てを解除"
     }
   },
+  "setup": {
+    "title": "初期セットアップ",
+    "subtitle": "Infisical シークレット管理を設定して開始します。",
+    "steps": {
+      "connection": "接続先",
+      "credentials": "認証情報",
+      "verify": "確認"
+    },
+    "host": "Infisical ホスト",
+    "hostPlaceholder": "https://app.infisical.com",
+    "hostHelp": "Infisical インスタンスの URL です。",
+    "environment": "環境",
+    "environmentPlaceholder": "dev",
+    "environmentHelp": "環境スラッグ（例: dev, staging, production）。",
+    "clientId": "クライアント ID",
+    "clientIdPlaceholder": "Machine Identity Client ID",
+    "clientSecret": "クライアントシークレット",
+    "clientSecretPlaceholder": "Machine Identity Client Secret",
+    "projectId": "プロジェクト ID",
+    "projectIdPlaceholder": "Infisical ワークスペース ID",
+    "credentialsHelp": "Infisical ダッシュボード > Project Settings > Machine Identities で Universal Auth の Machine Identity を作成してください。",
+    "validating": "検証中...",
+    "validate": "接続を検証",
+    "validationSuccess": "接続成功！認証情報は有効です。",
+    "validationFailed": "検証失敗: {{error}}",
+    "saving": "保存中...",
+    "save": "保存して開始",
+    "saveSuccess": "設定を {{path}} に保存しました。サーバーは自動的に再起動します。",
+    "back": "戻る",
+    "next": "次へ",
+    "cancel": "キャンセル",
+    "skipWarning": "Infisical の設定がない場合、クラウド機能（認証、クラウド保存など）は利用できません。"
+  },
   "common": {
     "cancel": "キャンセル",
     "save": "保存",

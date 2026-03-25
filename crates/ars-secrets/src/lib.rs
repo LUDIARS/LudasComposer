@@ -32,7 +32,7 @@ use std::sync::Arc;
 
 use crate::cache::SecretCache;
 use crate::client::InfisicalClient;
-use crate::config::InfisicalConfig;
+pub use crate::config::InfisicalConfig;
 use crate::error::SecretsError;
 
 /// Scope for secret retrieval.

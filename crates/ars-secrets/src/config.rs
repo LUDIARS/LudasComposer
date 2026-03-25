@@ -1,13 +1,13 @@
 use std::path::{Path, PathBuf};
 
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 
 use crate::error::SecretsError;
 
 /// Bootstrap configuration for Infisical connection.
 ///
 /// Loaded from a TOML file (e.g., `secrets.toml`) — never from environment variables.
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct InfisicalConfig {
     /// Infisical API host (e.g., "https://app.infisical.com")
     pub host: String,
@@ -51,7 +51,7 @@ fn default_cache_ttl() -> u64 {
 }
 
 /// Wrapper that contains the infisical section of the TOML file.
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize)]
 struct ConfigFile {
     infisical: InfisicalConfig,
 }
@@ -86,6 +86,36 @@ impl InfisicalConfig {
         Err(SecretsError::ConfigNotFound(PathBuf::from(
             "secrets.toml (searched CWD and ~/.config/ars/)",
         )))
+    }
+
+    /// Return the default config file path: `~/.config/ars/secrets.toml`
+    pub fn default_config_path() -> PathBuf {
+        dirs_home().join("secrets.toml")
+    }
+
+    /// Check whether a config file exists in any standard location.
+    pub fn exists() -> bool {
+        let candidates: Vec<PathBuf> = vec![
+            PathBuf::from("secrets.toml"),
+            dirs_home().join("secrets.toml"),
+        ];
+        candidates.iter().any(|p| p.exists())
+    }
+
+    /// Save configuration to a TOML file.
+    pub fn save_to_file(&self, path: &Path) -> Result<(), SecretsError> {
+        let wrapper = ConfigFile {
+            infisical: self.clone(),
+        };
+        let content = toml::to_string_pretty(&wrapper)
+            .map_err(|e| SecretsError::Io(std::io::Error::new(std::io::ErrorKind::Other, e)))?;
+
+        // Ensure parent directory exists
+        if let Some(parent) = path.parent() {
+            std::fs::create_dir_all(parent)?;
+        }
+        std::fs::write(path, content)?;
+        Ok(())
     }
 }
 
