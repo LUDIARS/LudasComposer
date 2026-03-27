@@ -1,6 +1,7 @@
 use std::sync::Arc;
 
 use ars_core::repository::{ProjectRepository, SessionRepository, UserRepository};
+use ars_secrets::{SecretScope, SecretsManager};
 
 use crate::redis_client::RedisClient;
 use crate::redis_repo::RedisSessionRepository;
@@ -9,9 +10,7 @@ use crate::surrealdb_client::SurrealClient;
 
 #[derive(Clone)]
 pub struct AppState {
-    pub github_client_id: String,
-    pub github_client_secret: String,
-    pub github_redirect_uri: String,
+    pub secrets: SecretsManager,
     pub surreal: SurrealClient,
     pub redis: RedisClient,
     // Repository trait objects
@@ -21,27 +20,25 @@ pub struct AppState {
 }
 
 impl AppState {
-    pub async fn from_env() -> Result<Self, Box<dyn std::error::Error>> {
-        let github_client_id = std::env::var("GITHUB_CLIENT_ID")
-            .map_err(|_| "GITHUB_CLIENT_ID environment variable must be set")?;
-        let github_client_secret = std::env::var("GITHUB_CLIENT_SECRET")
-            .map_err(|_| "GITHUB_CLIENT_SECRET environment variable must be set")?;
-        let github_redirect_uri = std::env::var("GITHUB_REDIRECT_URI")
-            .unwrap_or_else(|_| "http://localhost:5173/auth/github/callback".to_string());
+    /// Initialize from secrets provider (Infisical or AWS SSM).
+    ///
+    /// The `secrets.toml` config file is auto-discovered from:
+    ///   1. Current working directory
+    ///   2. `~/.config/ars/secrets.toml`
+    pub async fn new() -> Result<Self, Box<dyn std::error::Error>> {
+        let secrets = SecretsManager::discover().await
+            .map_err(|e| format!("Failed to initialize secrets manager: {}", e))?;
 
-        let surreal_data_dir = std::env::var("SURREALDB_DATA_DIR")
-            .unwrap_or_else(|_| {
-                let base = dirs_next::data_dir()
-                    .unwrap_or_else(|| std::path::PathBuf::from("."))
-                    .join("ars")
-                    .join("surrealdb");
-                base.to_string_lossy().to_string()
-            });
+        // Infrastructure secrets — fetched on-demand but needed for DB init
+        let surreal_data_dir = secrets
+            .get_or_default("SURREALDB_DATA_DIR", SecretScope::Shared, &default_surreal_dir())
+            .await;
         let surreal = SurrealClient::new(&surreal_data_dir).await
             .map_err(|e| format!("Failed to initialize SurrealDB: {}", e))?;
 
-        let redis_url = std::env::var("REDIS_URL")
-            .unwrap_or_else(|_| "redis://127.0.0.1:6379".to_string());
+        let redis_url = secrets
+            .get_or_default("REDIS_URL", SecretScope::Shared, "redis://127.0.0.1:6379")
+            .await;
         let redis = RedisClient::new(&redis_url).await
             .map_err(|e| format!("Failed to initialize Redis: {}", e))?;
 
@@ -53,9 +50,7 @@ impl AppState {
             Arc::new(RedisSessionRepository::new(redis.clone()));
 
         Ok(Self {
-            github_client_id,
-            github_client_secret,
-            github_redirect_uri,
+            secrets,
             surreal,
             redis,
             project_repo,
@@ -64,8 +59,37 @@ impl AppState {
         })
     }
 
-    /// redirect_uri が https:// の場合に true を返す（Cookie Secure フラグ判定用）
-    pub fn is_https(&self) -> bool {
-        self.github_redirect_uri.starts_with("https://")
+    /// Get GitHub Client ID (fetched from Infisical on-demand).
+    pub async fn github_client_id(&self) -> Result<String, ars_secrets::error::SecretsError> {
+        self.secrets.get("GITHUB_CLIENT_ID", SecretScope::Shared).await
     }
+
+    /// Get GitHub Client Secret (fetched from Infisical on-demand).
+    pub async fn github_client_secret(&self) -> Result<String, ars_secrets::error::SecretsError> {
+        self.secrets.get("GITHUB_CLIENT_SECRET", SecretScope::Shared).await
+    }
+
+    /// Get GitHub Redirect URI (fetched from Infisical, with default fallback).
+    pub async fn github_redirect_uri(&self) -> String {
+        self.secrets
+            .get_or_default(
+                "GITHUB_REDIRECT_URI",
+                SecretScope::Shared,
+                "http://localhost:5173/auth/github/callback",
+            )
+            .await
+    }
+
+    /// Whether the redirect URI uses HTTPS (for Cookie Secure flag).
+    pub async fn is_https(&self) -> bool {
+        self.github_redirect_uri().await.starts_with("https://")
+    }
+}
+
+fn default_surreal_dir() -> String {
+    let base = dirs_next::data_dir()
+        .unwrap_or_else(|| std::path::PathBuf::from("."))
+        .join("ars")
+        .join("surrealdb");
+    base.to_string_lossy().to_string()
 }

@@ -36,6 +36,7 @@ web-server = [
     "dep:dashmap",
     "dep:surrealdb",
     "dep:redis",
+    "dep:ars-secrets",
 ]
 
 [[bin]]
@@ -52,6 +53,7 @@ required-features = ["web-server"]
 # Ars core crates
 ars-core = { path = "../../crates/ars-core" }
 ars-project = { path = "../../crates/ars-project" }
+ars-secrets = { path = "../../crates/ars-secrets", optional = true }
 # Common
 serde_json = "1.0"
 serde = { version = "1.0", features = ["derive"] }

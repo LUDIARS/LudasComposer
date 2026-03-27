@@ -3,20 +3,21 @@ import { ReactFlowProvider } from '@xyflow/react';
 import { EditorPage } from './features/editor-page';
 import { CollabPresence } from './features/node-editor/components/CollabPresence';
 import { LanguageSettings } from './components/LanguageSettings';
+import { SecretsSetup } from './components/SecretsSetup';
 import { useAuthStore } from './stores/authStore';
 import { useCollabStore } from './stores/collabStore';
 import { useProjectStore } from './stores/projectStore';
 import { isTauri } from './lib/backend';
+import { getSetupStatus } from './lib/setup-api';
 import { useI18n } from '@/hooks/useI18n';
 
 type Page = 'editor';
 
 function App() {
   const { t, locale } = useI18n();
-
-  const NAV_ITEMS: { key: Page; label: string }[] = [
-    { key: 'editor', label: t('app.nav.editor') },
-  ];
+  // Tauri desktop: セットアップ不要（ローカルモード）
+  // Web: 起動時にセットアップ状態を非同期チェック
+  const [needsSetup, setNeedsSetup] = useState<boolean | null>(() => isTauri() ? false : null);
   const [page, setPage] = useState<Page>('editor');
   const [showLanguageSettings, setShowLanguageSettings] = useState(false);
   const user = useAuthStore((s) => s.user);
@@ -27,6 +28,14 @@ function App() {
   const collabConnected = useCollabStore((s) => s.connected);
   const collabUsers = useCollabStore((s) => s.users);
   const projectName = useProjectStore((s) => s.project.name);
+
+  // Web版のみ: セットアップ状態を確認
+  useEffect(() => {
+    if (isTauri()) return;
+    getSetupStatus()
+      .then((status) => setNeedsSetup(status.needs_setup))
+      .catch(() => setNeedsSetup(false));
+  }, []);
 
   // Web版のみ: ユーザー情報を取得
   useEffect(() => {
@@ -45,6 +54,24 @@ function App() {
       };
     }
   }, [user, projectName, joinRoom, leaveRoom]);
+
+  // セットアップが必要な場合はウィザードを表示
+  if (needsSetup === true) {
+    return <SecretsSetup />;
+  }
+
+  // ロード中
+  if (needsSetup === null && !isTauri()) {
+    return (
+      <div className="flex items-center justify-center h-screen w-screen bg-zinc-900 text-zinc-400 text-sm">
+        Loading...
+      </div>
+    );
+  }
+
+  const NAV_ITEMS: { key: Page; label: string }[] = [
+    { key: 'editor', label: t('app.nav.editor') },
+  ];
 
   return (
     <div className="flex flex-col h-screen w-screen bg-zinc-900 text-zinc-200">

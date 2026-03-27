@@ -1,0 +1,19 @@
+[package]
+name = "ars-secrets"
+version = "0.1.0"
+edition = "2021"
+description = "Secrets management for Ars — supports Infisical and AWS SSM Parameter Store"
+
+[dependencies]
+reqwest = { version = "0.12", features = ["json"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+dirs-next = "2.0"
+tokio = { version = "1", features = ["sync", "time"] }
+thiserror = "2"
+toml = "0.8"
+log = "0.4"
+async-trait = "0.1"
+# AWS SDK (SSM Parameter Store)
+aws-config = { version = "1", features = ["behavior-version-latest"] }
+aws-sdk-ssm = "1"

@@ -3,6 +3,7 @@ resolver = "2"
 members = [
     "crates/ars-core",
     "crates/ars-project",
+    "crates/ars-secrets",
     "crates/ars-codegen",
     "crates/ars-mcp-server",
     "ars-editor/src-tauri",

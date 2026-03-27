@@ -39,23 +39,28 @@ struct GitHubUser {
 pub async fn github_login(
     State(state): State<AppState>,
     jar: CookieJar,
-) -> (CookieJar, Redirect) {
+) -> Result<(CookieJar, Redirect), (StatusCode, String)> {
     let csrf_state = Uuid::new_v4().to_string();
+    let redirect_uri = state.github_redirect_uri().await;
+    let is_https = redirect_uri.starts_with("https://");
 
     let state_cookie = Cookie::build((CSRF_STATE_COOKIE, csrf_state.clone()))
         .path("/")
         .http_only(true)
         .max_age(time::Duration::minutes(10))
         .same_site(axum_extra::extract::cookie::SameSite::Lax)
-        .secure(state.is_https());
+        .secure(is_https);
+
+    let client_id = state.github_client_id().await
+        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, format!("Failed to get GitHub client ID: {}", e)))?;
 
     let url = format!(
         "https://github.com/login/oauth/authorize?client_id={}&redirect_uri={}&scope=read:user%20user:email%20repo&state={}",
-        state.github_client_id,
-        urlencoding::encode(&state.github_redirect_uri),
+        client_id,
+        urlencoding::encode(&redirect_uri),
         urlencoding::encode(&csrf_state),
     );
-    (jar.add(state_cookie), Redirect::temporary(&url))
+    Ok((jar.add(state_cookie), Redirect::temporary(&url)))
 }
 
 /// GET /auth/github/callback - Handle OAuth callback with CSRF validation
@@ -75,16 +80,23 @@ pub async fn github_callback(
         return Err((StatusCode::BAD_REQUEST, "Invalid OAuth state (CSRF check failed)".to_string()));
     }
 
+    // Fetch secrets on-demand from Infisical
+    let client_id = state.github_client_id().await
+        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, format!("Failed to get GitHub client ID: {}", e)))?;
+    let client_secret = state.github_client_secret().await
+        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, format!("Failed to get GitHub client secret: {}", e)))?;
+    let redirect_uri = state.github_redirect_uri().await;
+
     // Exchange code for access token
     let client = reqwest::Client::new();
     let token_res = client
         .post("https://github.com/login/oauth/access_token")
         .header("Accept", "application/json")
         .json(&serde_json::json!({
-            "client_id": state.github_client_id,
-            "client_secret": state.github_client_secret,
+            "client_id": client_id,
+            "client_secret": client_secret,
             "code": query.code,
-            "redirect_uri": state.github_redirect_uri,
+            "redirect_uri": redirect_uri,
         }))
         .send()
         .await
@@ -157,7 +169,7 @@ pub async fn github_callback(
         .http_only(true)
         .max_age(time::Duration::seconds(SESSION_TTL_SECS))
         .same_site(axum_extra::extract::cookie::SameSite::Lax)
-        .secure(state.is_https());
+        .secure(redirect_uri.starts_with("https://"));
 
     // Clear the CSRF state cookie
     let clear_csrf = Cookie::build((CSRF_STATE_COOKIE, ""))
