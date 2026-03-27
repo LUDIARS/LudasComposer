@@ -18,7 +18,7 @@ jobs:
   # Detect which paths changed
   changes:
     name: Detect changes
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
     timeout-minutes: 2
     outputs:
       frontend: ${{ steps.filter.outputs.frontend }}
@@ -40,7 +40,7 @@ jobs:
     name: Frontend
     needs: changes
     if: needs.changes.outputs.frontend == 'true'
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
     timeout-minutes: 10
     defaults:
       run:
@@ -52,9 +52,8 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '20'
-          # GitHub-hosted runner 向けキャッシュ高速化 (self-hosted では不要)
-          # cache: npm
-          # cache-dependency-path: ars-editor/package-lock.json
+          cache: npm
+          cache-dependency-path: ars-editor/package-lock.json
 
       - run: npm ci
 
@@ -68,8 +67,8 @@ jobs:
     name: Rust
     needs: changes
     if: needs.changes.outputs.rust == 'true'
-    runs-on: self-hosted
-    timeout-minutes: 15
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
 
     steps:
       - uses: actions/checkout@v4
@@ -78,18 +77,16 @@ jobs:
         with:
           components: clippy
 
-      # GitHub-hosted runner 向けキャッシュ高速化 (self-hosted では不要)
-      # - name: Cache system dependencies
-      #   uses: awalsh128/cache-apt-pkgs-action@latest
-      #   with:
-      #     packages: clang libclang-dev
-      #     version: 1.0
-      #
-      # - uses: Swatinem/rust-cache@v2
-      #   with:
-      #     workspaces: |
-      #       ars-editor/src-tauri -> target
-      #     shared-key: rust-clippy
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: |
+            ars-editor/src-tauri -> target
+          shared-key: rust-clippy
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends clang libclang-dev cmake
 
       - name: Clippy (web-server)
         working-directory: ars-editor/src-tauri

@@ -23,10 +23,11 @@ RUN npm run build
 # ----- Stage 2: Rust web server build -----
 FROM rust:1-bookworm AS server-builder
 
-# SurrealDB (RocksDB) のビルドに必要なシステムライブラリ
+# SurrealDB (RocksDB) と AWS SDK (aws-lc-sys) のビルドに必要なシステムライブラリ
 RUN apt-get update && apt-get install -y --no-install-recommends \
     clang \
     libclang-dev \
+    cmake \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
