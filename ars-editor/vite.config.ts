@@ -23,6 +23,10 @@ export default defineConfig({
         target: 'http://localhost:5173',
         changeOrigin: true,
       },
+      '/ws': {
+        target: 'ws://localhost:5173',
+        ws: true,
+      },
     },
   },
   envPrefix: ['VITE_', 'TAURI_'],

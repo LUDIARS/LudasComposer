@@ -1,0 +1,35 @@
+# =============================================================================
+# Ars - Docker Compose (開発用)
+#
+# インフラサービス（Redis）のみ Docker で起動し、
+# Ars 本体はホスト上で直接実行する構成。
+#
+# フロントエンド: Vite HMR (port 5174)
+# バックエンド:   cargo-watch で自動リビルド (port 5173)
+#
+# 使用方法:
+#   # 1. インフラ起動
+#   docker compose -f docker-compose.dev.yaml up -d
+#
+#   # 2. アプリ起動（ars-editor/ ディレクトリで）
+#   npm run dev:full        # フロントエンド + バックエンド同時起動
+#   npm run dev             # フロントエンドのみ（Vite HMR）
+#   npm run dev:server      # バックエンドのみ（cargo-watch）
+#
+#   # 停止
+#   docker compose -f docker-compose.dev.yaml down
+# =============================================================================
+
+services:
+  redis:
+    image: redis:7-alpine
+    container_name: ars-redis-dev
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    volumes:
+      - redis-dev-data:/data
+    command: redis-server --appendonly yes
+    restart: unless-stopped
+
+volumes:
+  redis-dev-data:
