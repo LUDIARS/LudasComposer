@@ -74,17 +74,53 @@ SurrealDB のグラフ機能は `owns_project` リレーション（`user -[owns
 
 ## 効果
 
+### Commit 1: SurrealDB 組み込み排除
+
 | 指標 | Before | After | 改善 |
 |------|--------|-------|------|
 | クリーンビルド時間 | 8m 43s | 2m 24s | **-72%** |
 | 依存クレート数 | 847 | 655 | **-192** |
 | target ディレクトリ | 11 GB | 3.3 GB | **-70%** |
+
+### Commit 2: AWS SDK 除去
+
+| 指標 | Before | After | 改善 |
+|------|--------|-------|------|
+| クリーンビルド時間 | 2m 24s | 46s | **-68%** |
+| 依存クレート数 | 655 | 616 | **-39** |
+| target ディレクトリ | 3.3 GB | 1.7 GB | **-48%** |
+
+### 累計
+
+| 指標 | 最初 | 最終 | 累計改善 |
+|------|------|------|---------|
+| クリーンビルド時間 | 8m 43s | 46s | **-91%** |
+| 依存クレート数 | 847 | 616 | **-231** |
+| target ディレクトリ | 11 GB | 1.7 GB | **-85%** |
 | インクリメンタルビルド | 13-17s | (変化なし) | — |
+
+---
+
+## 追加対応: AWS SDK 除去
+
+### 背景
+
+AWS SSM Parameter Store との通信は、今後 ArsServer（別リポジトリ）の専用パッケージが担当する。
+本リポジトリに AWS SDK を持つ必要がなくなったため、`aws-config`、`aws-sdk-ssm`、`aws-lc-sys`（C コンパイル）を除去。
+
+### 実施内容
+
+1. **ssm_client.rs 削除**: AWS SSM クライアント実装を完全除去
+2. **ars-secrets/Cargo.toml**: `aws-config`, `aws-sdk-ssm` 依存を削除
+3. **config.rs**: `AwsSsmConfig` 構造体を削除。`SecretsProvider::AwsSsm` は TOML パース互換のため残置
+4. **lib.rs**: `Provider::AwsSsm` バリアントを除去。`SecretsProvider::AwsSsm` 選択時はランタイムエラーで案内
+5. **error.rs**: `AwsSsm` エラーバリアントを削除
+6. **setup.rs**: AWS SSM セットアップウィザード分岐を削除
+7. **docker-compose.yaml**: AWS 環境変数（`AWS_ACCESS_KEY_ID` 等）を削除
 
 ---
 
 ## 今後の計画
 
-1. **ArsServer リポジトリ新設**: プロジェクト管理・認証を別リポジトリ（PostgreSQL ベース）に移行
+1. **ArsServer リポジトリ新設**: プロジェクト管理・認証を PostgreSQL ベースの別リポジトリに移行。AWS SSM 通信もここで担当
 2. **SurrealDB 完全撤去**: ArsServer 移行完了後、本リポジトリから SurrealDB 関連コード・docker-compose サービスを削除
-3. **AWS SDK 軽量化**: `ars-secrets` の AWS 依存を feature gate 化し、不要時のビルドコスト排除（残り約100s 分）
