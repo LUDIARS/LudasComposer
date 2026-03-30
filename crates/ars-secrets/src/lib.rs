@@ -1,8 +1,8 @@
 //! Secrets management for Ars.
 //!
-//! Supports multiple providers:
-//! - **Infisical**: Self-hosted or cloud secrets manager
-//! - **AWS SSM Parameter Store**: AWS-native secrets via Systems Manager
+//! Currently supports **Infisical** as the secrets provider.
+//! AWS SSM Parameter Store support has been removed from this crate —
+//! SSM communication is handled by the dedicated ArsServer package.
 //!
 //! Provides on-demand secret retrieval with caching, separated into two scopes:
 //!
@@ -30,16 +30,14 @@ pub mod cache;
 pub mod client;
 pub mod config;
 pub mod error;
-pub mod ssm_client;
 
 use std::path::Path;
 use std::sync::Arc;
 
 use crate::cache::SecretCache;
 use crate::client::InfisicalClient;
-pub use crate::config::{AwsSsmConfig, InfisicalConfig, SecretsConfig, SecretsProvider};
+pub use crate::config::{InfisicalConfig, SecretsConfig, SecretsProvider};
 use crate::error::SecretsError;
-use crate::ssm_client::AwsSsmClient;
 
 /// Scope for secret retrieval.
 #[derive(Debug, Clone)]
@@ -59,24 +57,13 @@ impl<'a> SecretScope<'a> {
     }
 }
 
-/// Internal backend provider.
-#[derive(Clone)]
-enum Provider {
-    Infisical {
-        client: Box<InfisicalClient>,
-        config: InfisicalConfig,
-    },
-    AwsSsm {
-        client: AwsSsmClient,
-    },
-}
-
 /// High-level secrets manager with caching.
 ///
 /// Thread-safe (`Clone` + `Send` + `Sync`). Designed to be stored in `AppState`.
 #[derive(Clone)]
 pub struct SecretsManager {
-    provider: Provider,
+    client: Box<InfisicalClient>,
+    config: InfisicalConfig,
     cache: Arc<SecretCache>,
 }
 
@@ -89,18 +76,8 @@ impl SecretsManager {
         let cache = Arc::new(SecretCache::new(config.cache_ttl_secs));
 
         Ok(Self {
-            provider: Provider::Infisical { client: Box::new(client), config },
-            cache,
-        })
-    }
-
-    /// Create from an AWS SSM config.
-    pub async fn from_aws_ssm(config: AwsSsmConfig) -> Result<Self, SecretsError> {
-        let client = AwsSsmClient::new(config.clone()).await?;
-        let cache = Arc::new(SecretCache::new(config.cache_ttl_secs));
-
-        Ok(Self {
-            provider: Provider::AwsSsm { client },
+            client: Box::new(client),
+            config,
             cache,
         })
     }
@@ -117,12 +94,11 @@ impl SecretsManager {
                 Self::from_infisical(infisical).await
             }
             SecretsProvider::AwsSsm => {
-                let ssm = config.aws_ssm.clone().ok_or_else(|| {
-                    SecretsError::ProviderConfigMissing(
-                        "[aws_ssm] section required when provider = \"aws-ssm\"".to_string(),
-                    )
-                })?;
-                Self::from_aws_ssm(ssm).await
+                Err(SecretsError::ProviderConfigMissing(
+                    "AWS SSM provider is no longer supported in this crate. \
+                     SSM communication is handled by the ArsServer package."
+                        .to_string(),
+                ))
             }
         }
     }
@@ -141,14 +117,11 @@ impl SecretsManager {
 
     /// Resolve the secret path for a scope.
     fn secret_path(&self, scope: &SecretScope) -> String {
-        match &self.provider {
-            Provider::Infisical { config, .. } => match scope {
-                SecretScope::Shared => config.shared_path.clone(),
-                SecretScope::Personal(user_id) => {
-                    format!("{}/{}", config.personal_path_prefix, user_id)
-                }
-            },
-            Provider::AwsSsm { client } => client.secret_path(scope),
+        match scope {
+            SecretScope::Shared => self.config.shared_path.clone(),
+            SecretScope::Personal(user_id) => {
+                format!("{}/{}", self.config.personal_path_prefix, user_id)
+            }
         }
     }
 
@@ -165,10 +138,7 @@ impl SecretsManager {
 
         // Fetch from provider
         let path = self.secret_path(&scope);
-        let value = match &self.provider {
-            Provider::Infisical { client, .. } => client.get_secret(key, &path).await?,
-            Provider::AwsSsm { client } => client.get_secret(key, &path).await?,
-        };
+        let value = self.client.get_secret(key, &path).await?;
 
         // Cache it
         self.cache.set(cache_key, value.clone()).await;
@@ -207,11 +177,8 @@ impl SecretsManager {
         self.cache.invalidate_all().await;
     }
 
-    /// Re-authenticate with the provider (Infisical only; no-op for AWS SSM).
+    /// Re-authenticate with Infisical.
     pub async fn reauthenticate(&self) -> Result<(), SecretsError> {
-        match &self.provider {
-            Provider::Infisical { client, .. } => client.authenticate().await,
-            Provider::AwsSsm { .. } => Ok(()),
-        }
+        self.client.authenticate().await
     }
 }

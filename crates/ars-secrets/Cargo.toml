@@ -14,6 +14,3 @@ thiserror = "2"
 toml = "0.8"
 log = "0.4"
 async-trait = "0.1"
-# AWS SDK (SSM Parameter Store)
-aws-config = { version = "1", features = ["behavior-version-latest"] }
-aws-sdk-ssm = "1"

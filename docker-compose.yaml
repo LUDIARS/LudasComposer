@@ -65,12 +65,6 @@ services:
     volumes:
       - ars-data:/app/data
       - ./secrets.toml:/app/secrets.toml:ro
-    environment:
-      # AWS SSM Parameter Store 用（provider = "aws-ssm" の場合）
-      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID:-}
-      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY:-}
-      - AWS_REGION=${AWS_REGION:-}
-      - AWS_DEFAULT_REGION=${AWS_DEFAULT_REGION:-}
     depends_on:
       - redis
       - surrealdb

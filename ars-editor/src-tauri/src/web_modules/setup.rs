@@ -15,7 +15,7 @@ use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 use tokio::sync::watch;
 
-use ars_secrets::{AwsSsmConfig, InfisicalConfig, SecretsConfig, SecretsProvider};
+use ars_secrets::{InfisicalConfig, SecretsConfig, SecretsProvider};
 
 /// Shared state for the setup-mode server.
 #[derive(Clone)]
@@ -41,11 +41,6 @@ enum SetupRequest {
         client_secret: String,
         project_id: String,
         environment: String,
-    },
-    #[serde(rename = "aws-ssm")]
-    AwsSsm {
-        region: Option<String>,
-        path_prefix: Option<String>,
     },
 }
 
@@ -87,23 +82,6 @@ fn build_config(req: &SetupRequest) -> SecretsConfig {
                 client_secret: client_secret.clone(),
                 project_id: project_id.clone(),
                 environment: environment.clone(),
-                shared_path: "/shared".to_string(),
-                personal_path_prefix: "/personal".to_string(),
-                cache_ttl_secs: 300,
-            }),
-            aws_ssm: None,
-        },
-        SetupRequest::AwsSsm {
-            region,
-            path_prefix,
-        } => SecretsConfig {
-            provider: SecretsProvider::AwsSsm,
-            infisical: None,
-            aws_ssm: Some(AwsSsmConfig {
-                region: region.clone(),
-                path_prefix: path_prefix
-                    .clone()
-                    .unwrap_or_else(|| "/ars".to_string()),
                 shared_path: "/shared".to_string(),
                 personal_path_prefix: "/personal".to_string(),
                 cache_ttl_secs: 300,

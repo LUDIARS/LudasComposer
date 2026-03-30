@@ -23,9 +23,6 @@ pub enum SecretsError {
     #[error("HTTP request failed: {0}")]
     Http(#[from] reqwest::Error),
 
-    #[error("AWS SSM error: {0}")]
-    AwsSsm(String),
-
     #[error("Provider configuration missing: {0}")]
     ProviderConfigMissing(String),
 }
