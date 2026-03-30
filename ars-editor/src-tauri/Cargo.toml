@@ -23,7 +23,6 @@ web-server = [
     "dep:tokio",
     "dep:tower-http",
     "dep:reqwest",
-    "dep:jsonwebtoken",
     "dep:uuid",
     "dep:chrono",
     "dep:tower",
@@ -34,8 +33,6 @@ web-server = [
     "dep:dirs",
     "dep:futures",
     "dep:dashmap",
-    "dep:redis",
-    "dep:ars-secrets",
 ]
 
 [[bin]]
@@ -52,7 +49,7 @@ required-features = ["web-server"]
 # Ars core crates
 ars-core = { path = "../../crates/ars-core" }
 ars-project = { path = "../../crates/ars-project" }
-ars-secrets = { path = "../../crates/ars-secrets", optional = true }
+# ars-secrets: removed — secrets management moved to Cernere server
 # Common
 serde_json = "1.0"
 serde = { version = "1.0", features = ["derive"] }
@@ -64,9 +61,8 @@ dirs-next = "2.0"
 axum = { version = "0.7", features = ["ws"], optional = true }
 tokio = { version = "1", features = ["full"], optional = true }
 tower-http = { version = "0.5", features = ["cors", "fs"], optional = true }
-# OAuth & Auth
+# HTTP client & Auth (Cernere proxy)
 reqwest = { version = "0.12", features = ["json"], optional = true }
-jsonwebtoken = { version = "9", optional = true }
 uuid = { version = "1", features = ["v4"], optional = true }
 chrono = { version = "0.4", features = ["serde"], optional = true }
 tower = { version = "0.5", features = ["util"], optional = true }
@@ -79,5 +75,4 @@ dirs = { version = "6", optional = true }
 # Collaboration (WebSocket + shared state)
 futures = { version = "0.3", optional = true }
 dashmap = { version = "6", optional = true }
-# Redis (session management)
-redis = { version = "0.27", features = ["tokio-comp", "connection-manager"], optional = true }
+# Redis: removed — session management moved to Cernere server
