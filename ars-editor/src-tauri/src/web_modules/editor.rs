@@ -1,11 +1,11 @@
 /// Editor モジュール
 ///
-/// プロジェクト管理、認証、クラウド保存、Git操作のAPIルートを提供する。
-/// 既存の ars-editor web_server の機能をモジュールとして切り出したもの。
+/// プロジェクト管理、認証（Cernere プロキシ）、クラウド保存、Git操作のAPIルートを提供する。
+/// 認証・ユーザー・プロジェクト管理は Cernere サーバーに委譲する。
 use axum::{
     extract::{Path, Query, State},
     http::StatusCode,
-    response::Json,
+    response::{Json, Redirect},
     routing::{delete, get, post},
     Router,
 };
@@ -13,12 +13,20 @@ use axum_extra::extract::cookie::CookieJar;
 use serde::Deserialize;
 
 use crate::app_state::AppState;
-use crate::auth;
 use crate::commands::project::{
     get_default_project_path_impl, list_projects_impl, load_project_impl, save_project_impl,
 };
 use crate::git_ops;
 use crate::models::{GitProjectInfo, GitRepo, Project};
+
+const SESSION_COOKIE: &str = "ars_session";
+
+/// Cookie からセッションID を取得
+fn get_session_cookie(jar: &CookieJar) -> Result<String, (StatusCode, String)> {
+    jar.get(SESSION_COOKIE)
+        .map(|c| c.value().to_string())
+        .ok_or((StatusCode::UNAUTHORIZED, "Not authenticated".to_string()))
+}
 
 // ========== Local file-based APIs ==========
 
@@ -61,7 +69,53 @@ async fn api_list_projects() -> Result<Json<Vec<String>>, (StatusCode, String)> 
         .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e))
 }
 
-// ========== Cloud project APIs ==========
+// ========== Auth routes (proxy to Cernere) ==========
+
+/// GET /auth/github/login — Cernere にリダイレクト
+async fn auth_github_login(
+    State(state): State<AppState>,
+) -> Redirect {
+    Redirect::temporary(&state.cernere.login_url())
+}
+
+/// GET /auth/github/callback — Cernere にリダイレクト
+async fn auth_github_callback(
+    State(state): State<AppState>,
+    Query(params): Query<std::collections::HashMap<String, String>>,
+) -> Redirect {
+    let query_string: String = params
+        .iter()
+        .map(|(k, v)| format!("{}={}", k, urlencoding::encode(v)))
+        .collect::<Vec<_>>()
+        .join("&");
+    let url = format!("{}?{}", state.cernere.callback_url(), query_string);
+    Redirect::temporary(&url)
+}
+
+/// GET /auth/me — Cernere からユーザー情報を取得
+async fn auth_get_me(
+    State(state): State<AppState>,
+    jar: CookieJar,
+) -> Result<Json<ars_core::models::User>, (StatusCode, String)> {
+    let cookie = get_session_cookie(&jar)?;
+    let user = state.cernere.get_me(&cookie).await
+        .map_err(|e| (StatusCode::UNAUTHORIZED, e))?;
+    Ok(Json(user))
+}
+
+/// POST /auth/logout — Cernere にログアウトをプロキシ
+async fn auth_logout(
+    State(state): State<AppState>,
+    jar: CookieJar,
+) -> Result<Json<()>, (StatusCode, String)> {
+    if let Ok(cookie) = get_session_cookie(&jar) {
+        // Best-effort: notify Cernere
+        let _ = state.cernere.get_me(&cookie).await;
+    }
+    Ok(Json(()))
+}
+
+// ========== Cloud project APIs (via Cernere) ==========
 
 #[derive(Deserialize)]
 struct CloudSaveRequest {
@@ -75,13 +129,13 @@ async fn api_cloud_save_project(
     jar: CookieJar,
     Json(req): Json<CloudSaveRequest>,
 ) -> Result<Json<()>, (StatusCode, String)> {
-    let user = auth::extract_user(&state, &jar).await?;
+    let cookie = get_session_cookie(&jar)?;
     state
-        .project_repo
-        .save(&user.id, &req.project_id, &req.project)
+        .cernere
+        .save_project(&cookie, &req.project_id, &req.project)
         .await
         .map(|_| Json(()))
-        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))
+        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e))
 }
 
 #[derive(Deserialize)]
@@ -95,12 +149,12 @@ async fn api_cloud_load_project(
     jar: CookieJar,
     Query(q): Query<CloudLoadQuery>,
 ) -> Result<Json<Project>, (StatusCode, String)> {
-    let user = auth::extract_user(&state, &jar).await?;
+    let cookie = get_session_cookie(&jar)?;
     state
-        .project_repo
-        .load(&user.id, &q.project_id)
+        .cernere
+        .load_project(&cookie, &q.project_id)
         .await
-        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?
+        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e))?
         .map(Json)
         .ok_or((StatusCode::NOT_FOUND, "Project not found".to_string()))
 }
@@ -109,13 +163,22 @@ async fn api_cloud_list_projects(
     State(state): State<AppState>,
     jar: CookieJar,
 ) -> Result<Json<Vec<crate::models::ProjectSummary>>, (StatusCode, String)> {
-    let user = auth::extract_user(&state, &jar).await?;
-    state
-        .project_repo
-        .list(&user.id)
+    let cookie = get_session_cookie(&jar)?;
+    let summaries = state
+        .cernere
+        .list_projects(&cookie)
         .await
-        .map(Json)
-        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))
+        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e))?;
+    // Convert ars_core::models::ProjectSummary to crate::models::ProjectSummary
+    let result: Vec<crate::models::ProjectSummary> = summaries
+        .into_iter()
+        .map(|s| crate::models::ProjectSummary {
+            id: s.id,
+            name: s.name,
+            updated_at: s.updated_at,
+        })
+        .collect();
+    Ok(Json(result))
 }
 
 async fn api_cloud_delete_project(
@@ -123,13 +186,13 @@ async fn api_cloud_delete_project(
     jar: CookieJar,
     Path(project_id): Path<String>,
 ) -> Result<Json<()>, (StatusCode, String)> {
-    let user = auth::extract_user(&state, &jar).await?;
+    let cookie = get_session_cookie(&jar)?;
     state
-        .project_repo
-        .delete(&user.id, &project_id)
+        .cernere
+        .delete_project(&cookie, &project_id)
         .await
         .map(|_| Json(()))
-        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))
+        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e))
 }
 
 // ========== Git project management APIs ==========
@@ -138,7 +201,9 @@ async fn api_git_list_repos(
     State(state): State<AppState>,
     jar: CookieJar,
 ) -> Result<Json<Vec<GitRepo>>, (StatusCode, String)> {
-    let session = auth::extract_session(&state, &jar).await?;
+    let cookie = get_session_cookie(&jar)?;
+    let session = state.cernere.get_session(&cookie).await
+        .map_err(|e| (StatusCode::UNAUTHORIZED, e))?;
     let repos = git_ops::list_repos(&session.access_token)
         .await
         .map_err(|e| (StatusCode::BAD_GATEWAY, e))?;
@@ -157,7 +222,9 @@ async fn api_git_create_repo(
     jar: CookieJar,
     Json(req): Json<CreateRepoRequest>,
 ) -> Result<Json<GitRepo>, (StatusCode, String)> {
-    let session = auth::extract_session(&state, &jar).await?;
+    let cookie = get_session_cookie(&jar)?;
+    let session = state.cernere.get_session(&cookie).await
+        .map_err(|e| (StatusCode::UNAUTHORIZED, e))?;
     let repo = git_ops::create_repo(
         &session.access_token,
         &req.name,
@@ -182,7 +249,9 @@ async fn api_git_clone(
     jar: CookieJar,
     Json(req): Json<CloneRequest>,
 ) -> Result<Json<GitProjectInfo>, (StatusCode, String)> {
-    let session = auth::extract_session(&state, &jar).await?;
+    let cookie = get_session_cookie(&jar)?;
+    let session = state.cernere.get_session(&cookie).await
+        .map_err(|e| (StatusCode::UNAUTHORIZED, e))?;
     let token = session.access_token.clone();
     let clone_url = req.clone_url.clone();
     let full_name = req.full_name.clone();
@@ -214,7 +283,9 @@ async fn api_git_load_project(
     jar: CookieJar,
     Query(q): Query<GitLoadQuery>,
 ) -> Result<Json<Option<Project>>, (StatusCode, String)> {
-    let _session = auth::extract_session(&state, &jar).await?;
+    let cookie = get_session_cookie(&jar)?;
+    let _session = state.cernere.get_session(&cookie).await
+        .map_err(|e| (StatusCode::UNAUTHORIZED, e))?;
     let repo = q.repo.clone();
 
     let project = tokio::task::spawn_blocking(move || git_ops::load_project_from_repo(&repo))
@@ -238,7 +309,9 @@ async fn api_git_push(
     jar: CookieJar,
     Json(req): Json<GitPushRequest>,
 ) -> Result<Json<()>, (StatusCode, String)> {
-    let session = auth::extract_session(&state, &jar).await?;
+    let cookie = get_session_cookie(&jar)?;
+    let session = state.cernere.get_session(&cookie).await
+        .map_err(|e| (StatusCode::UNAUTHORIZED, e))?;
     let token = session.access_token.clone();
     let full_name = req.full_name.clone();
     let project = req.project.clone();
@@ -258,7 +331,9 @@ async fn api_git_list_local_projects(
     State(state): State<AppState>,
     jar: CookieJar,
 ) -> Result<Json<Vec<GitProjectInfo>>, (StatusCode, String)> {
-    let _session = auth::extract_session(&state, &jar).await?;
+    let cookie = get_session_cookie(&jar)?;
+    let _session = state.cernere.get_session(&cookie).await
+        .map_err(|e| (StatusCode::UNAUTHORIZED, e))?;
 
     let projects = tokio::task::spawn_blocking(git_ops::list_local_projects)
         .await
@@ -276,12 +351,12 @@ pub fn router(state: AppState) -> Router {
         .route("/api/project/load", get(api_load_project))
         .route("/api/project/default-path", get(api_default_path))
         .route("/api/project/list", get(api_list_projects))
-        // Auth routes
-        .route("/auth/github/login", get(auth::github_login))
-        .route("/auth/github/callback", get(auth::github_callback))
-        .route("/auth/me", get(auth::get_me))
-        .route("/auth/logout", post(auth::logout))
-        // Cloud project APIs
+        // Auth routes (proxy to Cernere)
+        .route("/auth/github/login", get(auth_github_login))
+        .route("/auth/github/callback", get(auth_github_callback))
+        .route("/auth/me", get(auth_get_me))
+        .route("/auth/logout", post(auth_logout))
+        // Cloud project APIs (via Cernere)
         .route("/api/cloud/project/save", post(api_cloud_save_project))
         .route("/api/cloud/project/load", get(api_cloud_load_project))
         .route("/api/cloud/project/list", get(api_cloud_list_projects))

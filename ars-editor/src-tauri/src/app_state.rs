@@ -1,91 +1,19 @@
-use std::sync::Arc;
-
-use ars_core::repository::{ProjectRepository, SessionRepository, UserRepository};
-use ars_secrets::{SecretScope, SecretsManager};
-
-use crate::redis_client::RedisClient;
-use crate::redis_repo::RedisSessionRepository;
-use crate::surreal_repo::{SurrealProjectRepository, SurrealUserRepository};
-use crate::surrealdb_client::SurrealClient;
+use crate::cernere_client::CernereClient;
 
 #[derive(Clone)]
 pub struct AppState {
-    pub secrets: SecretsManager,
-    pub redis: RedisClient,
-    // Repository trait objects
-    pub project_repo: Arc<dyn ProjectRepository>,
-    pub user_repo: Arc<dyn UserRepository>,
-    pub session_repo: Arc<dyn SessionRepository>,
+    pub cernere: CernereClient,
 }
 
 impl AppState {
-    /// Initialize from secrets provider (Infisical or AWS SSM).
+    /// Initialize with Cernere server URL.
     ///
-    /// The `secrets.toml` config file is auto-discovered from:
-    ///   1. Current working directory
-    ///   2. `~/.config/ars/secrets.toml`
-    pub async fn new() -> Result<Self, Box<dyn std::error::Error>> {
-        let secrets = SecretsManager::discover().await
-            .map_err(|e| format!("Failed to initialize secrets manager: {}", e))?;
-
-        // SurrealDB — connect to external instance via HTTP
-        let surreal_url = secrets
-            .get_or_default("SURREALDB_URL", SecretScope::Shared, "http://localhost:8000")
-            .await;
-        let surreal_user = secrets
-            .get_or_default("SURREALDB_USER", SecretScope::Shared, "root")
-            .await;
-        let surreal_pass = secrets
-            .get_or_default("SURREALDB_PASS", SecretScope::Shared, "root")
-            .await;
-        let surreal = SurrealClient::new(&surreal_url, &surreal_user, &surreal_pass).await
-            .map_err(|e| format!("Failed to connect to SurrealDB: {}", e))?;
-
-        let redis_url = secrets
-            .get_or_default("REDIS_URL", SecretScope::Shared, "redis://127.0.0.1:6379")
-            .await;
-        let redis = RedisClient::new(&redis_url).await
-            .map_err(|e| format!("Failed to initialize Redis: {}", e))?;
-
-        let project_repo: Arc<dyn ProjectRepository> =
-            Arc::new(SurrealProjectRepository::new(surreal.clone()));
-        let user_repo: Arc<dyn UserRepository> =
-            Arc::new(SurrealUserRepository::new(surreal));
-        let session_repo: Arc<dyn SessionRepository> =
-            Arc::new(RedisSessionRepository::new(redis.clone()));
-
-        Ok(Self {
-            secrets,
-            redis,
-            project_repo,
-            user_repo,
-            session_repo,
-        })
-    }
-
-    /// Get GitHub Client ID (fetched from Infisical on-demand).
-    pub async fn github_client_id(&self) -> Result<String, ars_secrets::error::SecretsError> {
-        self.secrets.get("GITHUB_CLIENT_ID", SecretScope::Shared).await
-    }
-
-    /// Get GitHub Client Secret (fetched from Infisical on-demand).
-    pub async fn github_client_secret(&self) -> Result<String, ars_secrets::error::SecretsError> {
-        self.secrets.get("GITHUB_CLIENT_SECRET", SecretScope::Shared).await
-    }
-
-    /// Get GitHub Redirect URI (fetched from Infisical, with default fallback).
-    pub async fn github_redirect_uri(&self) -> String {
-        self.secrets
-            .get_or_default(
-                "GITHUB_REDIRECT_URI",
-                SecretScope::Shared,
-                "http://localhost:5173/auth/github/callback",
-            )
-            .await
-    }
-
-    /// Whether the redirect URI uses HTTPS (for Cookie Secure flag).
-    pub async fn is_https(&self) -> bool {
-        self.github_redirect_uri().await.starts_with("https://")
+    /// The URL is read from `CERNERE_URL` env var, defaulting to `http://localhost:8080`.
+    pub fn new() -> Self {
+        let cernere_url = std::env::var("CERNERE_URL")
+            .unwrap_or_else(|_| "http://localhost:8080".to_string());
+        Self {
+            cernere: CernereClient::new(&cernere_url),
+        }
     }
 }

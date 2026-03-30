@@ -3,7 +3,7 @@ pub mod models;
 #[cfg(feature = "web-server")]
 pub mod app_state;
 #[cfg(feature = "web-server")]
-pub mod auth;
+pub mod cernere_client;
 #[cfg(feature = "web-server")]
 pub mod git_ops;
 #[cfg(feature = "web-server")]
@@ -14,14 +14,6 @@ pub mod web_server;
 pub mod web_modules;
 #[cfg(feature = "web-server")]
 pub mod collab;
-#[cfg(feature = "web-server")]
-pub mod surrealdb_client;
-#[cfg(feature = "web-server")]
-pub mod redis_client;
-#[cfg(feature = "web-server")]
-pub mod surreal_repo;
-#[cfg(feature = "web-server")]
-pub mod redis_repo;
 
 #[cfg(feature = "tauri-app")]
 pub fn run() {
