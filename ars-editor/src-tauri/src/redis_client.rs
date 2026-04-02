@@ -7,21 +7,27 @@ use redis::AsyncCommands;
 use ars_core::models::Session;
 
 const SESSION_PREFIX: &str = "session:";
-const SESSION_TTL_SECS: u64 = 7 * 24 * 60 * 60; // 7 days
+/// デフォルト TTL（秒）。AppState から Infisical 値で上書き可能。
+const DEFAULT_SESSION_TTL_SECS: u64 = 7 * 24 * 60 * 60;
 
 #[derive(Clone)]
 pub struct RedisClient {
     conn: ConnectionManager,
+    session_ttl_secs: u64,
 }
 
 impl RedisClient {
     pub async fn new(redis_url: &str) -> Result<Self, String> {
+        Self::with_ttl(redis_url, DEFAULT_SESSION_TTL_SECS).await
+    }
+
+    pub async fn with_ttl(redis_url: &str, session_ttl_secs: u64) -> Result<Self, String> {
         let client = redis::Client::open(redis_url)
             .map_err(|e| format!("Redis client creation failed: {}", e))?;
         let conn = ConnectionManager::new(client)
             .await
             .map_err(|e| format!("Redis connection failed: {}", e))?;
-        Ok(Self { conn })
+        Ok(Self { conn, session_ttl_secs })
     }
 
     fn session_key(session_id: &str) -> String {
@@ -34,7 +40,7 @@ impl RedisClient {
         let json = serde_json::to_string(session)
             .map_err(|e| format!("Failed to serialize session: {}", e))?;
 
-        conn.set_ex::<_, _, ()>(&key, &json, SESSION_TTL_SECS)
+        conn.set_ex::<_, _, ()>(&key, &json, self.session_ttl_secs)
             .await
             .map_err(|e| format!("Redis put_session failed: {}", e))?;
         Ok(())

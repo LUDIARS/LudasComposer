@@ -5,15 +5,18 @@
 ///   - POST /api/setup/validate — validate credentials (attempt auth)
 ///   - POST /api/setup/save     — write secrets.toml and signal restart
 use axum::{
-    extract::State,
+    extract::{ConnectInfo, State},
     http::StatusCode,
+    middleware,
     response::Json,
     routing::{get, post},
     Router,
 };
 use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
+use std::net::SocketAddr;
 use std::sync::Arc;
-use tokio::sync::watch;
+use tokio::sync::{watch, Mutex};
 
 use ars_secrets::{InfisicalConfig, SecretsConfig, SecretsProvider};
 
@@ -22,6 +25,37 @@ use ars_secrets::{InfisicalConfig, SecretsConfig, SecretsProvider};
 pub struct SetupState {
     /// Sends `true` when setup is completed and the server should reinitialize.
     pub setup_done_tx: Arc<watch::Sender<bool>>,
+    /// IP ベースの簡易レート制限（IP → 直近リクエスト時刻リスト）
+    rate_limiter: Arc<Mutex<HashMap<String, Vec<std::time::Instant>>>>,
+}
+
+impl SetupState {
+    pub fn new(setup_done_tx: Arc<watch::Sender<bool>>) -> Self {
+        Self {
+            setup_done_tx,
+            rate_limiter: Arc::new(Mutex::new(HashMap::new())),
+        }
+    }
+
+    /// 1分あたり MAX_REQUESTS_PER_MINUTE 回に制限。超過時は Err を返す。
+    async fn check_rate_limit(&self, ip: &str) -> Result<(), (StatusCode, String)> {
+        const MAX_REQUESTS_PER_MINUTE: usize = 10;
+        let now = std::time::Instant::now();
+        let one_minute_ago = now - std::time::Duration::from_secs(60);
+
+        let mut limiter = self.rate_limiter.lock().await;
+        let timestamps = limiter.entry(ip.to_string()).or_default();
+
+        // 1分以前のエントリを削除
+        timestamps.retain(|t| *t > one_minute_ago);
+
+        if timestamps.len() >= MAX_REQUESTS_PER_MINUTE {
+            return Err((StatusCode::TOO_MANY_REQUESTS, "Rate limit exceeded. Try again later.".to_string()));
+        }
+
+        timestamps.push(now);
+        Ok(())
+    }
 }
 
 // ─── Request / Response types ─────────────────────────────────────────────────
@@ -91,26 +125,33 @@ fn build_config(req: &SetupRequest) -> SecretsConfig {
 }
 
 /// POST /api/setup/validate — try to authenticate with the provided credentials.
-async fn setup_validate(Json(req): Json<SetupRequest>) -> Json<ValidateResponse> {
+async fn setup_validate(
+    State(state): State<SetupState>,
+    axum::extract::ConnectInfo(addr): axum::extract::ConnectInfo<SocketAddr>,
+    Json(req): Json<SetupRequest>,
+) -> Result<Json<ValidateResponse>, (StatusCode, String)> {
+    state.check_rate_limit(&addr.ip().to_string()).await?;
     let config = build_config(&req);
 
     match ars_secrets::SecretsManager::from_config(&config).await {
-        Ok(_) => Json(ValidateResponse {
+        Ok(_) => Ok(Json(ValidateResponse {
             valid: true,
             error: None,
-        }),
-        Err(e) => Json(ValidateResponse {
+        })),
+        Err(e) => Ok(Json(ValidateResponse {
             valid: false,
             error: Some(e.to_string()),
-        }),
+        })),
     }
 }
 
 /// POST /api/setup/save — write the config to disk and signal completion.
 async fn setup_save(
     State(state): State<SetupState>,
+    axum::extract::ConnectInfo(addr): axum::extract::ConnectInfo<SocketAddr>,
     Json(req): Json<SetupRequest>,
 ) -> Result<Json<SaveResponse>, (StatusCode, String)> {
+    state.check_rate_limit(&addr.ip().to_string()).await?;
     let config = build_config(&req);
 
     let path = SecretsConfig::default_config_path();
@@ -134,4 +175,9 @@ pub fn router(state: SetupState) -> Router {
         .route("/api/setup/validate", post(setup_validate))
         .route("/api/setup/save", post(setup_save))
         .with_state(state)
+}
+
+/// ConnectInfo 対応の setup-mode router（セットアップサーバーから呼び出す場合用）
+pub fn router_with_connect_info(state: SetupState) -> Router {
+    router(state)
 }

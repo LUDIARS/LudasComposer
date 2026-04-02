@@ -2,6 +2,7 @@ use std::sync::Arc;
 
 use ars_core::repository::{ProjectRepository, SessionRepository, UserRepository};
 use ars_secrets::{SecretScope, SecretsManager};
+use dashmap::DashMap;
 
 use crate::redis_client::RedisClient;
 use crate::redis_repo::RedisSessionRepository;
@@ -16,6 +17,8 @@ pub struct AppState {
     pub project_repo: Arc<dyn ProjectRepository>,
     pub user_repo: Arc<dyn UserRepository>,
     pub session_repo: Arc<dyn SessionRepository>,
+    /// アクセストークンはオンメモリで管理（Redis に保存しない）
+    pub token_store: Arc<DashMap<String, String>>,
 }
 
 impl AppState {
@@ -33,18 +36,24 @@ impl AppState {
             .get_or_default("SURREALDB_URL", SecretScope::Shared, "http://localhost:8000")
             .await;
         let surreal_user = secrets
-            .get_or_default("SURREALDB_USER", SecretScope::Shared, "root")
-            .await;
+            .get("SURREALDB_USER", SecretScope::Shared)
+            .await
+            .map_err(|e| format!("SURREALDB_USER not configured in Infisical: {}", e))?;
         let surreal_pass = secrets
-            .get_or_default("SURREALDB_PASS", SecretScope::Shared, "root")
-            .await;
+            .get("SURREALDB_PASS", SecretScope::Shared)
+            .await
+            .map_err(|e| format!("SURREALDB_PASS not configured in Infisical: {}", e))?;
         let surreal = SurrealClient::new(&surreal_url, &surreal_user, &surreal_pass).await
             .map_err(|e| format!("Failed to connect to SurrealDB: {}", e))?;
 
         let redis_url = secrets
             .get_or_default("REDIS_URL", SecretScope::Shared, "redis://127.0.0.1:6379")
             .await;
-        let redis = RedisClient::new(&redis_url).await
+        let session_ttl_str = secrets
+            .get_or_default("SESSION_TTL_SECS", SecretScope::Shared, "604800")
+            .await;
+        let session_ttl: u64 = session_ttl_str.parse().unwrap_or(604800);
+        let redis = RedisClient::with_ttl(&redis_url, session_ttl).await
             .map_err(|e| format!("Failed to initialize Redis: {}", e))?;
 
         let project_repo: Arc<dyn ProjectRepository> =
@@ -60,6 +69,7 @@ impl AppState {
             project_repo,
             user_repo,
             session_repo,
+            token_store: Arc::new(DashMap::new()),
         })
     }
 
@@ -87,5 +97,21 @@ impl AppState {
     /// Whether the redirect URI uses HTTPS (for Cookie Secure flag).
     pub async fn is_https(&self) -> bool {
         self.github_redirect_uri().await.starts_with("https://")
+    }
+
+    /// セッション TTL（秒）を Infisical から取得（デフォルト 7 日）
+    pub async fn session_ttl_secs(&self) -> i64 {
+        let val = self.secrets
+            .get_or_default("SESSION_TTL_SECS", SecretScope::Shared, "604800")
+            .await;
+        val.parse().unwrap_or(604800)
+    }
+
+    /// レート制限: 1分あたりのリクエスト上限を Infisical から取得
+    pub async fn rate_limit_rpm(&self) -> u64 {
+        let val = self.secrets
+            .get_or_default("RATE_LIMIT_RPM", SecretScope::Shared, "30")
+            .await;
+        val.parse().unwrap_or(30)
     }
 }

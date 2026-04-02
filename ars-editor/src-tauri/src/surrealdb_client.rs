@@ -38,14 +38,44 @@ impl SurrealClient {
 
     /// Execute one or more SurrealQL statements and return results per statement.
     async fn execute(&self, sql: &str) -> Result<Vec<Value>, String> {
-        let resp = self
+        self.execute_with_params(sql, None).await
+    }
+
+    /// Execute SurrealQL with bound parameters to prevent injection attacks.
+    async fn execute_with_params(
+        &self,
+        sql: &str,
+        params: Option<&HashMap<String, Value>>,
+    ) -> Result<Vec<Value>, String> {
+        let body = if let Some(params) = params {
+            serde_json::json!({
+                "query": sql,
+                "params": params,
+            })
+            .to_string()
+        } else {
+            sql.to_string()
+        };
+
+        let mut req = self
             .http
-            .post(format!("{}/sql", self.endpoint))
+            .post(if params.is_some() {
+                format!("{}/sql", self.endpoint)
+            } else {
+                format!("{}/sql", self.endpoint)
+            })
             .basic_auth(&self.username, Some(&self.password))
             .header("surreal-ns", "ars")
             .header("surreal-db", "main")
-            .header("Accept", "application/json")
-            .body(sql.to_string())
+            .header("Accept", "application/json");
+
+        if params.is_some() {
+            req = req.header("Content-Type", "application/json").body(body);
+        } else {
+            req = req.body(body);
+        }
+
+        let resp = req
             .send()
             .await
             .map_err(|e| format!("SurrealDB request failed: {}", e))?;
@@ -72,8 +102,8 @@ impl SurrealClient {
     }
 
     /// Execute a query and deserialize the first statement's results as `Vec<T>`.
-    async fn query_vec<T: serde::de::DeserializeOwned>(&self, sql: &str) -> Result<Vec<T>, String> {
-        let results = self.execute(sql).await?;
+    async fn query_vec<T: serde::de::DeserializeOwned>(&self, sql: &str, params: Option<&HashMap<String, Value>>) -> Result<Vec<T>, String> {
+        let results = self.execute_with_params(sql, params).await?;
         let first = results.into_iter().next().unwrap_or(Value::Array(vec![]));
         serde_json::from_value(first)
             .map_err(|e| format!("SurrealDB deserialize failed: {}", e))
@@ -103,16 +133,16 @@ impl SurrealClient {
         value: &str,
     ) -> Result<(), String> {
         let now = chrono::Utc::now().to_rfc3339();
-        let sql = format!(
-            "INSERT INTO project_setting (project_id, setting_key, value, updated_at) \
-             VALUES ({pid}, {key}, {val}, {now}) \
-             ON DUPLICATE KEY UPDATE value = {val}, updated_at = {now}",
-            pid = qs(project_id),
-            key = qs(key),
-            val = qs(value),
-            now = qs(&now),
-        );
-        self.execute(&sql).await?;
+        let sql = "INSERT INTO project_setting (project_id, setting_key, value, updated_at) \
+                   VALUES ($pid, $key, $val, $now) \
+                   ON DUPLICATE KEY UPDATE value = $val, updated_at = $now";
+        let params = params![
+            "pid" => project_id,
+            "key" => key,
+            "val" => value,
+            "now" => &now,
+        ];
+        self.execute_with_params(sql, Some(&params)).await?;
         Ok(())
     }
 
@@ -122,12 +152,12 @@ impl SurrealClient {
         project_id: &str,
         key: &str,
     ) -> Result<Option<String>, String> {
-        let sql = format!(
-            "SELECT value FROM project_setting WHERE project_id = {} AND setting_key = {} LIMIT 1",
-            qs(project_id),
-            qs(key),
-        );
-        let rows: Vec<ValueRecord> = self.query_vec(&sql).await?;
+        let sql = "SELECT value FROM project_setting WHERE project_id = $pid AND setting_key = $key LIMIT 1";
+        let params = params![
+            "pid" => project_id,
+            "key" => key,
+        ];
+        let rows: Vec<ValueRecord> = self.query_vec(sql, Some(&params)).await?;
         Ok(rows.into_iter().next().map(|r| r.value))
     }
 
@@ -136,11 +166,9 @@ impl SurrealClient {
         &self,
         project_id: &str,
     ) -> Result<HashMap<String, String>, String> {
-        let sql = format!(
-            "SELECT setting_key, value FROM project_setting WHERE project_id = {}",
-            qs(project_id),
-        );
-        let rows: Vec<SettingKvRecord> = self.query_vec(&sql).await?;
+        let sql = "SELECT setting_key, value FROM project_setting WHERE project_id = $pid";
+        let params = params!["pid" => project_id];
+        let rows: Vec<SettingKvRecord> = self.query_vec(sql, Some(&params)).await?;
         Ok(rows
             .into_iter()
             .map(|r| (r.setting_key, r.value))
@@ -161,55 +189,48 @@ impl SurrealClient {
 
     /// 個別設定を削除
     pub async fn delete_setting(&self, project_id: &str, key: &str) -> Result<(), String> {
-        let sql = format!(
-            "DELETE FROM project_setting WHERE project_id = {} AND setting_key = {}",
-            qs(project_id),
-            qs(key),
-        );
-        self.execute(&sql).await?;
+        let sql = "DELETE FROM project_setting WHERE project_id = $pid AND setting_key = $key";
+        let params = params!["pid" => project_id, "key" => key];
+        self.execute_with_params(sql, Some(&params)).await?;
         Ok(())
     }
 
     // ========== User operations (Graph node) ==========
 
     pub async fn put_user(&self, user: &User) -> Result<(), String> {
-        let email_val = user
+        let email_val: Value = user
             .email
             .as_deref()
-            .map(qs)
-            .unwrap_or_else(|| "NONE".to_string());
-        let sql = format!(
-            "INSERT INTO user (id, github_id, login, display_name, avatar_url, email, created_at, updated_at) \
-             VALUES ({id}, {gid}, {login}, {dn}, {av}, {email}, {ca}, {ua}) \
-             ON DUPLICATE KEY UPDATE login = {login}, display_name = {dn}, avatar_url = {av}, email = {email}, updated_at = {ua}",
-            id = qs(&user.id),
-            gid = user.github_id,
-            login = qs(&user.login),
-            dn = qs(&user.display_name),
-            av = qs(&user.avatar_url),
-            email = email_val,
-            ca = qs(&user.created_at),
-            ua = qs(&user.updated_at),
-        );
-        self.execute(&sql).await?;
+            .map(|e| Value::String(e.to_string()))
+            .unwrap_or(Value::Null);
+        let sql = "INSERT INTO user (id, github_id, login, display_name, avatar_url, email, created_at, updated_at) \
+                   VALUES ($id, $gid, $login, $dn, $av, $email, $ca, $ua) \
+                   ON DUPLICATE KEY UPDATE login = $login, display_name = $dn, avatar_url = $av, email = $email, updated_at = $ua";
+        let mut params = HashMap::new();
+        params.insert("id".to_string(), Value::String(user.id.clone()));
+        params.insert("gid".to_string(), Value::Number(user.github_id.into()));
+        params.insert("login".to_string(), Value::String(user.login.clone()));
+        params.insert("dn".to_string(), Value::String(user.display_name.clone()));
+        params.insert("av".to_string(), Value::String(user.avatar_url.clone()));
+        params.insert("email".to_string(), email_val);
+        params.insert("ca".to_string(), Value::String(user.created_at.clone()));
+        params.insert("ua".to_string(), Value::String(user.updated_at.clone()));
+        self.execute_with_params(sql, Some(&params)).await?;
         Ok(())
     }
 
     pub async fn get_user(&self, user_id: &str) -> Result<Option<User>, String> {
-        let sql = format!(
-            "SELECT * FROM user WHERE id = type::thing('user', {}) LIMIT 1",
-            qs(user_id),
-        );
-        let rows: Vec<UserRecord> = self.query_vec(&sql).await?;
+        let sql = "SELECT * FROM user WHERE id = type::thing('user', $uid) LIMIT 1";
+        let params = params!["uid" => user_id];
+        let rows: Vec<UserRecord> = self.query_vec(sql, Some(&params)).await?;
         Ok(rows.into_iter().next().map(|r| r.into_user()))
     }
 
     pub async fn get_user_by_github_id(&self, github_id: i64) -> Result<Option<User>, String> {
-        let sql = format!(
-            "SELECT * FROM user WHERE github_id = {} LIMIT 1",
-            github_id,
-        );
-        let rows: Vec<UserRecord> = self.query_vec(&sql).await?;
+        let sql = "SELECT * FROM user WHERE github_id = $gid LIMIT 1";
+        let mut params = HashMap::new();
+        params.insert("gid".to_string(), Value::Number(github_id.into()));
+        let rows: Vec<UserRecord> = self.query_vec(sql, Some(&params)).await?;
         Ok(rows.into_iter().next().map(|r| r.into_user()))
     }
 
@@ -226,24 +247,23 @@ impl SurrealClient {
         let now = chrono::Utc::now().to_rfc3339();
 
         // プロジェクトレコードを upsert + グラフ関係を作成（既存なら無視）
-        let sql = format!(
-            "INSERT INTO cloud_project (id, user_id, name, data, updated_at) \
-             VALUES ({id}, {uid}, {name}, {data}, {now}) \
-             ON DUPLICATE KEY UPDATE name = {name}, data = {data}, updated_at = {now};\
-             IF (SELECT count() FROM owns_project \
-                 WHERE in = type::thing('user', {uid}) \
-                   AND out = type::thing('cloud_project', {id}) GROUP ALL)[0].count = 0 \
-             THEN \
-                 (RELATE type::thing('user', {uid})->owns_project->type::thing('cloud_project', {id}) \
-                  SET created_at = {now}) \
-             END",
-            id = qs(project_id),
-            uid = qs(user_id),
-            name = qs(&project.name),
-            data = qs(&project_json),
-            now = qs(&now),
-        );
-        self.execute(&sql).await?;
+        let sql = "INSERT INTO cloud_project (id, user_id, name, data, updated_at) \
+                   VALUES ($id, $uid, $name, $data, $now) \
+                   ON DUPLICATE KEY UPDATE name = $name, data = $data, updated_at = $now;\
+                   IF (SELECT count() FROM owns_project \
+                       WHERE in = type::thing('user', $uid) \
+                         AND out = type::thing('cloud_project', $id) GROUP ALL)[0].count = 0 \
+                   THEN \
+                       (RELATE type::thing('user', $uid)->owns_project->type::thing('cloud_project', $id) \
+                        SET created_at = $now) \
+                   END";
+        let mut params = HashMap::new();
+        params.insert("id".to_string(), Value::String(project_id.to_string()));
+        params.insert("uid".to_string(), Value::String(user_id.to_string()));
+        params.insert("name".to_string(), Value::String(project.name.clone()));
+        params.insert("data".to_string(), Value::String(project_json));
+        params.insert("now".to_string(), Value::String(now));
+        self.execute_with_params(sql, Some(&params)).await?;
         Ok(())
     }
 
@@ -253,15 +273,12 @@ impl SurrealClient {
         project_id: &str,
     ) -> Result<Option<Project>, String> {
         // グラフ走査でユーザーが所有するプロジェクトを取得
-        let sql = format!(
-            "SELECT data FROM cloud_project \
-             WHERE id = type::thing('cloud_project', {pid}) \
-               AND id IN (SELECT VALUE out FROM owns_project \
-                          WHERE in = type::thing('user', {uid})) LIMIT 1",
-            pid = qs(project_id),
-            uid = qs(user_id),
-        );
-        let rows: Vec<CloudProjectRecord> = self.query_vec(&sql).await?;
+        let sql = "SELECT data FROM cloud_project \
+                   WHERE id = type::thing('cloud_project', $pid) \
+                     AND id IN (SELECT VALUE out FROM owns_project \
+                                WHERE in = type::thing('user', $uid)) LIMIT 1";
+        let params = params!["pid" => project_id, "uid" => user_id];
+        let rows: Vec<CloudProjectRecord> = self.query_vec(sql, Some(&params)).await?;
         match rows.into_iter().next() {
             Some(record) => {
                 let project: Project = serde_json::from_str(&record.data)
@@ -277,14 +294,12 @@ impl SurrealClient {
         user_id: &str,
     ) -> Result<Vec<ProjectSummary>, String> {
         // グラフ走査でユーザーの全プロジェクトを取得
-        let sql = format!(
-            "SELECT id, name, updated_at FROM cloud_project \
-             WHERE id IN (SELECT VALUE out FROM owns_project \
-                          WHERE in = type::thing('user', {})) \
-             ORDER BY updated_at DESC",
-            qs(user_id),
-        );
-        let rows: Vec<ProjectSummaryRecord> = self.query_vec(&sql).await?;
+        let sql = "SELECT id, name, updated_at FROM cloud_project \
+                   WHERE id IN (SELECT VALUE out FROM owns_project \
+                                WHERE in = type::thing('user', $uid)) \
+                   ORDER BY updated_at DESC";
+        let params = params!["uid" => user_id];
+        let rows: Vec<ProjectSummaryRecord> = self.query_vec(sql, Some(&params)).await?;
         Ok(rows
             .into_iter()
             .map(|r| ProjectSummary {
@@ -301,33 +316,40 @@ impl SurrealClient {
         project_id: &str,
     ) -> Result<(), String> {
         // グラフ走査で所有権を確認
-        let sql = format!(
-            "SELECT count() FROM owns_project \
-             WHERE in = type::thing('user', {uid}) \
-               AND out = type::thing('cloud_project', {pid}) GROUP ALL",
-            uid = qs(user_id),
-            pid = qs(project_id),
-        );
-        let rows: Vec<CountRecord> = self.query_vec(&sql).await?;
+        let check_sql = "SELECT count() FROM owns_project \
+                         WHERE in = type::thing('user', $uid) \
+                           AND out = type::thing('cloud_project', $pid) GROUP ALL";
+        let params = params!["uid" => user_id, "pid" => project_id];
+        let rows: Vec<CountRecord> = self.query_vec(check_sql, Some(&params)).await?;
         let count = rows.into_iter().next().map(|r| r.count).unwrap_or(0);
         if count == 0 {
             return Err("Access denied or project not found".to_string());
         }
 
         // 関係とプロジェクトを削除
-        let sql = format!(
-            "DELETE FROM owns_project \
-             WHERE in = type::thing('user', {uid}) \
-               AND out = type::thing('cloud_project', {pid});\
-             DELETE FROM cloud_project \
-             WHERE id = type::thing('cloud_project', {pid})",
-            uid = qs(user_id),
-            pid = qs(project_id),
-        );
-        self.execute(&sql).await?;
+        let delete_sql = "DELETE FROM owns_project \
+                          WHERE in = type::thing('user', $uid) \
+                            AND out = type::thing('cloud_project', $pid);\
+                          DELETE FROM cloud_project \
+                          WHERE id = type::thing('cloud_project', $pid)";
+        self.execute_with_params(delete_sql, Some(&params)).await?;
         Ok(())
     }
 }
+
+// ========== Internal helpers ==========
+
+/// Convenience macro for building parameter maps.
+macro_rules! params {
+    ($($key:expr => $val:expr),* $(,)?) => {{
+        let mut map = std::collections::HashMap::new();
+        $(
+            map.insert($key.to_string(), serde_json::Value::String($val.to_string()));
+        )*
+        map
+    }};
+}
+use params;
 
 // ========== Internal record types for deserialization ==========
 
@@ -384,11 +406,6 @@ struct ProjectSummaryRecord {
 #[derive(Debug, Deserialize)]
 struct CountRecord {
     count: i64,
-}
-
-/// Escape and quote a string value for safe embedding in SurrealQL.
-fn qs(s: &str) -> String {
-    format!("'{}'", s.replace('\\', "\\\\").replace('\'', "\\'"))
 }
 
 /// Parse a SurrealDB record ID to extract the plain ID string.
