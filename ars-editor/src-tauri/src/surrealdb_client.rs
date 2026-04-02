@@ -59,21 +59,16 @@ impl SurrealClient {
 
         let mut req = self
             .http
-            .post(if params.is_some() {
-                format!("{}/sql", self.endpoint)
-            } else {
-                format!("{}/sql", self.endpoint)
-            })
+            .post(format!("{}/sql", self.endpoint))
             .basic_auth(&self.username, Some(&self.password))
             .header("surreal-ns", "ars")
             .header("surreal-db", "main")
             .header("Accept", "application/json");
 
         if params.is_some() {
-            req = req.header("Content-Type", "application/json").body(body);
-        } else {
-            req = req.body(body);
+            req = req.header("Content-Type", "application/json");
         }
+        req = req.body(body);
 
         let resp = req
             .send()

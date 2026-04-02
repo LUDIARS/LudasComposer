@@ -5,16 +5,14 @@
 ///   - POST /api/setup/validate — validate credentials (attempt auth)
 ///   - POST /api/setup/save     — write secrets.toml and signal restart
 use axum::{
-    extract::{ConnectInfo, State},
-    http::StatusCode,
-    middleware,
+    extract::State,
+    http::{HeaderMap, StatusCode},
     response::Json,
     routing::{get, post},
     Router,
 };
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use std::net::SocketAddr;
 use std::sync::Arc;
 use tokio::sync::{watch, Mutex};
 
@@ -127,10 +125,11 @@ fn build_config(req: &SetupRequest) -> SecretsConfig {
 /// POST /api/setup/validate — try to authenticate with the provided credentials.
 async fn setup_validate(
     State(state): State<SetupState>,
-    axum::extract::ConnectInfo(addr): axum::extract::ConnectInfo<SocketAddr>,
+    headers: HeaderMap,
     Json(req): Json<SetupRequest>,
 ) -> Result<Json<ValidateResponse>, (StatusCode, String)> {
-    state.check_rate_limit(&addr.ip().to_string()).await?;
+    let ip = extract_client_ip(&headers);
+    state.check_rate_limit(&ip).await?;
     let config = build_config(&req);
 
     match ars_secrets::SecretsManager::from_config(&config).await {
@@ -148,10 +147,11 @@ async fn setup_validate(
 /// POST /api/setup/save — write the config to disk and signal completion.
 async fn setup_save(
     State(state): State<SetupState>,
-    axum::extract::ConnectInfo(addr): axum::extract::ConnectInfo<SocketAddr>,
+    headers: HeaderMap,
     Json(req): Json<SetupRequest>,
 ) -> Result<Json<SaveResponse>, (StatusCode, String)> {
-    state.check_rate_limit(&addr.ip().to_string()).await?;
+    let ip = extract_client_ip(&headers);
+    state.check_rate_limit(&ip).await?;
     let config = build_config(&req);
 
     let path = SecretsConfig::default_config_path();
@@ -168,6 +168,17 @@ async fn setup_save(
     }))
 }
 
+/// X-Forwarded-For または X-Real-IP ヘッダーからクライアント IP を取得する。
+fn extract_client_ip(headers: &HeaderMap) -> String {
+    headers
+        .get("x-forwarded-for")
+        .or_else(|| headers.get("x-real-ip"))
+        .and_then(|v| v.to_str().ok())
+        .and_then(|s| s.split(',').next())
+        .map(|s| s.trim().to_string())
+        .unwrap_or_else(|| "unknown".to_string())
+}
+
 /// Build the setup-mode router.
 pub fn router(state: SetupState) -> Router {
     Router::new()
@@ -175,9 +186,4 @@ pub fn router(state: SetupState) -> Router {
         .route("/api/setup/validate", post(setup_validate))
         .route("/api/setup/save", post(setup_save))
         .with_state(state)
-}
-
-/// ConnectInfo 対応の setup-mode router（セットアップサーバーから呼び出す場合用）
-pub fn router_with_connect_info(state: SetupState) -> Router {
-    router(state)
 }

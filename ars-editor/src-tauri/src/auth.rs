@@ -13,8 +13,6 @@ use crate::app_state::AppState;
 
 const SESSION_COOKIE: &str = "ars_session";
 const CSRF_STATE_COOKIE: &str = "ars_oauth_state";
-/// デフォルト TTL (Infisical 未設定時のフォールバック)
-const DEFAULT_SESSION_TTL_SECS: i64 = 7 * 24 * 60 * 60;
 
 #[derive(Debug, Deserialize)]
 pub struct OAuthCallbackQuery {
