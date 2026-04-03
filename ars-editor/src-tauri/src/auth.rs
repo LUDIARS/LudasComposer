@@ -13,7 +13,6 @@ use crate::app_state::AppState;
 
 const SESSION_COOKIE: &str = "ars_session";
 const CSRF_STATE_COOKIE: &str = "ars_oauth_state";
-const SESSION_TTL_SECS: i64 = 7 * 24 * 60 * 60; // 7 days
 
 #[derive(Debug, Deserialize)]
 pub struct OAuthCallbackQuery {
@@ -48,7 +47,7 @@ pub async fn github_login(
         .path("/")
         .http_only(true)
         .max_age(time::Duration::minutes(10))
-        .same_site(axum_extra::extract::cookie::SameSite::Lax)
+        .same_site(axum_extra::extract::cookie::SameSite::Strict)
         .secure(is_https);
 
     let client_id = state.github_client_id().await
@@ -153,22 +152,27 @@ pub async fn github_callback(
         }
     };
 
-    // Create session (store access token for Git operations)
+    // Create session (access token stored in-memory only, not in Redis)
+    let session_ttl = state.session_ttl_secs().await;
+    let session_id = Uuid::new_v4().to_string();
     let session = Session {
-        id: Uuid::new_v4().to_string(),
+        id: session_id.clone(),
         user_id: user.id,
-        expires_at: Some((Utc::now() + chrono::Duration::seconds(SESSION_TTL_SECS)).to_rfc3339()),
+        expires_at: Some((Utc::now() + chrono::Duration::seconds(session_ttl)).to_rfc3339()),
         created_at: now,
-        access_token: token_data.access_token.clone(),
+        access_token: String::new(), // トークンは Redis に保存しない
     };
     state.redis.put_session(&session).await
         .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, format!("Failed to create session: {}", e)))?;
 
+    // アクセストークンはオンメモリで管理
+    state.token_store.insert(session_id.clone(), token_data.access_token.clone());
+
     let cookie = Cookie::build((SESSION_COOKIE, session.id))
         .path("/")
         .http_only(true)
-        .max_age(time::Duration::seconds(SESSION_TTL_SECS))
-        .same_site(axum_extra::extract::cookie::SameSite::Lax)
+        .max_age(time::Duration::seconds(session_ttl))
+        .same_site(axum_extra::extract::cookie::SameSite::Strict)
         .secure(redirect_uri.starts_with("https://"));
 
     // Clear the CSRF state cookie
@@ -195,6 +199,7 @@ pub async fn logout(
 ) -> Result<(CookieJar, Json<()>), (StatusCode, String)> {
     if let Some(session_id) = jar.get(SESSION_COOKIE).map(|c| c.value().to_string()) {
         let _ = state.redis.delete_session(&session_id).await;
+        state.token_store.remove(&session_id);
     }
     let cookie = Cookie::build((SESSION_COOKIE, ""))
         .path("/")
@@ -202,14 +207,14 @@ pub async fn logout(
     Ok((jar.remove(cookie), Json(())))
 }
 
-/// Extract session from cookie (Redis)
+/// Extract session from cookie (Redis + in-memory token)
 pub async fn extract_session(state: &AppState, jar: &CookieJar) -> Result<Session, (StatusCode, String)> {
     let session_id = jar
         .get(SESSION_COOKIE)
         .map(|c| c.value().to_string())
         .ok_or((StatusCode::UNAUTHORIZED, "Not authenticated".to_string()))?;
 
-    let session = state
+    let mut session = state
         .redis
         .get_session(&session_id)
         .await
@@ -221,8 +226,14 @@ pub async fn extract_session(state: &AppState, jar: &CookieJar) -> Result<Sessio
             .map_err(|_| (StatusCode::INTERNAL_SERVER_ERROR, "Invalid session expiry".to_string()))?;
         if Utc::now() > expires_at {
             let _ = state.redis.delete_session(&session_id).await;
+            state.token_store.remove(&session_id);
             return Err((StatusCode::UNAUTHORIZED, "Session expired".to_string()));
         }
+    }
+
+    // オンメモリからアクセストークンを復元
+    if let Some(token) = state.token_store.get(&session_id) {
+        session.access_token = token.clone();
     }
 
     Ok(session)
@@ -248,6 +259,7 @@ pub async fn extract_user(state: &AppState, jar: &CookieJar) -> Result<User, (St
             .map_err(|_| (StatusCode::INTERNAL_SERVER_ERROR, "Invalid session expiry".to_string()))?;
         if Utc::now() > expires_at {
             let _ = state.redis.delete_session(&session_id).await;
+            state.token_store.remove(&session_id);
             return Err((StatusCode::UNAUTHORIZED, "Session expired".to_string()));
         }
     }

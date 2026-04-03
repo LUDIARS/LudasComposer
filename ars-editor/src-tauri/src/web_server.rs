@@ -8,17 +8,33 @@
 /// GUI ウィザードを通じて Infisical の初期設定を行う。
 use std::sync::Arc;
 
+use axum::http::{HeaderValue, Method};
 use axum::routing::get;
 use axum::Router;
 use tower_http::cors::CorsLayer;
 use tower_http::services::ServeDir;
 
-use ars_secrets::SecretsConfig;
+use ars_secrets::{SecretScope, SecretsConfig};
 
 use crate::app_state::AppState;
 use crate::collab::{self, CollabState};
 use crate::web_modules;
 use crate::web_modules::setup::SetupState;
+
+/// Infisical の ALLOWED_ORIGINS から許可オリジンを取得し、CorsLayer を構築する。
+/// 未設定時はローカル開発用のデフォルトを使用。
+fn build_cors(allowed_origins: &[String]) -> CorsLayer {
+    let origins: Vec<HeaderValue> = allowed_origins
+        .iter()
+        .filter_map(|o| o.parse::<HeaderValue>().ok())
+        .collect();
+
+    CorsLayer::new()
+        .allow_origin(origins)
+        .allow_methods([Method::GET, Method::POST, Method::PUT, Method::DELETE, Method::OPTIONS])
+        .allow_headers(tower_http::cors::Any)
+        .allow_credentials(true)
+}
 
 pub async fn serve(port: u16, static_dir: Option<String>) -> Result<(), Box<dyn std::error::Error>> {
     let addr = std::net::SocketAddr::from(([0, 0, 0, 0], port));
@@ -37,6 +53,13 @@ pub async fn serve(port: u16, static_dir: Option<String>) -> Result<(), Box<dyn 
     let state = AppState::new().await?;
     let collab_state = CollabState::new();
 
+    // CORS: Infisical から許可オリジンを取得（カンマ区切り）
+    let origins_csv = state.secrets
+        .get_or_default("ALLOWED_ORIGINS", SecretScope::Shared, "http://localhost:5173")
+        .await;
+    let allowed_origins: Vec<String> = origins_csv.split(',').map(|s| s.trim().to_string()).collect();
+    let cors = build_cors(&allowed_origins);
+
     let editor_router = web_modules::editor::router(state.clone());
     let module_router = web_modules::module_manager::router(state);
 
@@ -48,7 +71,7 @@ pub async fn serve(port: u16, static_dir: Option<String>) -> Result<(), Box<dyn 
     let app = editor_router
         .merge(module_router)
         .merge(collab_router)
-        .layer(CorsLayer::permissive());
+        .layer(cors);
 
     let app = if let Some(dir) = static_dir {
         app.fallback_service(ServeDir::new(dir))
@@ -74,13 +97,14 @@ async fn run_setup_server(
     static_dir: Option<&str>,
 ) -> Result<(), Box<dyn std::error::Error>> {
     let (done_tx, mut done_rx) = tokio::sync::watch::channel(false);
-    let setup_state = SetupState {
-        setup_done_tx: Arc::new(done_tx),
-    };
+    let setup_state = SetupState::new(Arc::new(done_tx));
 
     let setup_router = web_modules::setup::router(setup_state);
 
-    let app = setup_router.layer(CorsLayer::permissive());
+    // セットアップモードではローカルからのアクセスのみ許可
+    let setup_cors = build_cors(&["http://localhost:5173".to_string()]);
+
+    let app = setup_router.layer(setup_cors);
 
     let app = if let Some(dir) = static_dir {
         app.fallback_service(ServeDir::new(dir))

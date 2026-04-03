@@ -1,11 +1,11 @@
 import { memo } from 'react';
 import { Handle, Position, type NodeProps, NodeResizer } from '@xyflow/react';
-import type { ActorNodeData } from '../types/nodes';
+import type { GroupFlowNode } from '../types/nodes';
 import { ROLE_COLORS } from '../types/nodes';
 import { cn } from '@/lib/utils';
 
-export const GroupNode = memo(function GroupNode({ data, selected }: NodeProps) {
-  const nodeData = data as unknown as ActorNodeData;
+export const GroupNode = memo(function GroupNode({ data, selected }: NodeProps<GroupFlowNode>) {
+  const nodeData = data;
   const colors = ROLE_COLORS[nodeData.role];
 
   return (
