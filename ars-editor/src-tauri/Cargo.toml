@@ -74,7 +74,7 @@ axum-extra = { version = "0.9", features = ["cookie"], optional = true }
 time = { version = "0.3", optional = true }
 urlencoding = { version = "2", optional = true }
 # Git operations
-git2 = { version = "0.19", optional = true }
+git2 = { version = "0.20", optional = true }
 dirs = { version = "6", optional = true }
 # Collaboration (WebSocket + shared state)
 futures = { version = "0.3", optional = true }
