@@ -107,6 +107,13 @@ impl AppState {
         val.parse().unwrap_or(604800)
     }
 
+    /// Cernere JWT Secret (Infisical から取得)
+    pub async fn jwt_secret(&self) -> String {
+        self.secrets
+            .get_or_default("JWT_SECRET", SecretScope::Shared, "cernere-dev-secret-change-in-production")
+            .await
+    }
+
     /// レート制限: 1分あたりのリクエスト上限を Infisical から取得
     pub async fn rate_limit_rpm(&self) -> u64 {
         let val = self.secrets

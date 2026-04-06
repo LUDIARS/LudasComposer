@@ -15,6 +15,7 @@ interface AuthState {
 }
 
 interface AuthActions {
+  initAuth: () => Promise<void>;
   fetchUser: () => Promise<void>;
   logout: () => Promise<void>;
   fetchCloudProjects: () => Promise<void>;
@@ -33,6 +34,28 @@ export const useAuthStore = create<AuthState & AuthActions>()((set) => ({
   gitReposLoading: false,
   localGitProjects: [],
   activeGitRepo: null,
+
+  initAuth: async () => {
+    // Cernere OAuth コールバック: URL パラメータからトークンを取得
+    const params = new URLSearchParams(window.location.search);
+    const accessToken = params.get('accessToken');
+    const refreshToken = params.get('refreshToken');
+
+    if (accessToken && refreshToken) {
+      authApi.setTokens(accessToken, refreshToken);
+      window.history.replaceState({}, '', window.location.pathname);
+    }
+
+    // セッション検証
+    set({ loading: true, error: null });
+    try {
+      const user = await authApi.getMe();
+      set({ user, loading: false });
+    } catch {
+      authApi.clearTokens();
+      set({ user: null, loading: false });
+    }
+  },
 
   fetchUser: async () => {
     set({ loading: true, error: null });
