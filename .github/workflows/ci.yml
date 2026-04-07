@@ -18,11 +18,8 @@ jobs:
   # Detect which paths changed
   changes:
     name: Detect changes
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
     timeout-minutes: 2
-    defaults:
-      run:
-        shell: powershell
     outputs:
       frontend: ${{ steps.filter.outputs.frontend }}
       rust: ${{ steps.filter.outputs.rust }}
@@ -43,42 +40,45 @@ jobs:
     name: Frontend
     needs: changes
     if: needs.changes.outputs.frontend == 'true'
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
     timeout-minutes: 10
-    defaults:
-      run:
-        shell: powershell
 
     steps:
       - uses: actions/checkout@v4
-
-      # Linux コンテナ内で Node.js ビルド・リント実行
-      # → Windows self-hosted runner のパス問題を回避
-      - name: Lint & TypeScript check (inside Linux container)
-        run: |
-          docker run --rm `
-            -v "${PWD}:/workspace" `
-            -w /workspace/ars-editor `
-            node:20-slim sh -c "npm ci && npm run lint && npx tsc -b"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: ars-editor/package-lock.json
+      - name: Install dependencies
+        working-directory: ars-editor
+        run: npm ci
+      - name: Lint
+        working-directory: ars-editor
+        run: npm run lint
+      - name: TypeScript check
+        working-directory: ars-editor
+        run: npx tsc -b
 
   rust:
     name: Rust
     needs: changes
     if: needs.changes.outputs.rust == 'true'
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
     timeout-minutes: 30
-    defaults:
-      run:
-        shell: powershell
 
     steps:
       - uses: actions/checkout@v4
-
-      # Linux コンテナ内で Clippy 実行
-      # → Windows self-hosted runner のパス問題を回避
-      - name: Clippy (inside Linux container)
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: ars-editor/src-tauri -> target
+      - name: Install system dependencies
         run: |
-          docker run --rm `
-            -v "${PWD}:/workspace" `
-            -w /workspace/ars-editor/src-tauri `
-            rust:1-bookworm sh -c "rustup component add clippy && apt-get update && apt-get install -y --no-install-recommends clang libclang-dev cmake > /dev/null 2>&1 && cargo clippy --features web-server --no-default-features --bin ars-web-server -- -D warnings"
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends clang libclang-dev cmake
+      - name: Clippy
+        working-directory: ars-editor/src-tauri
+        run: cargo clippy --features web-server --no-default-features --bin ars-web-server -- -D warnings
