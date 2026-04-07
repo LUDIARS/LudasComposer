@@ -232,6 +232,125 @@ fn default_git_ref() -> String {
     "main".to_string()
 }
 
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_project_serialize_deserialize() {
+        let mut project = Project {
+            name: "Test".to_string(),
+            scenes: HashMap::new(),
+            components: HashMap::new(),
+            prefabs: HashMap::new(),
+            active_scene_id: None,
+        };
+
+        let scene = Scene {
+            id: "scene-1".to_string(),
+            name: "Main".to_string(),
+            root_actor_id: "actor-root".to_string(),
+            actors: HashMap::new(),
+            connections: vec![],
+            states: vec![],
+            active_state_id: None,
+        };
+        project.scenes.insert(scene.id.clone(), scene);
+        project.active_scene_id = Some("scene-1".to_string());
+
+        let json = serde_json::to_string(&project).unwrap();
+        let loaded: Project = serde_json::from_str(&json).unwrap();
+
+        assert_eq!(loaded.name, "Test");
+        assert_eq!(loaded.scenes.len(), 1);
+        assert_eq!(loaded.active_scene_id.as_deref(), Some("scene-1"));
+    }
+
+    #[test]
+    fn test_component_with_tasks() {
+        let comp = Component {
+            id: "comp-1".to_string(),
+            name: "Health".to_string(),
+            category: "Logic".to_string(),
+            domain: "core".to_string(),
+            variables: vec![Variable {
+                name: "hp".to_string(),
+                var_type: "int".to_string(),
+                default_value: Some(serde_json::json!(100)),
+            }],
+            tasks: vec![Task {
+                name: "TakeDamage".to_string(),
+                description: "Apply damage".to_string(),
+                inputs: vec![PortDefinition { name: "amount".to_string(), port_type: "int".to_string() }],
+                outputs: vec![PortDefinition { name: "isDead".to_string(), port_type: "bool".to_string() }],
+                test_cases: None,
+            }],
+            dependencies: vec![],
+            source_module_id: None,
+        };
+
+        let json = serde_json::to_string(&comp).unwrap();
+        let loaded: Component = serde_json::from_str(&json).unwrap();
+
+        assert_eq!(loaded.name, "Health");
+        assert_eq!(loaded.variables.len(), 1);
+        assert_eq!(loaded.tasks.len(), 1);
+        assert_eq!(loaded.tasks[0].inputs.len(), 1);
+    }
+
+    #[test]
+    fn test_actor_with_sequences() {
+        let actor = Actor {
+            id: "actor-1".to_string(),
+            name: "Player".to_string(),
+            role: "actor".to_string(),
+            components: vec!["comp-1".to_string()],
+            children: vec![],
+            position: Position { x: 100.0, y: 200.0 },
+            parent_id: None,
+            sequences: vec![SequenceStep {
+                id: "step-1".to_string(),
+                name: "Init".to_string(),
+                description: "Initialize".to_string(),
+                order: 0,
+            }],
+            sub_scene_id: None,
+            prefab_id: Some("prefab-1".to_string()),
+        };
+
+        let json = serde_json::to_string(&actor).unwrap();
+        let loaded: Actor = serde_json::from_str(&json).unwrap();
+
+        assert_eq!(loaded.name, "Player");
+        assert_eq!(loaded.sequences.len(), 1);
+        assert_eq!(loaded.prefab_id.as_deref(), Some("prefab-1"));
+    }
+
+    #[test]
+    fn test_project_default_fields() {
+        // Ensure deserialization works with missing optional fields
+        let json = r#"{"name":"Minimal","scenes":{},"components":{},"activeSceneId":null}"#;
+        let project: Project = serde_json::from_str(json).unwrap();
+        assert_eq!(project.name, "Minimal");
+        assert!(project.prefabs.is_empty());
+    }
+
+    #[test]
+    fn test_connection_roundtrip() {
+        let conn = Connection {
+            id: "c1".to_string(),
+            source_actor_id: "a1".to_string(),
+            source_port: "output".to_string(),
+            target_actor_id: "a2".to_string(),
+            target_port: "input".to_string(),
+        };
+        let json = serde_json::to_string(&conn).unwrap();
+        let loaded: Connection = serde_json::from_str(&json).unwrap();
+        assert_eq!(loaded.source_actor_id, "a1");
+        assert_eq!(loaded.target_port, "input");
+    }
+}
+
 /// インストール済みモジュール一覧を管理する設定ファイル
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
 #[ts(export)]

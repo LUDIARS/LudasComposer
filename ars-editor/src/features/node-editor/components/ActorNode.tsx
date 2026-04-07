@@ -3,7 +3,7 @@ import { Handle, Position, type NodeProps } from '@xyflow/react';
 import { useProjectStore } from '@/stores/projectStore';
 import { useEditorStore } from '@/stores/editorStore';
 import { useI18n } from '@/hooks/useI18n';
-import type { ActorNodeData } from '../types/nodes';
+import type { ActorFlowNode } from '../types/nodes';
 import { ROLE_COLORS } from '../types/nodes';
 import { cn } from '@/lib/utils';
 
@@ -14,9 +14,9 @@ const CATEGORY_ICONS: Record<string, string> = {
   GameObject: '📦',
 };
 
-export const ActorNode = memo(function ActorNode({ data, selected }: NodeProps) {
+export const ActorNode = memo(function ActorNode({ data, selected }: NodeProps<ActorFlowNode>) {
   const { t } = useI18n();
-  const nodeData = data as unknown as ActorNodeData;
+  const nodeData = data;
   const components = useProjectStore((s) => s.project.components);
   const scenes = useProjectStore((s) => s.project.scenes);
   const activeSceneId = useProjectStore((s) => s.project.activeSceneId);

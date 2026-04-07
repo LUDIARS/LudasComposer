@@ -8,17 +8,36 @@
 use axum::routing::get;
 use axum::Router;
 use tower_http::cors::CorsLayer;
-use tower_http::services::ServeDir;
+use tower_http::services::{ServeDir, ServeFile};
 
 use crate::app_state::AppState;
 use crate::collab::{self, CollabState};
 use crate::web_modules;
+
+/// Infisical の ALLOWED_ORIGINS から許可オリジンを取得し、CorsLayer を構築する。
+/// 未設定時はローカル開発用のデフォルトを使用。
+fn build_cors(allowed_origins: &[String]) -> CorsLayer {
+    let origins: Vec<axum::http::HeaderValue> = allowed_origins
+        .iter()
+        .filter_map(|o| o.parse::<axum::http::HeaderValue>().ok())
+        .collect();
+
+    CorsLayer::new()
+        .allow_origin(origins)
+        .allow_methods([axum::http::Method::GET, axum::http::Method::POST, axum::http::Method::PUT, axum::http::Method::DELETE, axum::http::Method::OPTIONS])
+        .allow_headers(tower_http::cors::Any)
+        .allow_credentials(true)
+}
 
 pub async fn serve(port: u16, static_dir: Option<String>) -> Result<(), Box<dyn std::error::Error>> {
     let addr = std::net::SocketAddr::from(([0, 0, 0, 0], port));
 
     let state = AppState::new();
     let collab_state = CollabState::new();
+
+    // CORS: デフォルトはローカル開発用
+    let allowed_origins = vec!["http://localhost:5173".to_string()];
+    let cors = build_cors(&allowed_origins);
 
     let editor_router = web_modules::editor::router(state.clone());
     let module_router = web_modules::module_manager::router(state);
@@ -31,10 +50,14 @@ pub async fn serve(port: u16, static_dir: Option<String>) -> Result<(), Box<dyn 
     let app = editor_router
         .merge(module_router)
         .merge(collab_router)
-        .layer(CorsLayer::permissive());
+        .layer(cors);
 
-    let app = if let Some(dir) = static_dir {
-        app.fallback_service(ServeDir::new(dir))
+    let app = if let Some(ref dir) = static_dir {
+        let index_path = format!("{}/index.html", dir);
+        app.fallback_service(
+            ServeDir::new(dir)
+                .not_found_service(ServeFile::new(index_path))
+        )
     } else {
         app
     };

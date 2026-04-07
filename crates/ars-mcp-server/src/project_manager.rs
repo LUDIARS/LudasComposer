@@ -1,4 +1,7 @@
-use ars_core::models::*;
+use ars_core::models::{
+    Actor, Component, Connection, Position, Prefab, PrefabActor, Project,
+    Scene, SequenceStep, Task, Variable,
+};
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 
@@ -219,6 +222,192 @@ impl ProjectManager {
         }
 
         lines.join("\n")
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::fs;
+
+    fn temp_dir() -> PathBuf {
+        let dir = std::env::temp_dir().join(format!("ars_test_{}", uuid::Uuid::new_v4()));
+        fs::create_dir_all(&dir).unwrap();
+        dir
+    }
+
+    #[test]
+    fn test_create_and_save_load_project() {
+        let dir = temp_dir();
+        let pm = ProjectManager::new(dir.clone());
+        let project = pm.create_project("TestProject");
+        assert_eq!(project.name, "TestProject");
+        assert!(project.scenes.is_empty());
+        assert!(project.components.is_empty());
+
+        let path = dir.join("test.ars.json");
+        pm.save_project(&path, &project).unwrap();
+        let loaded = pm.load_project(&path).unwrap();
+        assert_eq!(loaded.name, "TestProject");
+
+        fs::remove_dir_all(&dir).ok();
+    }
+
+    #[test]
+    fn test_create_scene_and_add_actor() {
+        let dir = temp_dir();
+        let pm = ProjectManager::new(dir.clone());
+        let mut project = pm.create_project("TestProject");
+
+        let scene = pm.create_scene(&mut project, "MainScene");
+        assert_eq!(scene.name, "MainScene");
+        assert!(project.scenes.contains_key(&scene.id));
+        assert_eq!(project.active_scene_id.as_deref(), Some(scene.id.as_str()));
+
+        // Root actor should exist
+        assert!(scene.actors.contains_key(&scene.root_actor_id));
+
+        // Add a new actor
+        let actor = pm.add_actor(&mut project, &scene.id, "Player", "actor", 100.0, 200.0).unwrap();
+        assert_eq!(actor.name, "Player");
+        assert_eq!(actor.role, "actor");
+        assert_eq!(actor.position.x, 100.0);
+        assert_eq!(actor.position.y, 200.0);
+
+        let scene = project.scenes.get(&scene.id).unwrap();
+        assert_eq!(scene.actors.len(), 2);
+
+        fs::remove_dir_all(&dir).ok();
+    }
+
+    #[test]
+    fn test_add_actor_nonexistent_scene() {
+        let dir = temp_dir();
+        let pm = ProjectManager::new(dir.clone());
+        let mut project = pm.create_project("TestProject");
+
+        let result = pm.add_actor(&mut project, "nonexistent", "Actor", "actor", 0.0, 0.0);
+        assert!(result.is_err());
+
+        fs::remove_dir_all(&dir).ok();
+    }
+
+    #[test]
+    fn test_create_component_and_attach() {
+        let dir = temp_dir();
+        let pm = ProjectManager::new(dir.clone());
+        let mut project = pm.create_project("TestProject");
+        let scene = pm.create_scene(&mut project, "Scene1");
+
+        let comp = pm.create_component(&mut project, "Health", "Logic", "core", vec![], vec![], vec![]);
+        assert_eq!(comp.name, "Health");
+        assert_eq!(comp.category, "Logic");
+        assert!(project.components.contains_key(&comp.id));
+
+        let actor = pm.add_actor(&mut project, &scene.id, "Player", "actor", 0.0, 0.0).unwrap();
+        let scene_id = scene.id.clone();
+        let actor_id = actor.id.clone();
+        let comp_id = comp.id.clone();
+        pm.attach_component(&mut project, &scene_id, &actor_id, &comp_id).unwrap();
+
+        {
+            let scene = project.scenes.get(&scene_id).unwrap();
+            let actor = scene.actors.get(&actor_id).unwrap();
+            assert!(actor.components.contains(&comp_id));
+        }
+
+        // Double attach should not duplicate
+        pm.attach_component(&mut project, &scene_id, &actor_id, &comp_id).unwrap();
+        {
+            let scene = project.scenes.get(&scene_id).unwrap();
+            let actor = scene.actors.get(&actor_id).unwrap();
+            assert_eq!(actor.components.len(), 1);
+        }
+
+        fs::remove_dir_all(&dir).ok();
+    }
+
+    #[test]
+    fn test_attach_nonexistent_component() {
+        let dir = temp_dir();
+        let pm = ProjectManager::new(dir.clone());
+        let mut project = pm.create_project("TestProject");
+        let scene = pm.create_scene(&mut project, "Scene1");
+        let actor = pm.add_actor(&mut project, &scene.id, "Player", "actor", 0.0, 0.0).unwrap();
+
+        let result = pm.attach_component(&mut project, &scene.id, &actor.id, "nonexistent");
+        assert!(result.is_err());
+
+        fs::remove_dir_all(&dir).ok();
+    }
+
+    #[test]
+    fn test_add_connection() {
+        let dir = temp_dir();
+        let pm = ProjectManager::new(dir.clone());
+        let mut project = pm.create_project("TestProject");
+        let scene = pm.create_scene(&mut project, "Scene1");
+
+        let a1 = pm.add_actor(&mut project, &scene.id, "A", "actor", 0.0, 0.0).unwrap();
+        let a2 = pm.add_actor(&mut project, &scene.id, "B", "actor", 200.0, 0.0).unwrap();
+
+        let conn = pm.add_connection(&mut project, &scene.id, &a1.id, "out", &a2.id, "in").unwrap();
+        assert_eq!(conn.source_actor_id, a1.id);
+        assert_eq!(conn.target_actor_id, a2.id);
+
+        let scene = project.scenes.get(&scene.id).unwrap();
+        assert_eq!(scene.connections.len(), 1);
+
+        fs::remove_dir_all(&dir).ok();
+    }
+
+    #[test]
+    fn test_connection_nonexistent_actor() {
+        let dir = temp_dir();
+        let pm = ProjectManager::new(dir.clone());
+        let mut project = pm.create_project("TestProject");
+        let scene = pm.create_scene(&mut project, "Scene1");
+        let a1 = pm.add_actor(&mut project, &scene.id, "A", "actor", 0.0, 0.0).unwrap();
+
+        let result = pm.add_connection(&mut project, &scene.id, &a1.id, "out", "nonexistent", "in");
+        assert!(result.is_err());
+
+        fs::remove_dir_all(&dir).ok();
+    }
+
+    #[test]
+    fn test_summarize_project() {
+        let dir = temp_dir();
+        let pm = ProjectManager::new(dir.clone());
+        let mut project = pm.create_project("Summary Test");
+        let scene = pm.create_scene(&mut project, "MainScene");
+        pm.add_actor(&mut project, &scene.id, "Player", "actor", 0.0, 0.0).unwrap();
+        pm.create_component(&mut project, "HP", "Logic", "core", vec![], vec![], vec![]);
+
+        let summary = pm.summarize_project(&project);
+        assert!(summary.contains("Summary Test"));
+        assert!(summary.contains("MainScene"));
+        assert!(summary.contains("Player"));
+        assert!(summary.contains("HP"));
+
+        fs::remove_dir_all(&dir).ok();
+    }
+
+    #[test]
+    fn test_find_project_files() {
+        let dir = temp_dir();
+        let pm = ProjectManager::new(dir.clone());
+        let project = pm.create_project("Test");
+
+        // Save to .ars.json file
+        let path = dir.join("test.ars.json");
+        pm.save_project(&path, &project).unwrap();
+
+        let files = pm.find_project_files();
+        assert_eq!(files.len(), 1);
+        assert!(files[0].ends_with("test.ars.json"));
+
+        fs::remove_dir_all(&dir).ok();
     }
 }
 

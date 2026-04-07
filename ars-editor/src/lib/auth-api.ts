@@ -1,12 +1,52 @@
 import type { User, ProjectSummary, GitRepo, GitProjectInfo } from '@/types/auth';
 import type { Project } from '@/types/domain';
 
+const CERNERE_URL = import.meta.env.VITE_CERNERE_URL ?? 'http://localhost:8080';
+
+// ── Token Management ──────────────────────────────────────
+
+function getAccessToken(): string | null {
+  return localStorage.getItem('accessToken');
+}
+
+function getRefreshToken(): string | null {
+  return localStorage.getItem('refreshToken');
+}
+
+export function setTokens(access: string, refresh: string) {
+  localStorage.setItem('accessToken', access);
+  localStorage.setItem('refreshToken', refresh);
+}
+
+export function clearTokens() {
+  localStorage.removeItem('accessToken');
+  localStorage.removeItem('refreshToken');
+}
+
+// ── API Client ────────────────────────────────────────────
+
 async function fetchJson<T>(url: string, options?: RequestInit): Promise<T> {
-  const res = await fetch(url, {
-    headers: { 'Content-Type': 'application/json' },
-    credentials: 'same-origin',
-    ...options,
-  });
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+    ...((options?.headers as Record<string, string>) || {}),
+  };
+
+  const token = getAccessToken();
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+
+  let res = await fetch(url, { ...options, headers });
+
+  // Auto-refresh on 401
+  if (res.status === 401 && getRefreshToken()) {
+    const refreshed = await refreshAccessToken();
+    if (refreshed) {
+      headers['Authorization'] = `Bearer ${getAccessToken()}`;
+      res = await fetch(url, { ...options, headers });
+    }
+  }
+
   if (!res.ok) {
     const text = await res.text();
     throw new Error(text || res.statusText);
@@ -14,17 +54,95 @@ async function fetchJson<T>(url: string, options?: RequestInit): Promise<T> {
   return res.json();
 }
 
+async function refreshAccessToken(): Promise<boolean> {
+  const refreshToken = getRefreshToken();
+  if (!refreshToken) return false;
+
+  try {
+    const res = await fetch(`${CERNERE_URL}/api/auth/refresh`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ refreshToken }),
+    });
+    if (!res.ok) {
+      clearTokens();
+      return false;
+    }
+    const data = await res.json() as { accessToken: string; refreshToken: string };
+    setTokens(data.accessToken, data.refreshToken);
+    return true;
+  } catch {
+    clearTokens();
+    return false;
+  }
+}
+
+// ── Auth API (Cernere) ────────────────────────────────────
+
 export async function getMe(): Promise<User> {
   return fetchJson<User>('/auth/me');
 }
 
 export async function logout(): Promise<void> {
-  await fetch('/auth/logout', { method: 'POST', credentials: 'same-origin' });
+  const refreshToken = getRefreshToken();
+  try {
+    await fetch(`${CERNERE_URL}/api/auth/logout`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ refreshToken }),
+    });
+  } catch { /* best-effort */ }
+  clearTokens();
 }
 
 export function getLoginUrl(): string {
-  return '/auth/github/login';
+  const redirect = encodeURIComponent(window.location.origin);
+  return `${CERNERE_URL}/auth/github/login?redirect=${redirect}`;
 }
+
+export function getGoogleAuthUrl(): string {
+  const redirect = encodeURIComponent(window.location.origin);
+  return `${CERNERE_URL}/auth/google/login?redirect=${redirect}`;
+}
+
+/**
+ * OAuth ログインをポップアップウィンドウで開く。
+ * メインウィンドウのページ遷移を発生させないため、WebSocket 接続が維持される。
+ */
+export function openOAuthPopup(): Promise<{ success: boolean }> {
+  return new Promise((resolve) => {
+    const width = 600;
+    const height = 700;
+    const left = window.screenX + (window.outerWidth - width) / 2;
+    const top = window.screenY + (window.outerHeight - height) / 2;
+    const popup = window.open(
+      '/auth/github/login',
+      'ars-oauth',
+      `width=${width},height=${height},left=${left},top=${top},popup=yes`
+    );
+
+    const handler = (event: MessageEvent) => {
+      if (event.origin !== window.location.origin) return;
+      if (event.data?.type === 'ars-oauth-callback') {
+        window.removeEventListener('message', handler);
+        clearInterval(timer);
+        resolve({ success: event.data.success });
+      }
+    };
+    window.addEventListener('message', handler);
+
+    // ポップアップが閉じられた場合のフォールバック
+    const timer = setInterval(() => {
+      if (popup?.closed) {
+        clearInterval(timer);
+        window.removeEventListener('message', handler);
+        resolve({ success: false });
+      }
+    }, 500);
+  });
+}
+
+// ── Cloud Project APIs ────────────────────────────────────
 
 export async function saveCloudProject(projectId: string, project: Project): Promise<void> {
   await fetchJson('/api/cloud/project/save', {
@@ -47,7 +165,7 @@ export async function deleteCloudProject(projectId: string): Promise<void> {
   });
 }
 
-// ========== Git project management APIs ==========
+// ── Git Project APIs ──────────────────────────────────────
 
 export async function listGitRepos(): Promise<GitRepo[]> {
   return fetchJson<GitRepo[]>('/api/git/repos');
