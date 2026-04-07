@@ -2,8 +2,7 @@
 # Ars - Docker Compose
 #
 # 統合Webサーバー（Editor + Collaboration）を起動します。
-# Redis: セッション管理
-# SurrealDB: ユーザー・プロジェクト（グラフDB）— 外部サービスとして起動
+# 認証・ユーザー管理・プロジェクト管理は Cernere サーバーに委譲。
 #
 # 使用方法:
 #   docker compose up -d        # サービス起動
@@ -16,42 +15,10 @@
 # 環境変数:
 #   IMAGE_TAG (default: latest) - 使用するイメージのタグ
 #   DOCKER_PLATFORM (default: linux/arm64) - ターゲットプラットフォーム
-#     例: DOCKER_PLATFORM=linux/amd64 docker compose up -d --build
-#
-# シークレットプロバイダー:
-#   secrets.toml で provider = "aws-ssm" または "infisical" を指定。
-#
-#   AWS SSM の場合、以下の環境変数を .env に設定:
-#     AWS_ACCESS_KEY_ID=<your-access-key>
-#     AWS_SECRET_ACCESS_KEY=<your-secret-key>
-#     AWS_REGION=ap-northeast-1
-#
-#   Infisical の場合、secrets.toml に認証情報を直接記載。
+#   CERNERE_URL - Cernere サーバーの URL (default: http://cernere:8080)
 # =============================================================================
 
 services:
-  redis:
-    image: redis:7-alpine
-    platform: ${DOCKER_PLATFORM:-linux/arm64}
-    container_name: ars-redis
-    ports:
-      - "${REDIS_PORT:-6379}:6379"
-    volumes:
-      - redis-data:/data
-    command: redis-server --appendonly yes
-    restart: unless-stopped
-
-  surrealdb:
-    image: surrealdb/surrealdb:v2
-    platform: ${DOCKER_PLATFORM:-linux/arm64}
-    container_name: ars-surrealdb
-    ports:
-      - "${SURREALDB_PORT:-8000}:8000"
-    volumes:
-      - surrealdb-data:/data
-    command: start --user ${SURREALDB_USER:-root} --pass ${SURREALDB_PASS:-root} rocksdb:/data/database.db
-    restart: unless-stopped
-
   ars:
     image: ghcr.io/ludiars/ars:${IMAGE_TAG:-latest}
     build:
@@ -64,13 +31,9 @@ services:
       - "${ARS_PORT:-5173}:5173"
     volumes:
       - ars-data:/app/data
-      - ./secrets.toml:/app/secrets.toml:ro
-    depends_on:
-      - redis
-      - surrealdb
+    environment:
+      CERNERE_URL: ${CERNERE_URL:-http://cernere:8080}
     restart: unless-stopped
 
 volumes:
   ars-data:
-  redis-data:
-  surrealdb-data:

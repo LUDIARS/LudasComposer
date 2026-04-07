@@ -13,9 +13,44 @@ use axum_extra::extract::cookie::CookieJar;
 use serde::Deserialize;
 
 use crate::app_state::AppState;
-use crate::auth;
 use crate::git_module_ops;
 use crate::models::InstalledModule;
+
+const SESSION_COOKIE: &str = "ars_session";
+
+/// Cookie からセッション を取得（Cernere 経由）
+async fn extract_session_token(
+    state: &AppState,
+    jar: &CookieJar,
+) -> Result<String, (StatusCode, String)> {
+    let cookie = jar
+        .get(SESSION_COOKIE)
+        .map(|c| c.value().to_string())
+        .ok_or((StatusCode::UNAUTHORIZED, "Not authenticated".to_string()))?;
+    let session = state
+        .cernere
+        .get_session(&cookie)
+        .await
+        .map_err(|e| (StatusCode::UNAUTHORIZED, e))?;
+    Ok(session.access_token)
+}
+
+/// Cookie でセッション検証のみ行う（Cernere 経由）
+async fn verify_session(
+    state: &AppState,
+    jar: &CookieJar,
+) -> Result<(), (StatusCode, String)> {
+    let cookie = jar
+        .get(SESSION_COOKIE)
+        .map(|c| c.value().to_string())
+        .ok_or((StatusCode::UNAUTHORIZED, "Not authenticated".to_string()))?;
+    state
+        .cernere
+        .get_me(&cookie)
+        .await
+        .map_err(|e| (StatusCode::UNAUTHORIZED, e))?;
+    Ok(())
+}
 
 // ========== Request types ==========
 
@@ -41,7 +76,7 @@ async fn api_list_modules(
     State(state): State<AppState>,
     jar: CookieJar,
 ) -> Result<Json<Vec<InstalledModule>>, (StatusCode, String)> {
-    let _session = auth::extract_session(&state, &jar).await?;
+    verify_session(&state, &jar).await?;
 
     let modules = tokio::task::spawn_blocking(git_module_ops::list_installed_modules)
         .await
@@ -56,8 +91,7 @@ async fn api_install_module(
     jar: CookieJar,
     Json(req): Json<InstallModuleRequest>,
 ) -> Result<Json<InstalledModule>, (StatusCode, String)> {
-    let session = auth::extract_session(&state, &jar).await?;
-    let token = session.access_token.clone();
+    let token = extract_session_token(&state, &jar).await?;
     let git_url = req.git_url;
     let git_ref = req.git_ref.unwrap_or_else(|| "main".to_string());
 
@@ -77,8 +111,7 @@ async fn api_update_module(
     jar: CookieJar,
     Path(module_id): Path<String>,
 ) -> Result<Json<InstalledModule>, (StatusCode, String)> {
-    let session = auth::extract_session(&state, &jar).await?;
-    let token = session.access_token.clone();
+    let token = extract_session_token(&state, &jar).await?;
 
     let module = tokio::task::spawn_blocking(move || {
         git_module_ops::update_module(&token, &module_id)
@@ -96,7 +129,7 @@ async fn api_uninstall_module(
     jar: CookieJar,
     Path(module_id): Path<String>,
 ) -> Result<Json<()>, (StatusCode, String)> {
-    let _session = auth::extract_session(&state, &jar).await?;
+    verify_session(&state, &jar).await?;
 
     tokio::task::spawn_blocking(move || git_module_ops::uninstall_module(&module_id))
         .await
@@ -113,7 +146,7 @@ async fn api_set_module_enabled(
     Path(module_id): Path<String>,
     Json(req): Json<SetEnabledRequest>,
 ) -> Result<Json<InstalledModule>, (StatusCode, String)> {
-    let _session = auth::extract_session(&state, &jar).await?;
+    verify_session(&state, &jar).await?;
 
     let module = tokio::task::spawn_blocking(move || {
         git_module_ops::set_module_enabled(&module_id, req.enabled)
@@ -131,7 +164,7 @@ async fn api_list_module_files(
     jar: CookieJar,
     Path(module_id): Path<String>,
 ) -> Result<Json<Vec<String>>, (StatusCode, String)> {
-    let _session = auth::extract_session(&state, &jar).await?;
+    verify_session(&state, &jar).await?;
 
     let files = tokio::task::spawn_blocking(move || {
         git_module_ops::list_module_files(&module_id)
