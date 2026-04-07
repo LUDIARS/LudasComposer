@@ -26,6 +26,43 @@ export function getLoginUrl(): string {
   return '/auth/github/login';
 }
 
+/**
+ * OAuth ログインをポップアップウィンドウで開く。
+ * メインウィンドウのページ遷移を発生させないため、WebSocket 接続が維持される。
+ */
+export function openOAuthPopup(): Promise<{ success: boolean }> {
+  return new Promise((resolve) => {
+    const width = 600;
+    const height = 700;
+    const left = window.screenX + (window.outerWidth - width) / 2;
+    const top = window.screenY + (window.outerHeight - height) / 2;
+    const popup = window.open(
+      '/auth/github/login',
+      'ars-oauth',
+      `width=${width},height=${height},left=${left},top=${top},popup=yes`
+    );
+
+    const handler = (event: MessageEvent) => {
+      if (event.origin !== window.location.origin) return;
+      if (event.data?.type === 'ars-oauth-callback') {
+        window.removeEventListener('message', handler);
+        clearInterval(timer);
+        resolve({ success: event.data.success });
+      }
+    };
+    window.addEventListener('message', handler);
+
+    // ポップアップが閉じられた場合のフォールバック
+    const timer = setInterval(() => {
+      if (popup?.closed) {
+        clearInterval(timer);
+        window.removeEventListener('message', handler);
+        resolve({ success: false });
+      }
+    }, 500);
+  });
+}
+
 export async function saveCloudProject(projectId: string, project: Project): Promise<void> {
   await fetchJson('/api/cloud/project/save', {
     method: 'POST',

@@ -1,7 +1,7 @@
 use axum::{
     extract::{Query, State},
     http::StatusCode,
-    response::{Json, Redirect},
+    response::{Html, Json, Redirect},
 };
 use axum_extra::extract::cookie::{Cookie, CookieJar};
 use chrono::Utc;
@@ -63,11 +63,14 @@ pub async fn github_login(
 }
 
 /// GET /auth/github/callback - Handle OAuth callback with CSRF validation
+///
+/// ポップアップウィンドウから開かれた場合: postMessage で親ウィンドウに通知して閉じる
+/// 直接アクセスの場合: `/` にリダイレクト
 pub async fn github_callback(
     State(state): State<AppState>,
     Query(query): Query<OAuthCallbackQuery>,
     jar: CookieJar,
-) -> Result<(CookieJar, Redirect), (StatusCode, String)> {
+) -> Result<(CookieJar, Html<String>), (StatusCode, String)> {
     // Validate CSRF state
     let expected_state = jar
         .get(CSRF_STATE_COOKIE)
@@ -180,7 +183,20 @@ pub async fn github_callback(
         .path("/")
         .max_age(time::Duration::seconds(0));
 
-    Ok((jar.add(cookie).remove(clear_csrf), Redirect::temporary("/")))
+    // ポップアップから開かれた場合は postMessage で親ウィンドウに通知して閉じる
+    // 直接アクセスの場合は `/` にリダイレクト
+    let html = r#"<!DOCTYPE html>
+<html><head><meta charset="utf-8"><title>Signing in...</title></head>
+<body><p>Completing sign in...</p><script>
+if (window.opener) {
+  window.opener.postMessage({ type: 'ars-oauth-callback', success: true }, window.location.origin);
+  window.close();
+} else {
+  window.location.href = '/';
+}
+</script></body></html>"#;
+
+    Ok((jar.add(cookie).remove(clear_csrf), Html(html.to_string())))
 }
 
 /// GET /auth/me - Get current user

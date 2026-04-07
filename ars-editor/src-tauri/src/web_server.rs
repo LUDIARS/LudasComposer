@@ -12,7 +12,7 @@ use axum::http::{HeaderValue, Method};
 use axum::routing::get;
 use axum::Router;
 use tower_http::cors::CorsLayer;
-use tower_http::services::ServeDir;
+use tower_http::services::{ServeDir, ServeFile};
 
 use ars_secrets::{SecretScope, SecretsConfig};
 
@@ -73,8 +73,12 @@ pub async fn serve(port: u16, static_dir: Option<String>) -> Result<(), Box<dyn 
         .merge(collab_router)
         .layer(cors);
 
-    let app = if let Some(dir) = static_dir {
-        app.fallback_service(ServeDir::new(dir))
+    let app = if let Some(ref dir) = static_dir {
+        let index_path = format!("{}/index.html", dir);
+        app.fallback_service(
+            ServeDir::new(dir)
+                .not_found_service(ServeFile::new(index_path))
+        )
     } else {
         app
     };
@@ -107,7 +111,11 @@ async fn run_setup_server(
     let app = setup_router.layer(setup_cors);
 
     let app = if let Some(dir) = static_dir {
-        app.fallback_service(ServeDir::new(dir))
+        let index_path = format!("{}/index.html", dir);
+        app.fallback_service(
+            ServeDir::new(dir)
+                .not_found_service(ServeFile::new(index_path))
+        )
     } else {
         app
     };
