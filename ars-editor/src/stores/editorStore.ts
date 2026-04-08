@@ -16,6 +16,7 @@ interface EditorState {
     preview: boolean;
     prefabList: boolean;
     behaviorEditor: boolean;
+    domainDiagram: boolean;
   };
   isDirty: boolean;
   lastSavedAt: number | null;
@@ -40,7 +41,7 @@ interface EditorState {
   closeSubScenePicker: () => void;
   copyToClipboard: (actors: Actor[]) => void;
   clearClipboard: () => void;
-  togglePanel: (panel: 'sceneManager' | 'componentEditor' | 'componentList' | 'preview' | 'prefabList' | 'behaviorEditor') => void;
+  togglePanel: (panel: 'sceneManager' | 'componentEditor' | 'componentList' | 'preview' | 'prefabList' | 'behaviorEditor' | 'domainDiagram') => void;
   markDirty: () => void;
   markSaved: (path?: string) => void;
   setProjectPath: (path: string | null) => void;
@@ -70,6 +71,7 @@ export const useEditorStore = create<EditorState>()((set) => ({
     preview: false,
     prefabList: false,
     behaviorEditor: false,
+    domainDiagram: false,
   },
   isDirty: false,
   lastSavedAt: null,
@@ -87,7 +89,7 @@ export const useEditorStore = create<EditorState>()((set) => ({
   openComponentEditor: (componentId) =>
     set({
       componentEditorTarget: componentId,
-      panelVisibility: { sceneManager: true, componentEditor: true, componentList: false, preview: false, prefabList: false, behaviorEditor: false },
+      panelVisibility: { sceneManager: true, componentEditor: true, componentList: false, preview: false, prefabList: false, behaviorEditor: false, domainDiagram: false },
       mobileBottomSheetOpen: true,
     }),
   closeComponentEditor: () =>

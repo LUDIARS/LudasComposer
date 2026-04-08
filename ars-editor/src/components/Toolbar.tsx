@@ -265,6 +265,17 @@ export function Toolbar() {
               >
                 {t('toolbar.preview')}
               </button>
+              <button
+                onClick={() => {
+                  togglePanel('domainDiagram');
+                  setMobileMenuOpen(false);
+                }}
+                className={`w-full text-left px-3 py-2 transition-colors ${
+                  panelVisibility.domainDiagram ? 'text-emerald-400' : 'text-zinc-300 hover:bg-zinc-700'
+                }`}
+              >
+                {t('toolbar.domainDiagram') === 'toolbar.domainDiagram' ? 'Domain Diagram' : t('toolbar.domainDiagram')}
+              </button>
               <div className="h-px bg-zinc-700 my-1" />
               {!backend.isTauri() && (
                 <button
@@ -403,6 +414,20 @@ export function Toolbar() {
         title={t('toolbar.togglePreview')}
       >
         {t('toolbar.preview')}
+      </button>
+
+      <div className="w-px h-4 bg-zinc-600 mx-1" />
+
+      <button
+        onClick={() => togglePanel('domainDiagram')}
+        className={`px-2 py-1 rounded transition-colors ${
+          panelVisibility.domainDiagram
+            ? 'bg-emerald-600 text-white'
+            : 'text-zinc-300 hover:bg-zinc-700'
+        }`}
+        title={t('toolbar.toggleDomainDiagram') === 'toolbar.toggleDomainDiagram' ? 'Toggle Domain Diagram' : t('toolbar.toggleDomainDiagram')}
+      >
+        {t('toolbar.domainDiagram') === 'toolbar.domainDiagram' ? 'Domain' : t('toolbar.domainDiagram')}
       </button>
 
       {/* Project name & status */}
