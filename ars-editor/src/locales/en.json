@@ -47,6 +47,8 @@
     "pushToRepo": "Push to {{repo}}",
     "pushToGithub": "Push to GitHub",
     "projectManager": "Project Manager",
+    "archetype": "Archetype",
+    "archetypeWizard": "Archetype Wizard",
     "gettingStarted": "Getting Started Guide",
     "lastSaved": "Last saved: {{time}}",
     "toast": {
@@ -565,6 +567,161 @@
     "back": "Back",
     "next": "Next",
     "cancel": "Cancel"
+  },
+  "archetypeWizard": {
+    "title": "Game Archetype Wizard",
+    "steps": {
+      "archetype": "Archetype",
+      "design": "Design Patterns",
+      "modules": "Module Injection"
+    },
+    "selectArchetype": "Select a game archetype for your project.",
+    "selectDesign": "Choose design patterns to add modules.",
+    "optional": "optional",
+    "modulePreview": "Review modules to be injected.",
+    "noDesigns": "No design patterns available for this archetype.",
+    "recommended": "Recommended",
+    "coreModulesCount": "core",
+    "modulesLabel": "modules",
+    "core": "core",
+    "back": "Back",
+    "next": "Next",
+    "inject": "Inject {{count}} Modules",
+    "injecting": "Injecting...",
+    "archetypes": {
+      "platformer": {
+        "name": "2D Platformer",
+        "desc": "Side-scrolling action game with jumping, running, and collecting."
+      },
+      "rpg": {
+        "name": "RPG",
+        "desc": "Role-playing game with character progression, combat, and quests."
+      },
+      "visualNovel": {
+        "name": "Visual Novel",
+        "desc": "Story-driven game with branching choices, character portraits, and backgrounds."
+      },
+      "puzzle": {
+        "name": "Puzzle Game",
+        "desc": "Logic and puzzle-based game with grids, scoring, and timers."
+      },
+      "cardGame": {
+        "name": "Card Game",
+        "desc": "Card-based game with deck building, hand management, and turns."
+      },
+      "action": {
+        "name": "Action Game",
+        "desc": "Real-time action with weapons, enemy AI, and wave-based spawning."
+      },
+      "simulation": {
+        "name": "Simulation",
+        "desc": "Management simulation with resource management, building, and time progression."
+      }
+    },
+    "designs": {
+      "physicsMovement": {
+        "name": "Physics-Based Movement",
+        "desc": "Character control with gravity, friction, and jumping."
+      },
+      "collectibles": {
+        "name": "Collectibles",
+        "desc": "Item collection and scoring mechanics."
+      },
+      "levelProgression": {
+        "name": "Level Progression",
+        "desc": "Stage-based level management and advancement."
+      },
+      "turnBasedCombat": {
+        "name": "Turn-Based Combat",
+        "desc": "Turn-based battle system with command selection and stat management."
+      },
+      "inventorySystem": {
+        "name": "Inventory System",
+        "desc": "Item storage, management, and usage."
+      },
+      "questSystem": {
+        "name": "Quest System",
+        "desc": "Quest acceptance, tracking, and completion."
+      },
+      "dialogSystem": {
+        "name": "Dialog System",
+        "desc": "Sequential NPC conversation display system."
+      },
+      "branchingNarrative": {
+        "name": "Branching Narrative",
+        "desc": "Script engine and story branching through player choices."
+      },
+      "characterPortraits": {
+        "name": "Character Portraits",
+        "desc": "Character display, expression changes, and text box management."
+      },
+      "saveLoad": {
+        "name": "Save & Load",
+        "desc": "Game state save and restore system."
+      },
+      "gridBased": {
+        "name": "Grid-Based",
+        "desc": "Grid placement and match detection puzzle mechanics."
+      },
+      "physicsPuzzle": {
+        "name": "Physics Puzzle",
+        "desc": "Physics-based puzzle mechanics."
+      },
+      "deckBuilding": {
+        "name": "Deck Building",
+        "desc": "Deck shuffling, drawing, and hand management."
+      },
+      "turnManagement": {
+        "name": "Turn Management",
+        "desc": "Turn progression between players."
+      },
+      "weaponSystem": {
+        "name": "Weapon System",
+        "desc": "Weapon firing, reloading, and hit detection."
+      },
+      "enemyAi": {
+        "name": "Enemy AI",
+        "desc": "State-based enemy AI patterns: detection, pursuit, and attack."
+      },
+      "waveSpawner": {
+        "name": "Wave Spawner",
+        "desc": "Wave-based enemy spawning management."
+      },
+      "resourceManagement": {
+        "name": "Resource Management",
+        "desc": "Collection and consumption of gold, wood, stone, and other resources."
+      },
+      "buildingSystem": {
+        "name": "Building System",
+        "desc": "Building placement and management."
+      }
+    },
+    "assist": {
+      "help": "Help",
+      "google": "Search",
+      "askAi": "Ask AI"
+    },
+    "help": {
+      "archetype": {
+        "title": "Selecting an Archetype",
+        "desc": "Choose a game genre. Core modules will be automatically prepared based on your selection. You can add features later through design patterns."
+      },
+      "design": {
+        "title": "Selecting Design Patterns",
+        "desc": "Choose design patterns (plugins) suited to your archetype. Recommended patterns are pre-selected but can be changed. Each pattern injects corresponding modules into your project."
+      },
+      "modules": {
+        "title": "Module Injection",
+        "desc": "Review the modules (components) to be injected based on your selections. Each module has variables (v) and tasks (t). Click \"Inject\" to add them as components to your project."
+      }
+    },
+    "ai": {
+      "archetypeQuestion": "I'm new to game development. Which archetype should I choose? Please explain the characteristics of each.",
+      "designQuestion": "When building a {{archetype}}, which design patterns work best together?",
+      "modulesQuestion": "Please briefly explain the role and usage of each of the {{count}} modules about to be injected.",
+      "cached": "(cached)",
+      "placeholder": "This feature will be available when connected to an AI backend. Currently in preview mode. Please also use the Help button and Google Search button in the archetype wizard."
+    }
   },
   "domainDiagram": {
     "emptyPrompt": "Select a scene to view the domain diagram",

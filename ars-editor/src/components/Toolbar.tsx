@@ -10,6 +10,7 @@ import * as authApi from '@/lib/auth-api';
 import { UserMenu } from './UserMenu';
 import { ProjectManager } from './ProjectManager';
 import { ProjectWizard } from './ProjectWizard';
+import { ArchetypeWizard } from '@/features/archetype-wizard';
 import { GettingStartedGuide } from './GettingStartedGuide';
 import { HelpTooltip } from './HelpTooltip';
 import { helpContent } from '@/lib/help-content';
@@ -36,6 +37,7 @@ export function Toolbar() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [showProjectManager, setShowProjectManager] = useState(false);
   const [showWizard, setShowWizard] = useState(false);
+  const [showArchetypeWizard, setShowArchetypeWizard] = useState(false);
   const [showGuide, setShowGuide] = useState(false);
   const [pushing, setPushing] = useState(false);
   const isMobile = useIsMobile();
@@ -216,6 +218,12 @@ export function Toolbar() {
               >
                 {t('toolbar.openProject')}
               </button>
+              <button
+                onClick={() => { setShowArchetypeWizard(true); setMobileMenuOpen(false); }}
+                className="w-full text-left px-3 py-2 text-cyan-400 hover:bg-zinc-700 transition-colors"
+              >
+                {t('toolbar.archetypeWizard')}
+              </button>
               <div className="h-px bg-zinc-700 my-1" />
               <button
                 onClick={() => {
@@ -315,6 +323,9 @@ export function Toolbar() {
         {showWizard && (
           <ProjectWizard onClose={() => setShowWizard(false)} />
         )}
+        {showArchetypeWizard && (
+          <ArchetypeWizard onClose={() => setShowArchetypeWizard(false)} />
+        )}
         {showGuide && (
           <GettingStartedGuide onClose={() => setShowGuide(false)} />
         )}
@@ -339,6 +350,13 @@ export function Toolbar() {
         title={t('toolbar.openProject')}
       >
         {t('toolbar.open')}
+      </button>
+      <button
+        onClick={() => setShowArchetypeWizard(true)}
+        className="px-2 py-1 text-cyan-400 hover:bg-zinc-700 rounded transition-colors"
+        title={t('toolbar.archetypeWizard')}
+      >
+        {t('toolbar.archetype')}
       </button>
       <button
         onClick={handleSave}
@@ -477,6 +495,9 @@ export function Toolbar() {
       )}
       {showWizard && (
         <ProjectWizard onClose={() => setShowWizard(false)} />
+      )}
+      {showArchetypeWizard && (
+        <ArchetypeWizard onClose={() => setShowArchetypeWizard(false)} />
       )}
       {showGuide && (
         <GettingStartedGuide onClose={() => setShowGuide(false)} />
