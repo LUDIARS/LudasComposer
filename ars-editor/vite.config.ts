@@ -3,6 +3,10 @@ import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 import path from 'path'
 
+const backendUrl = process.env.ARS_BACKEND_URL || 'http://localhost:5173'
+const backendWs = backendUrl.replace(/^http/, 'ws')
+const extraHosts = process.env.VITE_ALLOWED_HOSTS?.split(',').filter(Boolean) || []
+
 export default defineConfig({
   plugins: [react(), tailwindcss()],
   resolve: {
@@ -14,17 +18,18 @@ export default defineConfig({
   server: {
     port: 5174,
     strictPort: true,
+    allowedHosts: [...extraHosts],
     proxy: {
       '/api': {
-        target: 'http://localhost:5173',
+        target: backendUrl,
         changeOrigin: true,
       },
       '/auth': {
-        target: 'http://localhost:5173',
+        target: backendUrl,
         changeOrigin: true,
       },
       '/ws': {
-        target: 'ws://localhost:5173',
+        target: backendWs,
         ws: true,
       },
     },

@@ -1,0 +1,27 @@
+{
+  "name": "ars",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "npm run env:env && npx dotenv-cli -- npm run dev:full --prefix ars-editor",
+    "up": "nohup npm run dev > .ars.log 2>&1 & echo $! > .ars.pid && echo \"Ars started (PID: $(cat .ars.pid)) — logs: npm run logs\"",
+    "down": "[ -f .ars.pid ] && kill $(cat .ars.pid) 2>/dev/null; rm -f .ars.pid",
+    "logs": "tail -f .ars.log",
+    "clean": "cd ars-editor && rm -rf dist && cd src-tauri && cargo clean",
+    "tauri:dev": "npm run tauri:dev --prefix ars-editor",
+    "tauri:build": "npm run tauri:build --prefix ars-editor",
+    "lint": "npm run lint --prefix ars-editor",
+    "env:setup": "npx tsx ../Cernere/packages/env-cli/src/cli.ts setup",
+    "env:test": "npx tsx ../Cernere/packages/env-cli/src/cli.ts test",
+    "env:initialize": "npx tsx ../Cernere/packages/env-cli/src/cli.ts initialize",
+    "env:env": "npx tsx ../Cernere/packages/env-cli/src/cli.ts env",
+    "env:list": "npx tsx ../Cernere/packages/env-cli/src/cli.ts list",
+    "env:get": "npx tsx ../Cernere/packages/env-cli/src/cli.ts get",
+    "env:set": "npx tsx ../Cernere/packages/env-cli/src/cli.ts set",
+    "env:up": "npx tsx ../Cernere/packages/env-cli/src/cli.ts up dev",
+    "env:up:prod": "npx tsx ../Cernere/packages/env-cli/src/cli.ts up prod"
+  },
+  "devDependencies": {
+    "dotenv-cli": "^11.0.0"
+  }
+}
