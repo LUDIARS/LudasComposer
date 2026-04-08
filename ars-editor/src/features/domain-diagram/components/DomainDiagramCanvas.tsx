@@ -18,7 +18,6 @@ import { ActorDetailNode } from './ActorDetailNode';
 import { MessageEdge } from './MessageEdge';
 import { LayerSwitcher } from './LayerSwitcher';
 import { DomainDiagramContext } from './DomainDiagramContext';
-import { LAYER_COLORS } from '../types';
 import type { DiagramLayer, AnyDiagramNode } from '../types';
 
 const nodeTypes = {

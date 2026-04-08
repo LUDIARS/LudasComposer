@@ -62,7 +62,7 @@ function buildDomainLayer(
   const edges: DiagramEdge[] = [];
 
   // Build domain nodes for each actor
-  actors.forEach((actor, i) => {
+  actors.forEach((actor) => {
     const componentNames = actor.components
       .map((cid) => project.components[cid]?.name)
       .filter(Boolean);
@@ -167,7 +167,7 @@ function buildSystemLayer(
   }
 
   // Domain nodes (actors) — positioned on the right
-  actors.forEach((actor, i) => {
+  actors.forEach((actor, idx) => {
     const componentNames = actor.components
       .map((cid) => project.components[cid]?.name)
       .filter(Boolean);
@@ -175,7 +175,7 @@ function buildSystemLayer(
     nodes.push({
       id: `domain-${actor.id}`,
       type: 'domain' as const,
-      position: { x: GRID_X * 2.5, y: i * GRID_Y },
+      position: { x: GRID_X * 2.5, y: idx * GRID_Y },
       data: {
         actorId: actor.id,
         name: actor.name,
@@ -253,7 +253,7 @@ function buildUILayer(
   }
 
   // Domain nodes (actors) — positioned on the right
-  actors.forEach((actor, i) => {
+  actors.forEach((actor, idx) => {
     const componentNames = actor.components
       .map((cid) => project.components[cid]?.name)
       .filter(Boolean);
@@ -261,7 +261,7 @@ function buildUILayer(
     nodes.push({
       id: `domain-${actor.id}`,
       type: 'domain' as const,
-      position: { x: GRID_X * 2.5, y: i * GRID_Y },
+      position: { x: GRID_X * 2.5, y: idx * GRID_Y },
       data: {
         actorId: actor.id,
         name: actor.name,
