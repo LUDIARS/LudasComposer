@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useProjectStore } from '@/stores/projectStore';
 
 interface MessageEditorProps {
@@ -14,13 +14,6 @@ export function MessageEditor({ sceneId, messageId, onClose }: MessageEditorProp
 
   const [name, setName] = useState(message?.name ?? '');
   const [description, setDescription] = useState(message?.description ?? '');
-
-  useEffect(() => {
-    if (message) {
-      setName(message.name);
-      setDescription(message.description);
-    }
-  }, [message]);
 
   if (!message || !scene) return null;
 

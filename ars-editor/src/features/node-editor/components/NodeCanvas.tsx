@@ -152,6 +152,7 @@ export function NodeCanvas() {
       <ContextMenu flowPosition={flowClickPos} />
       {selectedEdgeId && (
         <MessageEditor
+          key={selectedEdgeId}
           sceneId={activeScene.id}
           messageId={selectedEdgeId}
           onClose={() => setSelectedEdgeId(null)}
