@@ -1,10 +1,6 @@
 name: Integration Tests
 
 on:
-  push:
-    branches: [main]
-  pull_request:
-    branches: [main]
   workflow_dispatch:
 
 concurrency:
@@ -15,29 +11,9 @@ permissions:
   contents: read
 
 jobs:
-  # パス変更検出
-  changes:
-    name: Detect changes
-    runs-on: ubuntu-latest
-    timeout-minutes: 2
-    outputs:
-      should_test: ${{ steps.filter.outputs.should_test }}
-    steps:
-      - uses: actions/checkout@v4
-      - uses: dorny/paths-filter@v3
-        id: filter
-        with:
-          filters: |
-            should_test:
-              - 'ars-editor/**'
-              - 'crates/**'
-              - 'tests/integration/**'
-
   integration:
     name: Integration Tests
-    needs: changes
-    if: needs.changes.outputs.should_test == 'true' || github.event_name == 'workflow_dispatch'
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     timeout-minutes: 30
 
     # ── Infisical シークレット ──
