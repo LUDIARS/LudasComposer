@@ -1,4 +1,6 @@
 import { defineConfig, devices } from '@playwright/test';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 /**
  * Ars 結合テスト - Playwright 設定
@@ -7,6 +9,12 @@ import { defineConfig, devices } from '@playwright/test';
  * 1. Mock Cernere (port 18080) - 認証バイパス用モックサーバー
  * 2. Ars Web Server (port 15173) - CERNERE_URL をモックに向けて起動
  */
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+const startServerScript = path.resolve(__dirname, 'start-server.mjs');
+
 export default defineConfig({
   testDir: './specs',
   fullyParallel: false,
@@ -39,7 +47,7 @@ export default defineConfig({
     },
     {
       command: process.env.ARS_SERVER_CMD
-        ?? '../../ars-editor/src-tauri/target/debug/ars-web-server ../../ars-editor/dist 15173',
+        ?? `node ${startServerScript} 15173`,
       port: 15173,
       reuseExistingServer: !process.env.CI,
       env: {

@@ -49,9 +49,9 @@ test.describe('Settings - General タブ', () => {
     await expect(page.getByText('Save Method')).toBeVisible();
 
     // 3つの保存方法
-    await expect(page.getByText('Local')).toBeVisible();
-    await expect(page.getByText('Cloud')).toBeVisible();
-    await expect(page.getByText('Git')).toBeVisible();
+    await expect(page.getByText('Local', { exact: true }).first()).toBeVisible();
+    await expect(page.getByText('Cloud', { exact: true }).first()).toBeVisible();
+    await expect(page.getByText('Git', { exact: true }).first()).toBeVisible();
     expect(errors).toEqual([]);
   });
 
@@ -105,12 +105,12 @@ test.describe('Settings - Members タブ', () => {
     await page.getByRole('button', { name: 'Add' }).click();
 
     // 追加されたメンバーが表示
-    await expect(page.getByText('new-member')).toBeVisible();
+    await expect(page.getByText('new-member', { exact: true })).toBeVisible();
 
     // メンバー削除
     const removeButton = page.locator('button', { hasText: 'x' });
     await removeButton.click();
-    await expect(page.getByText('new-member')).not.toBeVisible();
+    await expect(page.getByText('new-member', { exact: true })).not.toBeVisible();
   });
 });
 
