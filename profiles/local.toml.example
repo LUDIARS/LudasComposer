@@ -1,0 +1,10 @@
+# ローカル開発用プロファイル
+# コピー先: ~/.config/ars/profiles/local.toml
+
+name = "ローカル開発"
+
+[cernere]
+url = "http://localhost:8080"
+
+[secrets]
+provider = "none"

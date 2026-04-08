@@ -30,6 +30,7 @@ pub mod cache;
 pub mod client;
 pub mod config;
 pub mod error;
+pub mod profile;
 
 use std::path::Path;
 use std::sync::Arc;
@@ -37,6 +38,7 @@ use std::sync::Arc;
 use crate::cache::SecretCache;
 use crate::client::InfisicalClient;
 pub use crate::config::{InfisicalConfig, SecretsConfig, SecretsProvider};
+pub use crate::profile::{ProfileConfig, ProfileManager, CernereConfig};
 use crate::error::SecretsError;
 
 /// Scope for secret retrieval.

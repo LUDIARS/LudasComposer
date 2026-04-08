@@ -1,0 +1,17 @@
+# 組織プロファイルのテンプレート
+# コピー先: ~/.config/ars/profiles/<org-name>.toml
+
+name = "My Organization"
+
+[cernere]
+url = "https://cernere.example.com"
+
+[secrets]
+provider = "infisical"
+
+[secrets.infisical]
+host = "https://app.infisical.com"
+client_id = ""
+client_secret = ""
+project_id = ""
+environment = "dev"
