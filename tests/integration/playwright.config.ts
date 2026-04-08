@@ -1,4 +1,5 @@
 import { defineConfig, devices } from '@playwright/test';
+import path from 'node:path';
 
 /**
  * Ars 結合テスト - Playwright 設定
@@ -7,6 +8,15 @@ import { defineConfig, devices } from '@playwright/test';
  * 1. Mock Cernere (port 18080) - 認証バイパス用モックサーバー
  * 2. Ars Web Server (port 15173) - CERNERE_URL をモックに向けて起動
  */
+
+const ext = process.platform === 'win32' ? '.exe' : '';
+const serverBin = path.resolve(
+  __dirname,
+  '../../ars-editor/src-tauri/target/debug',
+  `ars-web-server${ext}`,
+);
+const distDir = path.resolve(__dirname, '../../ars-editor/dist');
+
 export default defineConfig({
   testDir: './specs',
   fullyParallel: false,
@@ -39,7 +49,7 @@ export default defineConfig({
     },
     {
       command: process.env.ARS_SERVER_CMD
-        ?? '../../ars-editor/src-tauri/target/debug/ars-web-server ../../ars-editor/dist 15173',
+        ?? `"${serverBin}" "${distDir}" 15173`,
       port: 15173,
       reuseExistingServer: !process.env.CI,
       env: {
