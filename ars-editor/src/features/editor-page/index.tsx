@@ -94,8 +94,6 @@ export function EditorPage() {
           x: actor.position.x + 50,
           y: actor.position.y + 50,
         },
-        parentId: null,
-        children: [],
       });
     }
   }, [project.activeSceneId, clipboard, addActor]);

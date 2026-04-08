@@ -60,13 +60,28 @@ pub struct Position {
     pub y: f64,
 }
 
+/// アクタータイプ: simple / state / flexible
+#[derive(Debug, Clone, Default, Serialize, Deserialize, TS)]
+#[ts(export)]
+pub struct Requirements {
+    /// 概要
+    pub overview: String,
+    /// 達成する事
+    pub goals: String,
+    /// 役割
+    pub role: String,
+    /// 挙動
+    pub behavior: String,
+}
+
+/// ステートマシン内の1つのステート定義 (State型アクター用)
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
 #[ts(export)]
-pub struct SequenceStep {
+pub struct ActorState {
     pub id: String,
     pub name: String,
-    pub description: String,
-    pub order: i32,
+    /// このステート内で実行する処理の説明
+    pub processes: Vec<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
@@ -74,21 +89,31 @@ pub struct SequenceStep {
 pub struct Actor {
     pub id: String,
     pub name: String,
+    /// ドメインとしての役割
     pub role: String,
-    pub components: Vec<String>,
-    pub children: Vec<String>,
-    pub position: Position,
-    #[serde(rename = "parentId")]
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub parent_id: Option<String>,
+    /// アクタータイプ: "simple" | "state" | "flexible"
+    #[serde(rename = "actorType")]
+    #[serde(default = "default_actor_type")]
+    pub actor_type: String,
+    /// 要件定義
     #[serde(default)]
-    pub sequences: Vec<SequenceStep>,
+    pub requirements: Requirements,
+    /// ステートマシン定義 (State型のみ使用)
+    #[serde(rename = "actorStates")]
+    #[serde(default)]
+    pub actor_states: Vec<ActorState>,
+    /// 自由記述 (Flexible型のみ使用)
+    #[serde(rename = "flexibleContent")]
+    #[serde(default)]
+    pub flexible_content: String,
+    pub position: Position,
     #[serde(rename = "subSceneId")]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub sub_scene_id: Option<String>,
-    #[serde(rename = "prefabId")]
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub prefab_id: Option<String>,
+}
+
+fn default_actor_type() -> String {
+    "simple".to_string()
 }
 
 // ── Prefab ──────────────────────────────────────────
@@ -98,10 +123,17 @@ pub struct Actor {
 pub struct PrefabActor {
     pub name: String,
     pub role: String,
-    pub components: Vec<String>,
-    pub children: Vec<String>,
+    #[serde(rename = "actorType")]
+    #[serde(default = "default_actor_type")]
+    pub actor_type: String,
     #[serde(default)]
-    pub sequences: Vec<SequenceStep>,
+    pub requirements: Requirements,
+    #[serde(rename = "actorStates")]
+    #[serde(default)]
+    pub actor_states: Vec<ActorState>,
+    #[serde(rename = "flexibleContent")]
+    #[serde(default)]
+    pub flexible_content: String,
     #[serde(rename = "subSceneId")]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub sub_scene_id: Option<String>,
@@ -117,38 +149,22 @@ pub struct Prefab {
 
 // ── Scene ───────────────────────────────────────────
 
+/// ドメイン間のメッセージ定義
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
 #[ts(export)]
-pub struct Connection {
+pub struct Message {
     pub id: String,
-    #[serde(rename = "sourceActorId")]
-    pub source_actor_id: String,
-    #[serde(rename = "sourcePort")]
-    pub source_port: String,
-    #[serde(rename = "targetActorId")]
-    pub target_actor_id: String,
-    #[serde(rename = "targetPort")]
-    pub target_port: String,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize, TS)]
-#[ts(export)]
-pub struct KeyBinding {
-    pub id: String,
-    pub key: String,
-    pub description: String,
-    #[serde(rename = "targetActorId")]
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub target_actor_id: Option<String>,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize, TS)]
-#[ts(export)]
-pub struct SceneState {
-    pub id: String,
+    /// 送信元ドメイン(アクター)ID
+    #[serde(rename = "sourceDomainId")]
+    pub source_domain_id: String,
+    /// 送信先ドメイン(アクター)ID
+    #[serde(rename = "targetDomainId")]
+    pub target_domain_id: String,
+    /// メッセージ名
     pub name: String,
-    #[serde(rename = "keyBindings")]
-    pub key_bindings: Vec<KeyBinding>,
+    /// メッセージの説明
+    #[serde(default)]
+    pub description: String,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
@@ -160,12 +176,9 @@ pub struct Scene {
     pub root_actor_id: String,
     #[ts(type = "Record<string, Actor>")]
     pub actors: HashMap<String, Actor>,
-    pub connections: Vec<Connection>,
+    /// ドメイン間メッセージ
     #[serde(default)]
-    pub states: Vec<SceneState>,
-    #[serde(rename = "activeStateId")]
-    #[serde(default)]
-    pub active_state_id: Option<String>,
+    pub messages: Vec<Message>,
 }
 
 // ── Project ─────────────────────────────────────────
@@ -251,9 +264,7 @@ mod tests {
             name: "Main".to_string(),
             root_actor_id: "actor-root".to_string(),
             actors: HashMap::new(),
-            connections: vec![],
-            states: vec![],
-            active_state_id: None,
+            messages: vec![],
         };
         project.scenes.insert(scene.id.clone(), scene);
         project.active_scene_id = Some("scene-1".to_string());
@@ -299,31 +310,35 @@ mod tests {
     }
 
     #[test]
-    fn test_actor_with_sequences() {
+    fn test_actor_with_requirements() {
         let actor = Actor {
             id: "actor-1".to_string(),
             name: "Player".to_string(),
             role: "actor".to_string(),
-            components: vec!["comp-1".to_string()],
-            children: vec![],
-            position: Position { x: 100.0, y: 200.0 },
-            parent_id: None,
-            sequences: vec![SequenceStep {
-                id: "step-1".to_string(),
-                name: "Init".to_string(),
-                description: "Initialize".to_string(),
-                order: 0,
+            actor_type: "state".to_string(),
+            requirements: Requirements {
+                overview: "プレイヤーキャラクター".to_string(),
+                goals: "ユーザーの入力に応じてキャラクターを制御する".to_string(),
+                role: "主人公".to_string(),
+                behavior: "移動・攻撃・防御".to_string(),
+            },
+            actor_states: vec![ActorState {
+                id: "state-1".to_string(),
+                name: "Idle".to_string(),
+                processes: vec!["待機アニメーション再生".to_string()],
             }],
+            flexible_content: String::new(),
+            position: Position { x: 100.0, y: 200.0 },
             sub_scene_id: None,
-            prefab_id: Some("prefab-1".to_string()),
         };
 
         let json = serde_json::to_string(&actor).unwrap();
         let loaded: Actor = serde_json::from_str(&json).unwrap();
 
         assert_eq!(loaded.name, "Player");
-        assert_eq!(loaded.sequences.len(), 1);
-        assert_eq!(loaded.prefab_id.as_deref(), Some("prefab-1"));
+        assert_eq!(loaded.actor_type, "state");
+        assert_eq!(loaded.requirements.overview, "プレイヤーキャラクター");
+        assert_eq!(loaded.actor_states.len(), 1);
     }
 
     #[test]
@@ -336,18 +351,18 @@ mod tests {
     }
 
     #[test]
-    fn test_connection_roundtrip() {
-        let conn = Connection {
-            id: "c1".to_string(),
-            source_actor_id: "a1".to_string(),
-            source_port: "output".to_string(),
-            target_actor_id: "a2".to_string(),
-            target_port: "input".to_string(),
+    fn test_message_roundtrip() {
+        let msg = Message {
+            id: "m1".to_string(),
+            source_domain_id: "a1".to_string(),
+            target_domain_id: "a2".to_string(),
+            name: "TakeDamage".to_string(),
+            description: "ダメージを与える".to_string(),
         };
-        let json = serde_json::to_string(&conn).unwrap();
-        let loaded: Connection = serde_json::from_str(&json).unwrap();
-        assert_eq!(loaded.source_actor_id, "a1");
-        assert_eq!(loaded.target_port, "input");
+        let json = serde_json::to_string(&msg).unwrap();
+        let loaded: Message = serde_json::from_str(&json).unwrap();
+        assert_eq!(loaded.source_domain_id, "a1");
+        assert_eq!(loaded.name, "TakeDamage");
     }
 }
 

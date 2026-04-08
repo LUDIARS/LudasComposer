@@ -1,7 +1,7 @@
 mod project_manager;
 mod module_parser;
 
-use ars_core::models::{self, Variable, Task as ArsTask, Project, Scene, Actor, Component, Connection, Position, SequenceStep, Prefab, PrefabActor, ProjectSummary, GitRepo, GitProjectInfo};
+use ars_core::models::{self, Variable, Task as ArsTask, Project, Scene, Actor, Component, Message, Position, Prefab, PrefabActor, ProjectSummary, GitRepo, GitProjectInfo};
 use project_manager::ProjectManager;
 use module_parser::parse_module_markdown;
 use rmcp::{
@@ -80,31 +80,19 @@ struct ListComponentsParam {
 }
 
 #[derive(Debug, serde::Deserialize, schemars::JsonSchema)]
-struct AttachComponentParam {
+struct AddMessageParam {
     #[schemars(description = ".ars.json ファイルのパス")]
     file_path: String,
     #[schemars(description = "シーンID")]
     scene_id: String,
-    #[schemars(description = "アクターID")]
-    actor_id: String,
-    #[schemars(description = "コンポーネントID")]
-    component_id: String,
-}
-
-#[derive(Debug, serde::Deserialize, schemars::JsonSchema)]
-struct AddConnectionParam {
-    #[schemars(description = ".ars.json ファイルのパス")]
-    file_path: String,
-    #[schemars(description = "シーンID")]
-    scene_id: String,
-    #[schemars(description = "接続元アクターID")]
-    source_actor_id: String,
-    #[schemars(description = "接続元ポート名")]
-    source_port: String,
-    #[schemars(description = "接続先アクターID")]
-    target_actor_id: String,
-    #[schemars(description = "接続先ポート名")]
-    target_port: String,
+    #[schemars(description = "送信元ドメインID")]
+    source_domain_id: String,
+    #[schemars(description = "送信先ドメインID")]
+    target_domain_id: String,
+    #[schemars(description = "メッセージ名")]
+    name: String,
+    #[schemars(description = "メッセージの説明")]
+    description: Option<String>,
 }
 
 #[derive(Debug, serde::Deserialize, schemars::JsonSchema)]
@@ -291,7 +279,7 @@ impl ArsMcpServer {
         }
     }
 
-    #[tool(description = "シーン内の全アクターを一覧表示する")]
+    #[tool(description = "シーン内の全ドメイン(アクター)を一覧表示する")]
     fn list_actors(&self, Parameters(p): Parameters<SceneQueryParam>) -> String {
         let full_path = match self.resolve_path(&p.file_path) {
             Ok(p) => p,
@@ -302,11 +290,9 @@ impl ArsMcpServer {
             match project.scenes.get(&p.scene_id) {
                 Some(scene) => {
                     let list: Vec<_> = scene.actors.values().map(|a| {
-                        let comp_names: Vec<_> = a.components.iter().filter_map(|cid| project.components.get(cid).map(|c| c.name.as_str())).collect();
-                        let comps = if comp_names.is_empty() { String::new() } else { format!(" [{}]", comp_names.join(", ")) };
-                        format!("- **{}** [{}] (ID: {}){}", a.name, a.role, a.id, comps)
+                        format!("- **{}** [{}:{}] (ID: {})", a.name, a.role, a.actor_type, a.id)
                     }).collect();
-                    Ok(ok(format!("シーン \"{}\" のアクター一覧:\n{}", scene.name, list.join("\n"))))
+                    Ok(ok(format!("シーン \"{}\" のドメイン一覧:\n{}", scene.name, list.join("\n"))))
                 }
                 None => Err(format!("シーンが見つかりません: {}", p.scene_id)),
             }
@@ -356,34 +342,17 @@ impl ArsMcpServer {
         }
     }
 
-    #[tool(description = "アクターにコンポーネントをアタッチする")]
-    fn attach_component(&self, Parameters(p): Parameters<AttachComponentParam>) -> String {
+    #[tool(description = "ドメイン間のメッセージを追加する")]
+    fn add_message(&self, Parameters(p): Parameters<AddMessageParam>) -> String {
         let full_path = match self.resolve_path(&p.file_path) {
             Ok(p) => p,
             Err(e) => return err(e),
         };
         match self.with_pm_result(|pm| {
             let mut project = pm.load_project(&full_path)?;
-            pm.attach_component(&mut project, &p.scene_id, &p.actor_id, &p.component_id)?;
+            let msg = pm.add_message(&mut project, &p.scene_id, &p.source_domain_id, &p.target_domain_id, &p.name, &p.description.unwrap_or_default())?;
             pm.save_project(&full_path, &project)?;
-            Ok(ok("コンポーネントをアタッチしました。".into()))
-        }) {
-            Ok(s) => s,
-            Err(e) => err(e),
-        }
-    }
-
-    #[tool(description = "シーン内のアクター間に接続を追加する")]
-    fn add_connection(&self, Parameters(p): Parameters<AddConnectionParam>) -> String {
-        let full_path = match self.resolve_path(&p.file_path) {
-            Ok(p) => p,
-            Err(e) => return err(e),
-        };
-        match self.with_pm_result(|pm| {
-            let mut project = pm.load_project(&full_path)?;
-            let conn = pm.add_connection(&mut project, &p.scene_id, &p.source_actor_id, &p.source_port, &p.target_actor_id, &p.target_port)?;
-            pm.save_project(&full_path, &project)?;
-            Ok(ok(format!("接続を追加しました (ID: {})", conn.id)))
+            Ok(ok(format!("メッセージを追加しました (ID: {})", msg.id)))
         }) {
             Ok(s) => s,
             Err(e) => err(e),

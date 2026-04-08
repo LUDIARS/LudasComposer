@@ -1,7 +1,6 @@
 import { useEditorStore } from '@/stores/editorStore';
 import { useProjectStore } from '@/stores/projectStore';
-import { useI18n } from '@/hooks/useI18n';
-import type { ActorRole } from '@/types/domain';
+import type { ActorType } from '@/types/domain';
 import { useCallback, useEffect, useRef } from 'react';
 import { generateId } from '@/lib/utils';
 
@@ -10,7 +9,6 @@ interface ContextMenuProps {
 }
 
 export function ContextMenu({ flowPosition }: ContextMenuProps) {
-  const { t } = useI18n();
   const contextMenu = useEditorStore((s) => s.contextMenu);
   const closeContextMenu = useEditorStore((s) => s.closeContextMenu);
   const clipboard = useEditorStore((s) => s.clipboard);
@@ -30,19 +28,23 @@ export function ContextMenu({ flowPosition }: ContextMenuProps) {
     return () => document.removeEventListener('mousedown', handleClick);
   }, [closeContextMenu]);
 
-  const handleAddActor = useCallback(
-    (role: ActorRole) => {
+  const handleAddDomain = useCallback(
+    (actorType: ActorType) => {
       if (!activeSceneId || !flowPosition) return;
+      const labels: Record<ActorType, string> = {
+        simple: 'New Domain',
+        state: 'New State Domain',
+        flexible: 'New Flexible Domain',
+      };
       addActor(activeSceneId, {
-        name: `New ${role.charAt(0).toUpperCase() + role.slice(1)}`,
-        role,
-        components: [],
-        children: [],
+        name: labels[actorType],
+        role: 'actor',
+        actorType,
+        requirements: { overview: '', goals: '', role: '', behavior: '' },
+        actorStates: [],
+        flexibleContent: '',
         position: flowPosition,
-        parentId: null,
-        sequences: [],
         subSceneId: null,
-        prefabId: null,
       });
       closeContextMenu();
     },
@@ -57,8 +59,6 @@ export function ContextMenu({ flowPosition }: ContextMenuProps) {
         id: generateId(),
         name: `${actor.name} (Paste)`,
         position: flowPosition,
-        parentId: null,
-        children: [],
       });
     }
     closeContextMenu();
@@ -75,9 +75,10 @@ export function ContextMenu({ flowPosition }: ContextMenuProps) {
 
   if (!contextMenu) return null;
 
-  const items: { label: string; role: ActorRole; icon: string }[] = [
-    { label: t('contextMenu.addActor'), role: 'actor', icon: '🟢' },
-    { label: t('contextMenu.addSequence'), role: 'sequence', icon: '🟠' },
+  const items: { label: string; actorType: ActorType; icon: string }[] = [
+    { label: 'Add Simple Domain', actorType: 'simple', icon: '⬜' },
+    { label: 'Add State Domain', actorType: 'state', icon: '🟡' },
+    { label: 'Add Flexible Domain', actorType: 'flexible', icon: '🟣' },
   ];
 
   const prefabList = Object.values(prefabs);
@@ -85,15 +86,15 @@ export function ContextMenu({ flowPosition }: ContextMenuProps) {
   return (
     <div
       ref={menuRef}
-      className="absolute z-50 bg-zinc-800 border border-zinc-600 rounded-lg shadow-xl py-1 min-w-[180px]"
+      className="absolute z-50 bg-zinc-800 border border-zinc-600 rounded-lg shadow-xl py-1 min-w-[200px]"
       style={{ left: contextMenu.x, top: contextMenu.y }}
     >
-      <div className="px-3 py-1 text-xs text-zinc-500 uppercase tracking-wider">{t('contextMenu.addNode')}</div>
-      {items.map(({ label, role, icon }) => (
+      <div className="px-3 py-1 text-xs text-zinc-500 uppercase tracking-wider">Add Domain</div>
+      {items.map(({ label, actorType, icon }) => (
         <button
-          key={role}
+          key={actorType}
           className="w-full flex items-center gap-2 px-3 py-2 text-sm text-zinc-200 hover:bg-zinc-700 transition-colors"
-          onClick={() => handleAddActor(role)}
+          onClick={() => handleAddDomain(actorType)}
         >
           <span>{icon}</span>
           <span>{label}</span>
@@ -109,7 +110,7 @@ export function ContextMenu({ flowPosition }: ContextMenuProps) {
             onClick={handlePaste}
           >
             <span>📋</span>
-            <span>{t('contextMenu.pasteActor', { count: clipboard.length })}</span>
+            <span>Paste ({clipboard.length})</span>
           </button>
         </>
       )}
@@ -118,7 +119,7 @@ export function ContextMenu({ flowPosition }: ContextMenuProps) {
       {prefabList.length > 0 && (
         <>
           <div className="h-px bg-zinc-700 my-1" />
-          <div className="px-3 py-1 text-xs text-zinc-500 uppercase tracking-wider">{t('contextMenu.fromPrefab')}</div>
+          <div className="px-3 py-1 text-xs text-zinc-500 uppercase tracking-wider">From Prefab</div>
           {prefabList.map((prefab) => (
             <button
               key={prefab.id}

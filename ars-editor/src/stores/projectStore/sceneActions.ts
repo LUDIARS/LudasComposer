@@ -1,4 +1,4 @@
-import type { Project, Actor, Scene, SceneState } from '@/types/domain';
+import type { Project, Actor, Scene } from '@/types/domain';
 import { generateId } from '@/lib/utils';
 
 export function createSceneAction(project: Project, name: string): { project: Project } {
@@ -8,28 +8,19 @@ export function createSceneAction(project: Project, name: string): { project: Pr
     id: rootActorId,
     name,
     role: 'scene',
-    components: [],
-    children: [],
+    actorType: 'simple',
+    requirements: { overview: '', goals: '', role: '', behavior: '' },
+    actorStates: [],
+    flexibleContent: '',
     position: { x: 250, y: 50 },
-    parentId: null,
-    sequences: [],
     subSceneId: null,
-    prefabId: null,
-  };
-  const defaultStateId = generateId();
-  const defaultState: SceneState = {
-    id: defaultStateId,
-    name: 'Default',
-    keyBindings: [],
   };
   const scene: Scene = {
     id: sceneId,
     name,
     rootActorId,
     actors: { [rootActorId]: rootActor },
-    connections: [],
-    states: [defaultState],
-    activeStateId: defaultStateId,
+    messages: [],
   };
   return {
     project: {

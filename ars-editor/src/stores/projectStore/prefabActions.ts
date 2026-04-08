@@ -14,7 +14,7 @@ export function createPrefabAction(
   if (!actor) return { project, prefabId: null };
 
   const prefabId = generateId();
-  const { id: _id, position: _pos, parentId: _pid, prefabId: _pfid, ...actorData } = actor;
+  const { id: _id, position: _pos, ...actorData } = actor;
   const prefab: Prefab = {
     id: prefabId,
     name,
@@ -63,8 +63,6 @@ export function instantiatePrefabAction(
     ...JSON.parse(JSON.stringify(prefab.actor)),
     id: newId,
     position,
-    parentId: null,
-    prefabId,
   };
 
   const updated = updateScene(project, sceneId, (s) => ({

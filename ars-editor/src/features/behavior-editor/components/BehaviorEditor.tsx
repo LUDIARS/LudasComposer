@@ -1,38 +1,25 @@
-import { useState, useCallback } from 'react';
+import { useState } from 'react';
 import { useProjectStore } from '@/stores/projectStore';
-import { useI18n } from '@/hooks/useI18n';
+import { useEditorStore } from '@/stores/editorStore';
 import { HelpTooltip } from '@/components/HelpTooltip';
 import { helpContent } from '@/lib/help-content';
-import type { SceneState, KeyBinding } from '@/types/domain';
-
-const COMMON_KEYS = [
-  'W', 'A', 'S', 'D', 'Space', 'Enter', 'Escape',
-  'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight',
-  'Shift', 'Ctrl', 'E', 'Q', 'R', 'F', 'Tab',
-  '1', '2', '3', '4', '5',
-  'MouseLeft', 'MouseRight',
-];
+import type { ActorType, ActorState } from '@/types/domain';
 
 export function BehaviorEditor() {
-  const { t } = useI18n();
   const activeSceneId = useProjectStore((s) => s.project.activeSceneId);
   const scenes = useProjectStore((s) => s.project.scenes);
-  const addSceneState = useProjectStore((s) => s.addSceneState);
-  const removeSceneState = useProjectStore((s) => s.removeSceneState);
-  const renameSceneState = useProjectStore((s) => s.renameSceneState);
-  const setActiveState = useProjectStore((s) => s.setActiveState);
-  const addKeyBinding = useProjectStore((s) => s.addKeyBinding);
-  const updateKeyBinding = useProjectStore((s) => s.updateKeyBinding);
-  const removeKeyBinding = useProjectStore((s) => s.removeKeyBinding);
-
-  const [newStateName, setNewStateName] = useState('');
-  const [isCapturingKey, setIsCapturingKey] = useState(false);
-  const [captureTargetStateId, setCaptureTargetStateId] = useState<string | null>(null);
+  const setActorRequirements = useProjectStore((s) => s.setActorRequirements);
+  const setActorType = useProjectStore((s) => s.setActorType);
+  const setFlexibleContent = useProjectStore((s) => s.setFlexibleContent);
+  const addActorState = useProjectStore((s) => s.addActorState);
+  const removeActorState = useProjectStore((s) => s.removeActorState);
+  const updateActorState = useProjectStore((s) => s.updateActorState);
+  const selectedNodeIds = useEditorStore((s) => s.selectedNodeIds);
 
   if (!activeSceneId) {
     return (
       <div className="h-full flex items-center justify-center text-zinc-500 text-sm p-4">
-        Select a scene to edit behaviors
+        Select a scene
       </div>
     );
   }
@@ -40,20 +27,31 @@ export function BehaviorEditor() {
   const scene = scenes[activeSceneId];
   if (!scene) return null;
 
-  const states = scene.states ?? [];
-  const activeStateId = scene.activeStateId;
-  const actors = Object.values(scene.actors);
+  // Get the first selected actor
+  const actorId = selectedNodeIds[0];
+  const actor = actorId ? scene.actors[actorId] : null;
 
-  const handleAddState = () => {
-    const name = newStateName.trim();
-    if (!name) return;
-    addSceneState(activeSceneId, name);
-    setNewStateName('');
-  };
+  if (!actor) {
+    return (
+      <div className="h-full flex flex-col overflow-hidden">
+        <div className="px-4 py-3 border-b border-zinc-700">
+          <h2 className="text-sm font-semibold text-white flex items-center gap-1.5">
+            Domain Editor
+            <HelpTooltip content={helpContent.behaviorEditor} position="bottom" highlightSelector='[data-help-target="behaviorEditor"]' />
+          </h2>
+        </div>
+        <div className="flex-1 flex items-center justify-center text-zinc-500 text-sm p-4">
+          Select a domain node to edit
+        </div>
+      </div>
+    );
+  }
 
-  const handleStartCapture = (stateId: string) => {
-    setIsCapturingKey(true);
-    setCaptureTargetStateId(stateId);
+  const actorType = (actor.actorType ?? 'simple') as ActorType;
+  const req = actor.requirements ?? { overview: '', goals: '', role: '', behavior: '' };
+
+  const handleReqChange = (field: string, value: string) => {
+    setActorRequirements(activeSceneId, actorId, { ...req, [field]: value });
   };
 
   return (
@@ -61,325 +59,200 @@ export function BehaviorEditor() {
       {/* Header */}
       <div className="px-4 py-3 border-b border-zinc-700">
         <h2 className="text-sm font-semibold text-white flex items-center gap-1.5">
-          {t('behaviorEditor.title')}
+          Domain Editor
           <HelpTooltip content={helpContent.behaviorEditor} position="bottom" highlightSelector='[data-help-target="behaviorEditor"]' />
         </h2>
-        <p className="text-xs text-zinc-500 mt-0.5">
-          {t('behaviorEditor.sceneStates', { scene: scene.name, count: states.length })}
-        </p>
+        <p className="text-xs text-zinc-500 mt-0.5">{actor.name}</p>
       </div>
 
-      {/* State tabs */}
-      <div className="flex items-center gap-1 px-3 py-2 border-b border-zinc-700 overflow-x-auto">
-        {states.map((state) => (
-          <button
-            key={state.id}
-            onClick={() => setActiveState(activeSceneId, state.id)}
-            className={`px-3 py-1 rounded text-xs whitespace-nowrap transition-colors ${
-              activeStateId === state.id
-                ? 'bg-cyan-600 text-white'
-                : 'bg-zinc-800 text-zinc-400 hover:bg-zinc-700 hover:text-zinc-200'
-            }`}
-          >
-            {state.name}
-          </button>
-        ))}
-        <div className="flex items-center gap-1 ml-1">
-          <input
-            className="w-20 bg-zinc-900 text-white text-xs px-2 py-1 rounded border border-zinc-600 outline-none focus:border-cyan-500"
-            placeholder={t('behaviorEditor.newStatePlaceholder')}
-            value={newStateName}
-            onChange={(e) => setNewStateName(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') handleAddState();
-            }}
-          />
-          <button
-            onClick={handleAddState}
-            disabled={!newStateName.trim()}
-            className="text-cyan-400 hover:text-cyan-300 text-xs px-1 disabled:opacity-30"
-          >
-            +
-          </button>
-        </div>
-      </div>
-
-      {/* Active state editor */}
       <div className="flex-1 overflow-y-auto">
-        {activeStateId ? (
-          <ActiveStateEditor
-            sceneId={activeSceneId}
-            state={states.find((s) => s.id === activeStateId)!}
-            actors={actors}
-            onRename={(name) => renameSceneState(activeSceneId, activeStateId, name)}
-            onDelete={() => removeSceneState(activeSceneId, activeStateId)}
-            onAddBinding={(binding) => addKeyBinding(activeSceneId, activeStateId, binding)}
-            onUpdateBinding={(id, updates) => updateKeyBinding(activeSceneId, activeStateId, id, updates)}
-            onRemoveBinding={(id) => removeKeyBinding(activeSceneId, activeStateId, id)}
-            isCapturingKey={isCapturingKey && captureTargetStateId === activeStateId}
-            onStartCapture={() => handleStartCapture(activeStateId)}
-            onStopCapture={() => {
-              setIsCapturingKey(false);
-              setCaptureTargetStateId(null);
-            }}
-          />
-        ) : (
-          <div className="p-4 text-zinc-500 text-sm text-center">
-            {t('behaviorEditor.addStatePrompt')}
-          </div>
-        )}
-      </div>
-    </div>
-  );
-}
-
-interface ActiveStateEditorProps {
-  sceneId: string;
-  state: SceneState;
-  actors: { id: string; name: string; role: string }[];
-  onRename: (name: string) => void;
-  onDelete: () => void;
-  onAddBinding: (binding: Omit<KeyBinding, 'id'>) => void;
-  onUpdateBinding: (id: string, updates: Partial<KeyBinding>) => void;
-  onRemoveBinding: (id: string) => void;
-  isCapturingKey: boolean;
-  onStartCapture: () => void;
-  onStopCapture: () => void;
-}
-
-function ActiveStateEditor({
-  state,
-  actors,
-  onRename,
-  onDelete,
-  onAddBinding,
-  onUpdateBinding,
-  onRemoveBinding,
-  isCapturingKey,
-  onStartCapture,
-  onStopCapture,
-}: ActiveStateEditorProps) {
-  const { t } = useI18n();
-  const [newKey, setNewKey] = useState('');
-  const [newDescription, setNewDescription] = useState('');
-  const [newTargetActorId, setNewTargetActorId] = useState<string>('');
-  const [showKeyPicker, setShowKeyPicker] = useState(false);
-
-  const handleKeyCapture = useCallback(
-    (e: React.KeyboardEvent) => {
-      if (!isCapturingKey) return;
-      e.preventDefault();
-      e.stopPropagation();
-      const key = e.key === ' ' ? 'Space' : e.key;
-      setNewKey(key);
-      onStopCapture();
-    },
-    [isCapturingKey, onStopCapture],
-  );
-
-  const handleAddBinding = () => {
-    const key = newKey.trim();
-    const description = newDescription.trim();
-    if (!key || !description) return;
-    onAddBinding({
-      key,
-      description,
-      targetActorId: newTargetActorId || null,
-    });
-    setNewKey('');
-    setNewDescription('');
-    setNewTargetActorId('');
-  };
-
-  const nonSceneActors = actors.filter((a) => a.role !== 'scene');
-
-  return (
-    <div className="p-4 space-y-4">
-      {/* State header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <input
-            className="bg-transparent text-white text-sm font-semibold outline-none border-b border-transparent focus:border-cyan-500 w-40"
-            value={state.name}
-            onChange={(e) => onRename(e.target.value)}
-          />
-          <span className="text-xs text-zinc-600">
-            {t('behaviorEditor.bindings', { count: state.keyBindings.length })}
-          </span>
-        </div>
-        <button
-          onClick={onDelete}
-          className="text-red-400 hover:text-red-300 text-xs px-2 py-1 rounded hover:bg-zinc-800"
-        >
-          {t('behaviorEditor.deleteState')}
-        </button>
-      </div>
-
-      {/* Existing bindings */}
-      <div className="space-y-2">
-        {state.keyBindings.length === 0 ? (
-          <div className="text-zinc-500 text-sm text-center py-4 bg-zinc-900 rounded-md border border-zinc-800">
-            {t('behaviorEditor.noBindings')}
-          </div>
-        ) : (
-          state.keyBindings.map((binding) => (
-            <KeyBindingRow
-              key={binding.id}
-              binding={binding}
-              actors={nonSceneActors}
-              onUpdate={(updates) => onUpdateBinding(binding.id, updates)}
-              onRemove={() => onRemoveBinding(binding.id)}
-            />
-          ))
-        )}
-      </div>
-
-      {/* Add new binding */}
-      <div className="bg-zinc-900 rounded-md border border-zinc-700 p-3 space-y-3">
-        <div className="text-xs text-zinc-400 font-medium">{t('behaviorEditor.addKeyBinding')}</div>
-
-        {/* Key selection */}
-        <div className="flex items-center gap-2">
-          <div className="flex-1 relative">
-            <input
-              className="w-full bg-zinc-800 text-white text-sm px-3 py-1.5 rounded border border-zinc-600 outline-none focus:border-cyan-500"
-              placeholder={isCapturingKey ? t('behaviorEditor.pressKey') : t('behaviorEditor.keyPlaceholder')}
-              value={newKey}
-              onChange={(e) => setNewKey(e.target.value)}
-              onKeyDown={handleKeyCapture}
-              readOnly={isCapturingKey}
-            />
-          </div>
-          <button
-            onClick={() => {
-              if (isCapturingKey) {
-                onStopCapture();
-              } else {
-                onStartCapture();
-              }
-            }}
-            className={`text-xs px-2 py-1.5 rounded transition-colors ${
-              isCapturingKey
-                ? 'bg-cyan-600 text-white'
-                : 'bg-zinc-800 text-zinc-400 hover:bg-zinc-700 border border-zinc-600'
-            }`}
-          >
-            {isCapturingKey ? t('behaviorEditor.cancelCapture') : t('behaviorEditor.capture')}
-          </button>
-          <button
-            onClick={() => setShowKeyPicker(!showKeyPicker)}
-            className="text-xs px-2 py-1.5 bg-zinc-800 text-zinc-400 hover:bg-zinc-700 rounded border border-zinc-600"
-          >
-            {t('behaviorEditor.list')}
-          </button>
-        </div>
-
-        {/* Key picker dropdown */}
-        {showKeyPicker && (
-          <div className="flex flex-wrap gap-1">
-            {COMMON_KEYS.map((k) => (
+        {/* Actor Type */}
+        <div className="px-4 py-3 border-b border-zinc-700">
+          <div className="text-xs text-zinc-400 font-semibold uppercase tracking-wider mb-2">Type</div>
+          <div className="flex gap-1">
+            {(['simple', 'state', 'flexible'] as ActorType[]).map((type) => (
               <button
-                key={k}
-                onClick={() => {
-                  setNewKey(k);
-                  setShowKeyPicker(false);
-                }}
-                className="text-xs px-2 py-1 bg-zinc-800 text-zinc-300 hover:bg-zinc-700 rounded border border-zinc-600"
+                key={type}
+                onClick={() => setActorType(activeSceneId, actorId, type)}
+                className={`text-xs px-3 py-1.5 rounded transition-colors ${
+                  actorType === type
+                    ? type === 'simple' ? 'bg-zinc-600 text-white' :
+                      type === 'state' ? 'bg-amber-600 text-white' :
+                      'bg-purple-600 text-white'
+                    : 'bg-zinc-800 text-zinc-400 hover:text-zinc-200'
+                }`}
               >
-                {k}
+                {type.charAt(0).toUpperCase() + type.slice(1)}
               </button>
             ))}
           </div>
+        </div>
+
+        {/* Requirements */}
+        <div className="px-4 py-3 border-b border-zinc-700 space-y-2">
+          <div className="text-xs text-zinc-400 font-semibold uppercase tracking-wider">Requirements</div>
+          <RequirementsField label="概要 (Overview)" value={req.overview} onChange={(v) => handleReqChange('overview', v)} />
+          <RequirementsField label="達成する事 (Goals)" value={req.goals} onChange={(v) => handleReqChange('goals', v)} />
+          <RequirementsField label="役割 (Role)" value={req.role} onChange={(v) => handleReqChange('role', v)} />
+          <RequirementsField label="挙動 (Behavior)" value={req.behavior} onChange={(v) => handleReqChange('behavior', v)} multiline />
+        </div>
+
+        {/* State Machine Editor (State type only) */}
+        {actorType === 'state' && (
+          <div className="px-4 py-3 border-b border-zinc-700 space-y-2">
+            <div className="text-xs text-amber-400 font-semibold uppercase tracking-wider">State Machine</div>
+            <StateEditor
+              states={actor.actorStates ?? []}
+              onAddState={(name) => addActorState(activeSceneId, actorId, name)}
+              onRemoveState={(stateId) => removeActorState(activeSceneId, actorId, stateId)}
+              onUpdateState={(stateId, updates) => updateActorState(activeSceneId, actorId, stateId, updates)}
+            />
+          </div>
         )}
 
-        {/* Description - natural language */}
-        <input
-          className="w-full bg-zinc-800 text-white text-sm px-3 py-1.5 rounded border border-zinc-600 outline-none focus:border-cyan-500"
-          placeholder={t('behaviorEditor.descPlaceholder')}
-          value={newDescription}
-          onChange={(e) => setNewDescription(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter') handleAddBinding();
-          }}
-        />
-
-        {/* Target actor */}
-        <select
-          className="w-full bg-zinc-800 text-white text-sm px-3 py-1.5 rounded border border-zinc-600 outline-none focus:border-cyan-500"
-          value={newTargetActorId}
-          onChange={(e) => setNewTargetActorId(e.target.value)}
-        >
-          <option value="">{t('behaviorEditor.targetActor')}</option>
-          {nonSceneActors.map((actor) => (
-            <option key={actor.id} value={actor.id}>
-              {actor.name}
-            </option>
-          ))}
-        </select>
-
-        <button
-          onClick={handleAddBinding}
-          disabled={!newKey.trim() || !newDescription.trim()}
-          className="w-full bg-cyan-600 hover:bg-cyan-500 text-white text-sm py-1.5 rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          {t('behaviorEditor.addBinding')}
-        </button>
+        {/* Flexible Content (Flexible type only) */}
+        {actorType === 'flexible' && (
+          <div className="px-4 py-3 space-y-2">
+            <div className="text-xs text-purple-400 font-semibold uppercase tracking-wider">Free Content</div>
+            <textarea
+              value={actor.flexibleContent ?? ''}
+              onChange={(e) => setFlexibleContent(activeSceneId, actorId, e.target.value)}
+              placeholder="自由に記述..."
+              rows={10}
+              className="w-full bg-zinc-900 border border-zinc-600 rounded px-3 py-2 text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-purple-500 resize-none"
+            />
+          </div>
+        )}
       </div>
     </div>
   );
 }
 
-interface KeyBindingRowProps {
-  binding: KeyBinding;
-  actors: { id: string; name: string; role: string }[];
-  onUpdate: (updates: Partial<KeyBinding>) => void;
-  onRemove: () => void;
+function RequirementsField({ label, value, onChange, multiline }: {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+  multiline?: boolean;
+}) {
+  return (
+    <div>
+      <label className="text-[10px] text-zinc-500 block mb-0.5">{label}</label>
+      {multiline ? (
+        <textarea
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          rows={3}
+          className="w-full bg-zinc-900 border border-zinc-700 rounded px-2 py-1.5 text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-blue-500 resize-none"
+        />
+      ) : (
+        <input
+          type="text"
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          className="w-full bg-zinc-900 border border-zinc-700 rounded px-2 py-1.5 text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-blue-500"
+        />
+      )}
+    </div>
+  );
 }
 
-function KeyBindingRow({ binding, actors, onUpdate, onRemove }: KeyBindingRowProps) {
-  const { t } = useI18n();
-  const targetActor = actors.find((a) => a.id === binding.targetActorId);
+function StateEditor({ states, onAddState, onRemoveState, onUpdateState }: {
+  states: ActorState[];
+  onAddState: (name: string) => void;
+  onRemoveState: (stateId: string) => void;
+  onUpdateState: (stateId: string, updates: Partial<ActorState>) => void;
+}) {
+  const [newStateName, setNewStateName] = useState('');
+  const [newProcessMap, setNewProcessMap] = useState<Record<string, string>>({});
+
+  const handleAddState = () => {
+    const name = newStateName.trim();
+    if (!name) return;
+    onAddState(name);
+    setNewStateName('');
+  };
+
+  const handleAddProcess = (stateId: string) => {
+    const text = (newProcessMap[stateId] ?? '').trim();
+    if (!text) return;
+    const state = states.find((s) => s.id === stateId);
+    if (!state) return;
+    onUpdateState(stateId, { processes: [...state.processes, text] });
+    setNewProcessMap({ ...newProcessMap, [stateId]: '' });
+  };
+
+  const handleRemoveProcess = (stateId: string, index: number) => {
+    const state = states.find((s) => s.id === stateId);
+    if (!state) return;
+    onUpdateState(stateId, { processes: state.processes.filter((_, i) => i !== index) });
+  };
 
   return (
-    <div className="bg-zinc-900 rounded-md p-3 border border-zinc-700 space-y-2">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <span className="text-xs font-mono bg-zinc-800 text-cyan-400 px-2 py-0.5 rounded border border-zinc-600">
-            {binding.key}
-          </span>
-          <input
-            className="bg-transparent text-white text-sm outline-none border-b border-transparent focus:border-zinc-500 flex-1"
-            value={binding.description}
-            onChange={(e) => onUpdate({ description: e.target.value })}
-          />
+    <div className="space-y-2">
+      {states.map((state) => (
+        <div key={state.id} className="bg-zinc-900 rounded border border-zinc-700 p-2">
+          <div className="flex items-center justify-between mb-1">
+            <input
+              className="bg-transparent text-amber-300 text-sm font-medium outline-none border-b border-transparent focus:border-amber-500 flex-1"
+              value={state.name}
+              onChange={(e) => onUpdateState(state.id, { name: e.target.value })}
+            />
+            <button
+              onClick={() => onRemoveState(state.id)}
+              className="text-red-400 hover:text-red-300 text-xs px-1"
+            >
+              x
+            </button>
+          </div>
+          {/* Processes */}
+          <div className="space-y-0.5 mt-1">
+            {state.processes.map((proc, idx) => (
+              <div key={idx} className="flex items-center gap-1 text-[11px] text-zinc-300">
+                <span className="text-zinc-600">{idx + 1}.</span>
+                <span className="flex-1">{proc}</span>
+                <button
+                  onClick={() => handleRemoveProcess(state.id, idx)}
+                  className="text-zinc-600 hover:text-red-400 text-[10px]"
+                >
+                  x
+                </button>
+              </div>
+            ))}
+          </div>
+          <div className="flex gap-1 mt-1">
+            <input
+              className="flex-1 bg-zinc-800 text-white text-[11px] px-2 py-1 rounded border border-zinc-700 outline-none focus:border-amber-500"
+              placeholder="Add process..."
+              value={newProcessMap[state.id] ?? ''}
+              onChange={(e) => setNewProcessMap({ ...newProcessMap, [state.id]: e.target.value })}
+              onKeyDown={(e) => { if (e.key === 'Enter') handleAddProcess(state.id); }}
+            />
+            <button
+              onClick={() => handleAddProcess(state.id)}
+              className="text-amber-400 text-xs px-1"
+            >
+              +
+            </button>
+          </div>
         </div>
+      ))}
+
+      {/* Add new state */}
+      <div className="flex gap-1">
+        <input
+          className="flex-1 bg-zinc-800 text-white text-xs px-2 py-1.5 rounded border border-zinc-700 outline-none focus:border-amber-500"
+          placeholder="New state name..."
+          value={newStateName}
+          onChange={(e) => setNewStateName(e.target.value)}
+          onKeyDown={(e) => { if (e.key === 'Enter') handleAddState(); }}
+        />
         <button
-          onClick={onRemove}
-          className="text-red-400 hover:text-red-300 text-xs px-1"
-          title="Remove binding"
+          onClick={handleAddState}
+          disabled={!newStateName.trim()}
+          className="text-amber-400 hover:text-amber-300 text-xs px-2 py-1.5 bg-zinc-800 rounded border border-zinc-700 disabled:opacity-30"
         >
-          x
+          + State
         </button>
-      </div>
-      <div className="flex items-center gap-2">
-        <span className="text-xs text-zinc-500">{t('behaviorEditor.target')}</span>
-        <select
-          className="flex-1 bg-zinc-800 text-xs text-zinc-300 px-2 py-1 rounded border border-zinc-700 outline-none focus:border-cyan-500"
-          value={binding.targetActorId ?? ''}
-          onChange={(e) => onUpdate({ targetActorId: e.target.value || null })}
-        >
-          <option value="">{t('behaviorEditor.targetNone')}</option>
-          {actors.map((actor) => (
-            <option key={actor.id} value={actor.id}>
-              {actor.name}
-            </option>
-          ))}
-        </select>
-        {targetActor && (
-          <span className="text-xs text-cyan-500">
-            → {targetActor.name}
-          </span>
-        )}
       </div>
     </div>
   );

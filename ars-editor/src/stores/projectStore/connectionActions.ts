@@ -1,27 +1,41 @@
-import type { Project, Connection, Component } from '@/types/domain';
+import type { Project, Message, Component } from '@/types/domain';
 import { generateId } from '@/lib/utils';
 import { updateScene } from './storeHelpers';
 
-export function addConnectionAction(
+export function addMessageAction(
   project: Project,
   sceneId: string,
-  connectionData: Omit<Connection, 'id'>,
+  messageData: Omit<Message, 'id'>,
 ): Project {
-  const connection: Connection = { ...connectionData, id: generateId() };
+  const message: Message = { ...messageData, id: generateId() };
   return updateScene(project, sceneId, (scene) => ({
     ...scene,
-    connections: [...scene.connections, connection],
+    messages: [...scene.messages, message],
   }));
 }
 
-export function removeConnectionAction(
+export function removeMessageAction(
   project: Project,
   sceneId: string,
-  connectionId: string,
+  messageId: string,
 ): Project {
   return updateScene(project, sceneId, (scene) => ({
     ...scene,
-    connections: scene.connections.filter((c) => c.id !== connectionId),
+    messages: scene.messages.filter((m) => m.id !== messageId),
+  }));
+}
+
+export function updateMessageAction(
+  project: Project,
+  sceneId: string,
+  messageId: string,
+  updates: Partial<Message>,
+): Project {
+  return updateScene(project, sceneId, (scene) => ({
+    ...scene,
+    messages: scene.messages.map((m) =>
+      m.id === messageId ? { ...m, ...updates } : m,
+    ),
   }));
 }
 

@@ -3,21 +3,21 @@
 
 export type {
   Actor,
+  ActorState,
   Component,
-  Connection,
-  KeyBinding,
+  Message,
   PortDefinition,
   Position,
   Prefab,
   PrefabActor,
   Project,
+  Requirements,
   Scene,
-  SceneState,
-  SequenceStep,
   Task,
   Variable,
 } from './generated';
 
 // TS-only convenience types (not in Rust)
-export type ActorRole = 'actor' | 'scene' | 'sequence';
+export type ActorRole = 'actor' | 'scene';
+export type ActorType = 'simple' | 'state' | 'flexible';
 export type ComponentCategory = 'UI' | 'Logic' | 'System' | 'GameObject';

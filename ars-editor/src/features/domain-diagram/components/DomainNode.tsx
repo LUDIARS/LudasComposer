@@ -1,17 +1,21 @@
 import { memo, useCallback } from 'react';
 import { Handle, Position, type NodeProps } from '@xyflow/react';
 import { cn } from '@/lib/utils';
-import { useI18n } from '@/hooks/useI18n';
 import type { DomainFlowNode } from '../types';
 import { DOMAIN_NODE_COLORS } from '../types';
 import { useDomainDiagramContext } from './DomainDiagramContext';
+
+const TYPE_BADGES: Record<string, { bg: string; text: string }> = {
+  simple: { bg: 'bg-zinc-600', text: 'text-zinc-300' },
+  state: { bg: 'bg-amber-600', text: 'text-amber-300' },
+  flexible: { bg: 'bg-purple-600', text: 'text-purple-300' },
+};
 
 export const DomainNode = memo(function DomainNode({
   data,
   selected,
 }: NodeProps<DomainFlowNode>) {
   const c = DOMAIN_NODE_COLORS;
-  const { t } = useI18n();
   const { setFocusActorId } = useDomainDiagramContext();
 
   const handleDetail = useCallback(
@@ -22,10 +26,7 @@ export const DomainNode = memo(function DomainNode({
     [data.actorId, setFocusActorId],
   );
 
-  const detailLabel =
-    t('domainDiagram.detail') === 'domainDiagram.detail'
-      ? 'Detail'
-      : t('domainDiagram.detail');
+  const badge = TYPE_BADGES[data.actorType] ?? TYPE_BADGES.simple;
 
   return (
     <div
@@ -41,6 +42,9 @@ export const DomainNode = memo(function DomainNode({
         <span className="text-sm font-bold text-white truncate flex-1">
           {data.name}
         </span>
+        <span className={cn('text-[10px] px-1.5 py-0.5 rounded font-medium', badge.bg, badge.text)}>
+          {data.actorType}
+        </span>
         {data.isRoot && (
           <span className="text-[10px] bg-white/20 px-1.5 py-0.5 rounded text-white/80">
             root
@@ -50,29 +54,10 @@ export const DomainNode = memo(function DomainNode({
 
       {/* Body */}
       <div className="px-3 py-2 space-y-1.5">
-        {/* Attached components */}
-        {data.componentNames.length > 0 && (
-          <div>
-            <div className="text-[10px] text-zinc-500 uppercase tracking-wider mb-0.5">
-              Components
-            </div>
-            <div className="flex flex-wrap gap-1">
-              {data.componentNames.map((name) => (
-                <span
-                  key={name}
-                  className="text-[11px] bg-zinc-800 text-zinc-300 px-1.5 py-0.5 rounded"
-                >
-                  {name}
-                </span>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Child count */}
-        {data.childCount > 0 && (
-          <div className="text-[11px] text-zinc-400">
-            {data.childCount} child actor{data.childCount > 1 ? 's' : ''}
+        {/* Overview */}
+        {data.overview && (
+          <div className="text-[11px] text-zinc-300 truncate">
+            {data.overview}
           </div>
         )}
 
@@ -89,7 +74,7 @@ export const DomainNode = memo(function DomainNode({
           onClick={handleDetail}
           className="w-full mt-1 text-[11px] text-green-300 hover:text-white bg-green-800/40 hover:bg-green-700/60 px-2 py-1 rounded transition-colors text-center"
         >
-          {detailLabel}
+          Detail
         </button>
       </div>
 

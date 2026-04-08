@@ -1,4 +1,4 @@
-import type { Project, Actor } from '@/types/domain';
+import type { Project, Actor, Requirements, ActorState } from '@/types/domain';
 import { generateId } from '@/lib/utils';
 import { updateScene, updateActor } from './storeHelpers';
 
@@ -11,9 +11,11 @@ export function addActorAction(
   const actor: Actor = {
     ...actorData,
     id,
-    sequences: actorData.sequences ?? [],
+    actorType: actorData.actorType ?? 'simple',
+    requirements: actorData.requirements ?? { overview: '', goals: '', role: '', behavior: '' },
+    actorStates: actorData.actorStates ?? [],
+    flexibleContent: actorData.flexibleContent ?? '',
     subSceneId: actorData.subSceneId ?? null,
-    prefabId: actorData.prefabId ?? null,
   };
   return {
     project: updateScene(project, sceneId, (scene) => ({
@@ -27,28 +29,14 @@ export function addActorAction(
 export function removeActorAction(project: Project, sceneId: string, actorId: string): Project {
   const scene = project.scenes[sceneId];
   if (!scene) return project;
-  const removedActor = scene.actors[actorId];
   const { [actorId]: _, ...remainingActors } = scene.actors;
-  const updatedActors = Object.fromEntries(
-    Object.entries(remainingActors).map(([k, a]) => [
-      k,
-      { ...a, children: a.children.filter((c) => c !== actorId) },
-    ]),
-  );
-  if (removedActor) {
-    for (const childId of removedActor.children) {
-      if (updatedActors[childId]) {
-        updatedActors[childId] = { ...updatedActors[childId], parentId: null };
-      }
-    }
-  }
-  const updatedConnections = scene.connections.filter(
-    (c) => c.sourceActorId !== actorId && c.targetActorId !== actorId,
+  const updatedMessages = scene.messages.filter(
+    (m) => m.sourceDomainId !== actorId && m.targetDomainId !== actorId,
   );
   return updateScene(project, sceneId, () => ({
     ...scene,
-    actors: updatedActors,
-    connections: updatedConnections,
+    actors: remainingActors,
+    messages: updatedMessages,
   }));
 }
 
@@ -64,57 +52,6 @@ export function updateActorPositionAction(
   }));
 }
 
-export function setActorComponentsAction(
-  project: Project,
-  sceneId: string,
-  actorId: string,
-  componentIds: string[],
-): Project {
-  return updateActor(project, sceneId, actorId, (actor) => ({
-    ...actor,
-    components: componentIds,
-  }));
-}
-
-export function setActorParentAction(
-  project: Project,
-  sceneId: string,
-  actorId: string,
-  parentId: string | null,
-): Project {
-  const scene = project.scenes[sceneId];
-  if (!scene) return project;
-  const actor = scene.actors[actorId];
-  if (!actor) return project;
-
-  // Circular dependency check
-  if (parentId) {
-    let current: string | null | undefined = parentId;
-    while (current) {
-      if (current === actorId) return project;
-      current = scene.actors[current]?.parentId;
-    }
-  }
-
-  const updatedActors = { ...scene.actors };
-  for (const a of Object.values(updatedActors)) {
-    if (a.children.includes(actorId)) {
-      updatedActors[a.id] = {
-        ...a,
-        children: a.children.filter((c) => c !== actorId),
-      };
-    }
-  }
-  updatedActors[actorId] = { ...actor, parentId };
-  if (parentId && updatedActors[parentId]) {
-    updatedActors[parentId] = {
-      ...updatedActors[parentId],
-      children: [...updatedActors[parentId].children, actorId],
-    };
-  }
-  return updateScene(project, sceneId, () => ({ ...scene, actors: updatedActors }));
-}
-
 export function renameActorAction(
   project: Project,
   sceneId: string,
@@ -122,6 +59,95 @@ export function renameActorAction(
   name: string,
 ): Project {
   return updateActor(project, sceneId, actorId, (actor) => ({ ...actor, name }));
+}
+
+export function setActorTypeAction(
+  project: Project,
+  sceneId: string,
+  actorId: string,
+  actorType: string,
+): Project {
+  return updateActor(project, sceneId, actorId, (actor) => ({ ...actor, actorType }));
+}
+
+export function setActorRequirementsAction(
+  project: Project,
+  sceneId: string,
+  actorId: string,
+  requirements: Requirements,
+): Project {
+  return updateActor(project, sceneId, actorId, (actor) => ({ ...actor, requirements }));
+}
+
+export function setActorStatesAction(
+  project: Project,
+  sceneId: string,
+  actorId: string,
+  actorStates: ActorState[],
+): Project {
+  return updateActor(project, sceneId, actorId, (actor) => ({ ...actor, actorStates }));
+}
+
+export function addActorStateAction(
+  project: Project,
+  sceneId: string,
+  actorId: string,
+  name: string,
+): { project: Project; stateId: string } {
+  const stateId = generateId();
+  const newState: ActorState = { id: stateId, name, processes: [] };
+  return {
+    project: updateActor(project, sceneId, actorId, (actor) => ({
+      ...actor,
+      actorStates: [...actor.actorStates, newState],
+    })),
+    stateId,
+  };
+}
+
+export function removeActorStateAction(
+  project: Project,
+  sceneId: string,
+  actorId: string,
+  stateId: string,
+): Project {
+  return updateActor(project, sceneId, actorId, (actor) => ({
+    ...actor,
+    actorStates: actor.actorStates.filter((s) => s.id !== stateId),
+  }));
+}
+
+export function updateActorStateAction(
+  project: Project,
+  sceneId: string,
+  actorId: string,
+  stateId: string,
+  updates: Partial<ActorState>,
+): Project {
+  return updateActor(project, sceneId, actorId, (actor) => ({
+    ...actor,
+    actorStates: actor.actorStates.map((s) =>
+      s.id === stateId ? { ...s, ...updates } : s,
+    ),
+  }));
+}
+
+export function setFlexibleContentAction(
+  project: Project,
+  sceneId: string,
+  actorId: string,
+  flexibleContent: string,
+): Project {
+  return updateActor(project, sceneId, actorId, (actor) => ({ ...actor, flexibleContent }));
+}
+
+export function setActorSubSceneAction(
+  project: Project,
+  sceneId: string,
+  actorId: string,
+  subSceneId: string | null,
+): Project {
+  return updateActor(project, sceneId, actorId, (actor) => ({ ...actor, subSceneId }));
 }
 
 export function duplicateActorAction(
@@ -144,9 +170,6 @@ export function duplicateActorAction(
       x: actor.position.x + offset.x,
       y: actor.position.y + offset.y,
     },
-    parentId: null,
-    children: [],
-    prefabId: actor.prefabId,
   };
 
   const updated = updateScene(project, sceneId, (s) => ({

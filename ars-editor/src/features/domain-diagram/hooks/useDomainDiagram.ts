@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 import { useProjectStore } from '@/stores/projectStore';
+import type { Scene, Component, ActorType } from '@/types/domain';
 import type {
   DiagramLayer,
   AnyDiagramNode,
@@ -50,7 +51,7 @@ export function useDomainDiagram(layer: DiagramLayer, focusActorId?: string | nu
 }
 
 // ---------------------------------------------------------------------------
-// Domain layer: actors as domains, connections as messages, scene transitions
+// Domain layer: actors as domains, messages between them
 // ---------------------------------------------------------------------------
 
 function buildDomainLayer(
@@ -63,10 +64,6 @@ function buildDomainLayer(
 
   // Build domain nodes for each actor
   actors.forEach((actor) => {
-    const componentNames = actor.components
-      .map((cid) => project.components[cid]?.name)
-      .filter(Boolean);
-
     const subSceneName = actor.subSceneId
       ? project.scenes[actor.subSceneId]?.name ?? null
       : null;
@@ -78,26 +75,28 @@ function buildDomainLayer(
       data: {
         actorId: actor.id,
         name: actor.name,
-        componentNames,
-        childCount: actor.children.length,
+        actorType: (actor.actorType ?? 'simple') as ActorType,
+        overview: actor.requirements?.overview ?? '',
         isRoot: actor.id === activeScene.rootActorId,
         subSceneName,
       } satisfies DomainNodeData,
     });
   });
 
-  // Message edges from connections
-  for (const conn of activeScene.connections) {
+  // Message edges
+  for (const msg of activeScene.messages) {
+    const srcName = activeScene.actors[msg.sourceDomainId]?.name ?? '?';
+    const tgtName = activeScene.actors[msg.targetDomainId]?.name ?? '?';
     edges.push({
-      id: `msg-${conn.id}`,
-      source: `domain-${conn.sourceActorId}`,
-      target: `domain-${conn.targetActorId}`,
+      id: `msg-${msg.id}`,
+      source: `domain-${msg.sourceDomainId}`,
+      target: `domain-${msg.targetDomainId}`,
       type: 'message',
       animated: true,
       data: {
-        sourceLabel: conn.sourcePort || 'out',
-        targetLabel: conn.targetPort || 'in',
-        description: `${conn.sourcePort || 'output'} -> ${conn.targetPort || 'input'}`,
+        sourceLabel: srcName,
+        targetLabel: tgtName,
+        description: msg.name || msg.description || '',
       } satisfies MessageEdgeData,
     });
   }
@@ -111,7 +110,6 @@ function buildDomainLayer(
 
       if (!sceneRefIds.has(refScene.id)) {
         sceneRefIds.add(refScene.id);
-        // Place scene reference nodes to the right of the main cluster
         const maxX = Math.max(...actors.map((a) => a.position.x), 0);
         nodes.push({
           id: refNodeId,
@@ -158,20 +156,8 @@ function buildSystemLayer(
   const nodes: AnyDiagramNode[] = [];
   const edges: DiagramEdge[] = [];
 
-  // Collect system/logic components used in this scene
-  const usedComponentIds = new Set<string>();
-  for (const actor of actors) {
-    for (const cid of actor.components) {
-      usedComponentIds.add(cid);
-    }
-  }
-
   // Domain nodes (actors) — positioned on the right
   actors.forEach((actor, idx) => {
-    const componentNames = actor.components
-      .map((cid) => project.components[cid]?.name)
-      .filter(Boolean);
-
     nodes.push({
       id: `domain-${actor.id}`,
       type: 'domain' as const,
@@ -179,8 +165,8 @@ function buildSystemLayer(
       data: {
         actorId: actor.id,
         name: actor.name,
-        componentNames,
-        childCount: actor.children.length,
+        actorType: (actor.actorType ?? 'simple') as ActorType,
+        overview: actor.requirements?.overview ?? '',
         isRoot: actor.id === activeScene.rootActorId,
         subSceneName: null,
       } satisfies DomainNodeData,
@@ -189,9 +175,7 @@ function buildSystemLayer(
 
   // Module nodes (System/Logic components) — positioned on the left
   let moduleIdx = 0;
-  for (const cid of usedComponentIds) {
-    const comp = project.components[cid];
-    if (!comp) continue;
+  for (const comp of Object.values(project.components)) {
     if (comp.category !== 'System' && comp.category !== 'Logic') continue;
 
     nodes.push({
@@ -208,32 +192,13 @@ function buildSystemLayer(
       } satisfies ModuleNodeData,
     });
     moduleIdx++;
-
-    // Edges from module to each actor that uses it
-    for (const actor of actors) {
-      if (actor.components.includes(comp.id)) {
-        const taskList = comp.tasks.map((t) => t.name).join(', ') || 'attached';
-        edges.push({
-          id: `sys-${comp.id}-${actor.id}`,
-          source: `module-${comp.id}`,
-          target: `domain-${actor.id}`,
-          type: 'message',
-          animated: true,
-          data: {
-            sourceLabel: comp.name,
-            targetLabel: actor.name,
-            description: taskList,
-          } satisfies MessageEdgeData,
-        });
-      }
-    }
   }
 
   return { nodes, edges };
 }
 
 // ---------------------------------------------------------------------------
-// UI layer: UI components and what domain information they display
+// UI layer: UI components and domains
 // ---------------------------------------------------------------------------
 
 function buildUILayer(
@@ -244,20 +209,8 @@ function buildUILayer(
   const nodes: AnyDiagramNode[] = [];
   const edges: DiagramEdge[] = [];
 
-  // Collect UI components used in this scene
-  const usedComponentIds = new Set<string>();
-  for (const actor of actors) {
-    for (const cid of actor.components) {
-      usedComponentIds.add(cid);
-    }
-  }
-
   // Domain nodes (actors) — positioned on the right
   actors.forEach((actor, idx) => {
-    const componentNames = actor.components
-      .map((cid) => project.components[cid]?.name)
-      .filter(Boolean);
-
     nodes.push({
       id: `domain-${actor.id}`,
       type: 'domain' as const,
@@ -265,8 +218,8 @@ function buildUILayer(
       data: {
         actorId: actor.id,
         name: actor.name,
-        componentNames,
-        childCount: actor.children.length,
+        actorType: (actor.actorType ?? 'simple') as ActorType,
+        overview: actor.requirements?.overview ?? '',
         isRoot: actor.id === activeScene.rootActorId,
         subSceneName: null,
       } satisfies DomainNodeData,
@@ -275,9 +228,7 @@ function buildUILayer(
 
   // UI nodes — positioned on the left
   let uiIdx = 0;
-  for (const cid of usedComponentIds) {
-    const comp = project.components[cid];
-    if (!comp) continue;
+  for (const comp of Object.values(project.components)) {
     if (comp.category !== 'UI') continue;
 
     nodes.push({
@@ -293,25 +244,6 @@ function buildUILayer(
       } satisfies UINodeData,
     });
     uiIdx++;
-
-    // Edges from UI to each actor that uses it
-    for (const actor of actors) {
-      if (actor.components.includes(comp.id)) {
-        const varList = comp.variables.map((v) => v.name).join(', ') || 'display';
-        edges.push({
-          id: `ui-${comp.id}-${actor.id}`,
-          source: `ui-${comp.id}`,
-          target: `domain-${actor.id}`,
-          type: 'message',
-          animated: true,
-          data: {
-            sourceLabel: comp.name,
-            targetLabel: actor.name,
-            description: varList,
-          } satisfies MessageEdgeData,
-        });
-      }
-    }
   }
 
   return { nodes, edges };
@@ -332,24 +264,13 @@ function buildDetailView(
   const nodes: AnyDiagramNode[] = [];
   const edges: DiagramEdge[] = [];
 
-  // --- Center: focused actor detail node ---
-  const componentsByCategory = new Map<string, { name: string; taskNames: string[]; variableNames: string[] }[]>();
-  for (const cid of actor.components) {
-    const comp = project.components[cid];
-    if (!comp) continue;
-    const cat = comp.category || 'Other';
-    if (!componentsByCategory.has(cat)) componentsByCategory.set(cat, []);
-    componentsByCategory.get(cat)!.push({
-      name: comp.name,
-      taskNames: comp.tasks.map((t) => t.name),
-      variableNames: comp.variables.map((v) => v.name),
-    });
-  }
-
   const subSceneName = actor.subSceneId
     ? project.scenes[actor.subSceneId]?.name ?? null
     : null;
 
+  const actorType = (actor.actorType ?? 'simple') as ActorType;
+
+  // --- Center: focused actor detail node ---
   nodes.push({
     id: `detail-${actor.id}`,
     type: 'actorDetail' as const,
@@ -357,39 +278,38 @@ function buildDetailView(
     data: {
       actorId: actor.id,
       name: actor.name,
+      actorType,
       isRoot: actor.id === activeScene.rootActorId,
-      childCount: actor.children.length,
       subSceneName,
-      componentsByCategory: Array.from(componentsByCategory.entries()).map(
-        ([category, components]) => ({ category, components }),
-      ),
-      sequenceStepNames: actor.sequences.map((s) => s.name),
+      overview: actor.requirements?.overview ?? '',
+      goals: actor.requirements?.goals ?? '',
+      role: actor.requirements?.role ?? '',
+      behavior: actor.requirements?.behavior ?? '',
+      stateNames: actor.actorStates?.map((s) => s.name) ?? [],
+      flexibleContentPreview: actor.flexibleContent?.slice(0, 100) ?? '',
     } satisfies ActorDetailNodeData,
   });
 
-  // --- Connected actors (from connections) ---
+  // --- Connected actors (from messages) ---
   const connectedActorIds = new Set<string>();
 
-  // Outgoing connections: this actor -> other actors
-  const outgoing = activeScene.connections.filter(
-    (c) => c.sourceActorId === focusActorId,
+  // Outgoing messages
+  const outgoing = activeScene.messages.filter(
+    (m) => m.sourceDomainId === focusActorId,
   );
-  // Incoming connections: other actors -> this actor
-  const incoming = activeScene.connections.filter(
-    (c) => c.targetActorId === focusActorId,
+  // Incoming messages
+  const incoming = activeScene.messages.filter(
+    (m) => m.targetDomainId === focusActorId,
   );
 
   let rightIdx = 0;
-  for (const conn of outgoing) {
-    const target = activeScene.actors[conn.targetActorId];
+  for (const msg of outgoing) {
+    const target = activeScene.actors[msg.targetDomainId];
     if (!target) continue;
     const targetNodeId = `domain-${target.id}`;
 
     if (!connectedActorIds.has(target.id)) {
       connectedActorIds.add(target.id);
-      const targetCompNames = target.components
-        .map((cid) => project.components[cid]?.name)
-        .filter(Boolean);
       nodes.push({
         id: targetNodeId,
         type: 'domain' as const,
@@ -397,8 +317,8 @@ function buildDetailView(
         data: {
           actorId: target.id,
           name: target.name,
-          componentNames: targetCompNames,
-          childCount: target.children.length,
+          actorType: (target.actorType ?? 'simple') as ActorType,
+          overview: target.requirements?.overview ?? '',
           isRoot: target.id === activeScene.rootActorId,
           subSceneName: target.subSceneId
             ? project.scenes[target.subSceneId]?.name ?? null
@@ -409,30 +329,27 @@ function buildDetailView(
     }
 
     edges.push({
-      id: `out-${conn.id}`,
+      id: `out-${msg.id}`,
       source: `detail-${actor.id}`,
       target: targetNodeId,
       type: 'message',
       animated: true,
       data: {
-        sourceLabel: conn.sourcePort || 'out',
-        targetLabel: conn.targetPort || 'in',
-        description: `${conn.sourcePort || 'output'} -> ${conn.targetPort || 'input'}`,
+        sourceLabel: actor.name,
+        targetLabel: target.name,
+        description: msg.name || msg.description || '',
       } satisfies MessageEdgeData,
     });
   }
 
   let leftIdx = 0;
-  for (const conn of incoming) {
-    const source = activeScene.actors[conn.sourceActorId];
+  for (const msg of incoming) {
+    const source = activeScene.actors[msg.sourceDomainId];
     if (!source) continue;
     const sourceNodeId = `domain-${source.id}`;
 
     if (!connectedActorIds.has(source.id)) {
       connectedActorIds.add(source.id);
-      const sourceCompNames = source.components
-        .map((cid) => project.components[cid]?.name)
-        .filter(Boolean);
       nodes.push({
         id: sourceNodeId,
         type: 'domain' as const,
@@ -440,8 +357,8 @@ function buildDetailView(
         data: {
           actorId: source.id,
           name: source.name,
-          componentNames: sourceCompNames,
-          childCount: source.children.length,
+          actorType: (source.actorType ?? 'simple') as ActorType,
+          overview: source.requirements?.overview ?? '',
           isRoot: source.id === activeScene.rootActorId,
           subSceneName: source.subSceneId
             ? project.scenes[source.subSceneId]?.name ?? null
@@ -452,81 +369,17 @@ function buildDetailView(
     }
 
     edges.push({
-      id: `in-${conn.id}`,
+      id: `in-${msg.id}`,
       source: sourceNodeId,
       target: `detail-${actor.id}`,
       type: 'message',
       animated: true,
       data: {
-        sourceLabel: conn.sourcePort || 'out',
-        targetLabel: conn.targetPort || 'in',
-        description: `${conn.sourcePort || 'output'} -> ${conn.targetPort || 'input'}`,
+        sourceLabel: source.name,
+        targetLabel: actor.name,
+        description: msg.name || msg.description || '',
       } satisfies MessageEdgeData,
     });
-  }
-
-  // --- Components as separate nodes (bottom area) ---
-  let compIdx = 0;
-  for (const cid of actor.components) {
-    const comp = project.components[cid];
-    if (!comp) continue;
-
-    if (comp.category === 'System' || comp.category === 'Logic') {
-      nodes.push({
-        id: `module-${comp.id}`,
-        type: 'module' as const,
-        position: { x: -GRID_X + compIdx * GRID_X, y: GRID_Y * 2 },
-        data: {
-          componentId: comp.id,
-          name: comp.name,
-          category: comp.category,
-          domain: comp.domain,
-          taskNames: comp.tasks.map((t) => t.name),
-          variableNames: comp.variables.map((v) => v.name),
-        } satisfies ModuleNodeData,
-      });
-      edges.push({
-        id: `comp-${comp.id}-${actor.id}`,
-        source: `module-${comp.id}`,
-        target: `detail-${actor.id}`,
-        type: 'message',
-        animated: true,
-        style: { stroke: '#8b5cf6' },
-        data: {
-          sourceLabel: comp.name,
-          targetLabel: actor.name,
-          description: comp.tasks.map((t) => t.name).join(', ') || 'attached',
-        } satisfies MessageEdgeData,
-      });
-      compIdx++;
-    } else if (comp.category === 'UI') {
-      nodes.push({
-        id: `ui-${comp.id}`,
-        type: 'uiComponent' as const,
-        position: { x: -GRID_X + compIdx * GRID_X, y: -GRID_Y * 2 },
-        data: {
-          componentId: comp.id,
-          name: comp.name,
-          domain: comp.domain,
-          variableNames: comp.variables.map((v) => v.name),
-          taskNames: comp.tasks.map((t) => t.name),
-        } satisfies UINodeData,
-      });
-      edges.push({
-        id: `ui-${comp.id}-${actor.id}`,
-        source: `ui-${comp.id}`,
-        target: `detail-${actor.id}`,
-        type: 'message',
-        animated: true,
-        style: { stroke: '#f59e0b' },
-        data: {
-          sourceLabel: comp.name,
-          targetLabel: actor.name,
-          description: comp.variables.map((v) => v.name).join(', ') || 'displays',
-        } satisfies MessageEdgeData,
-      });
-      compIdx++;
-    }
   }
 
   // --- Scene reference ---
@@ -559,6 +412,3 @@ function buildDetailView(
 
   return { nodes, edges };
 }
-
-// Import types locally to keep the hook self-contained
-import type { Scene, Component } from '@/types/domain';

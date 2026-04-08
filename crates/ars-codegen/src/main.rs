@@ -98,7 +98,7 @@ fn command_list(project_file: &std::path::Path, project: &Project) {
     for scene in &scenes {
         let actor_count = scene.actors.len();
         let active = if project.active_scene_id.as_deref() == Some(&scene.id) { " ★" } else { "" };
-        println!("  [{}] {}{} - アクター: {}個, 接続: {}個", scene.id, scene.name, active, actor_count, scene.connections.len());
+        println!("  [{}] {}{} - ドメイン: {}個, メッセージ: {}個", scene.id, scene.name, active, actor_count, scene.messages.len());
     }
 
     let components: Vec<_> = project.components.values().collect();

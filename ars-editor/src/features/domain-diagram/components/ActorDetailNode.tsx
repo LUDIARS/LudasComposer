@@ -3,11 +3,10 @@ import { Handle, Position, type NodeProps } from '@xyflow/react';
 import { cn } from '@/lib/utils';
 import type { ActorDetailFlowNode } from '../types';
 
-const CATEGORY_COLORS: Record<string, string> = {
-  UI: 'text-amber-400',
-  Logic: 'text-cyan-400',
-  System: 'text-violet-400',
-  GameObject: 'text-rose-400',
+const TYPE_COLORS: Record<string, string> = {
+  simple: 'text-zinc-400',
+  state: 'text-amber-400',
+  flexible: 'text-purple-400',
 };
 
 export const ActorDetailNode = memo(function ActorDetailNode({
@@ -27,6 +26,9 @@ export const ActorDetailNode = memo(function ActorDetailNode({
         <span className="text-base font-bold text-white truncate flex-1">
           {data.name}
         </span>
+        <span className={cn('text-[10px] px-1.5 py-0.5 rounded font-medium bg-white/20', TYPE_COLORS[data.actorType])}>
+          {data.actorType}
+        </span>
         {data.isRoot && (
           <span className="text-[10px] bg-white/20 px-1.5 py-0.5 rounded text-white/80">
             root
@@ -36,63 +38,63 @@ export const ActorDetailNode = memo(function ActorDetailNode({
 
       {/* Body */}
       <div className="px-4 py-3 space-y-3">
-        {/* Components by category */}
-        {data.componentsByCategory.map(({ category, components }) => (
-          <div key={category}>
-            <div className={cn('text-[11px] font-semibold uppercase tracking-wider mb-1', CATEGORY_COLORS[category] ?? 'text-zinc-400')}>
-              {category}
-            </div>
-            <div className="space-y-1.5">
-              {components.map((comp) => (
-                <div key={comp.name} className="bg-zinc-800/60 rounded px-2 py-1.5">
-                  <div className="text-[12px] text-zinc-200 font-medium">{comp.name}</div>
-                  {comp.taskNames.length > 0 && (
-                    <div className="mt-0.5 flex flex-wrap gap-1">
-                      {comp.taskNames.map((t) => (
-                        <span key={t} className="text-[10px] bg-zinc-700 text-zinc-300 px-1 py-0.5 rounded">
-                          {t}()
-                        </span>
-                      ))}
-                    </div>
-                  )}
-                  {comp.variableNames.length > 0 && (
-                    <div className="mt-0.5 flex flex-wrap gap-1">
-                      {comp.variableNames.map((v) => (
-                        <span key={v} className="text-[10px] bg-zinc-700/60 text-zinc-400 px-1 py-0.5 rounded italic">
-                          {v}
-                        </span>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
+        {/* Requirements */}
+        <div>
+          <div className="text-[11px] font-semibold uppercase tracking-wider mb-1 text-zinc-400">
+            Requirements
           </div>
-        ))}
+          <div className="space-y-1">
+            {data.overview && (
+              <div className="text-[11px] text-zinc-300">
+                <span className="text-zinc-500">概要: </span>{data.overview}
+              </div>
+            )}
+            {data.goals && (
+              <div className="text-[11px] text-zinc-300">
+                <span className="text-zinc-500">達成: </span>{data.goals}
+              </div>
+            )}
+            {data.role && (
+              <div className="text-[11px] text-zinc-300">
+                <span className="text-zinc-500">役割: </span>{data.role}
+              </div>
+            )}
+            {data.behavior && (
+              <div className="text-[11px] text-zinc-300">
+                <span className="text-zinc-500">挙動: </span>{data.behavior}
+              </div>
+            )}
+          </div>
+        </div>
 
-        {/* Sequences */}
-        {data.sequenceStepNames.length > 0 && (
+        {/* State machine states */}
+        {data.actorType === 'state' && data.stateNames.length > 0 && (
           <div>
-            <div className="text-[11px] font-semibold uppercase tracking-wider mb-1 text-orange-400">
-              Sequences
+            <div className="text-[11px] font-semibold uppercase tracking-wider mb-1 text-amber-400">
+              States
             </div>
             <div className="flex flex-wrap gap-1">
-              {data.sequenceStepNames.map((name, i) => (
+              {data.stateNames.map((name) => (
                 <span
                   key={name}
-                  className="text-[10px] bg-zinc-800 text-zinc-300 px-1.5 py-0.5 rounded"
+                  className="text-[10px] bg-amber-900/40 text-amber-300 px-1.5 py-0.5 rounded"
                 >
-                  {i + 1}. {name}
+                  {name}
                 </span>
               ))}
             </div>
           </div>
         )}
 
-        {/* Child count */}
-        {data.childCount > 0 && (
-          <div className="text-[11px] text-zinc-400">
-            {data.childCount} child actor{data.childCount > 1 ? 's' : ''}
+        {/* Flexible content preview */}
+        {data.actorType === 'flexible' && data.flexibleContentPreview && (
+          <div>
+            <div className="text-[11px] font-semibold uppercase tracking-wider mb-1 text-purple-400">
+              Free Content
+            </div>
+            <div className="text-[10px] text-zinc-400 bg-zinc-800/60 rounded px-2 py-1 whitespace-pre-wrap">
+              {data.flexibleContentPreview}
+            </div>
           </div>
         )}
 

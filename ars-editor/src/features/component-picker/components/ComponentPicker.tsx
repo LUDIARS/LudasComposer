@@ -14,7 +14,6 @@ export function ComponentPicker() {
   const targetActorId = useEditorStore((s) => s.componentPickerTarget);
   const closeComponentPicker = useEditorStore((s) => s.closeComponentPicker);
   const project = useProjectStore((s) => s.project);
-  const setActorComponents = useProjectStore((s) => s.setActorComponents);
 
   const [searchQuery, setSearchQuery] = useState('');
   const [categoryFilter, setCategoryFilter] = useState<ComponentCategory | null>(null);
@@ -42,28 +41,6 @@ export function ComponentPicker() {
     });
   }, [allComponents, categoryFilter, searchQuery]);
 
-  const handleToggle = (componentId: string) => {
-    if (!activeScene || !actor) return;
-    const currentIds = actor.components;
-    const newIds = currentIds.includes(componentId)
-      ? currentIds.filter((id) => id !== componentId)
-      : [...currentIds, componentId];
-    setActorComponents(activeScene.id, actor.id, newIds);
-  };
-
-  // Check for unresolved dependencies
-  const getDependencyWarnings = (componentId: string): string[] => {
-    if (!actor) return [];
-    const comp = project.components[componentId];
-    if (!comp) return [];
-    return comp.dependencies.filter(
-      (depId) => !actor.components.includes(depId) && depId !== componentId,
-    ).map((depId) => {
-      const dep = project.components[depId];
-      return dep ? dep.name : depId;
-    });
-  };
-
   if (!targetActorId || !actor) return null;
 
   return (
@@ -74,7 +51,7 @@ export function ComponentPicker() {
           <div className="flex items-center gap-2">
             <div>
               <h3 className="text-white font-semibold">{t('componentPicker.title')}</h3>
-              <p className="text-xs text-zinc-400">{t('componentPicker.actor', { name: actor.name })}</p>
+              <p className="text-xs text-zinc-400">Browse components</p>
             </div>
             <HelpTooltip content={helpContent.componentPicker} position="bottom" />
           </div>
@@ -82,7 +59,7 @@ export function ComponentPicker() {
             onClick={closeComponentPicker}
             className="text-zinc-400 hover:text-white text-lg"
           >
-            ✕
+            &times;
           </button>
         </div>
 
@@ -130,24 +107,21 @@ export function ComponentPicker() {
                 : t('componentPicker.noMatching')}
             </p>
           ) : (
-            filteredComponents.map((comp) => {
-              const warnings = getDependencyWarnings(comp.id);
-              return (
-                <div key={comp.id}>
-                  <ComponentCard
-                    component={comp}
-                    isAttached={actor.components.includes(comp.id)}
-                    onToggle={() => handleToggle(comp.id)}
-                  />
-                  {warnings.length > 0 && actor.components.includes(comp.id) && (
-                    <div className="ml-8 mt-1 text-xs text-amber-400">
-                      {t('componentPicker.missingDeps')}{warnings.join(', ')}
-                    </div>
-                  )}
-                </div>
-              );
-            })
+            filteredComponents.map((comp) => (
+              <ComponentCard
+                key={comp.id}
+                component={comp}
+                isAttached={false}
+                onToggle={() => {}}
+              />
+            ))
           )}
+        </div>
+
+        <div className="px-4 py-2 border-t border-zinc-700">
+          <p className="text-[10px] text-zinc-500 text-center">
+            Component attachment will be available in the System Layer view
+          </p>
         </div>
       </div>
     </div>

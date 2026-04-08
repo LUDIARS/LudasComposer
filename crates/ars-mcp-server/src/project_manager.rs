@@ -1,6 +1,6 @@
 use ars_core::models::{
-    Actor, Component, Connection, Position, Prefab, PrefabActor, Project,
-    Scene, SequenceStep, Task, Variable,
+    Actor, Component, Message, Position, Prefab, PrefabActor, Project,
+    Requirements, Scene, Task, Variable,
 };
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
@@ -65,13 +65,12 @@ impl ProjectManager {
             id: root_actor_id.clone(),
             name: name.to_string(),
             role: "scene".to_string(),
-            components: vec![],
-            children: vec![],
+            actor_type: "simple".to_string(),
+            requirements: Requirements::default(),
+            actor_states: vec![],
+            flexible_content: String::new(),
             position: Position { x: 0.0, y: 0.0 },
-            parent_id: None,
-            sequences: vec![],
             sub_scene_id: None,
-            prefab_id: None,
         };
 
         let mut actors = HashMap::new();
@@ -82,9 +81,7 @@ impl ProjectManager {
             name: name.to_string(),
             root_actor_id,
             actors,
-            connections: vec![],
-            states: vec![],
-            active_state_id: None,
+            messages: vec![],
         };
 
         project.scenes.insert(scene_id, scene.clone());
@@ -103,13 +100,12 @@ impl ProjectManager {
             id: uuid::Uuid::new_v4().to_string(),
             name: name.to_string(),
             role: role.to_string(),
-            components: vec![],
-            children: vec![],
+            actor_type: "simple".to_string(),
+            requirements: Requirements::default(),
+            actor_states: vec![],
+            flexible_content: String::new(),
             position: Position { x, y },
-            parent_id: None,
-            sequences: vec![],
             sub_scene_id: None,
-            prefab_id: None,
         };
 
         scene.actors.insert(actor.id.clone(), actor.clone());
@@ -133,43 +129,28 @@ impl ProjectManager {
         component
     }
 
-    /// コンポーネントをアクターにアタッチ
-    pub fn attach_component(&self, project: &mut Project, scene_id: &str, actor_id: &str, component_id: &str) -> Result<(), String> {
-        let scene = project.scenes.get_mut(scene_id)
-            .ok_or_else(|| format!("Scene not found: {}", scene_id))?;
-        let actor = scene.actors.get_mut(actor_id)
-            .ok_or_else(|| format!("Actor not found: {}", actor_id))?;
-        if !project.components.contains_key(component_id) {
-            return Err(format!("Component not found: {}", component_id));
-        }
-        if !actor.components.contains(&component_id.to_string()) {
-            actor.components.push(component_id.to_string());
-        }
-        Ok(())
-    }
-
-    /// 接続追加
-    pub fn add_connection(&self, project: &mut Project, scene_id: &str, source_actor_id: &str, source_port: &str, target_actor_id: &str, target_port: &str) -> Result<Connection, String> {
+    /// メッセージ追加
+    pub fn add_message(&self, project: &mut Project, scene_id: &str, source_domain_id: &str, target_domain_id: &str, name: &str, description: &str) -> Result<Message, String> {
         let scene = project.scenes.get_mut(scene_id)
             .ok_or_else(|| format!("Scene not found: {}", scene_id))?;
 
-        if !scene.actors.contains_key(source_actor_id) {
-            return Err(format!("Source actor not found: {}", source_actor_id));
+        if !scene.actors.contains_key(source_domain_id) {
+            return Err(format!("Source domain not found: {}", source_domain_id));
         }
-        if !scene.actors.contains_key(target_actor_id) {
-            return Err(format!("Target actor not found: {}", target_actor_id));
+        if !scene.actors.contains_key(target_domain_id) {
+            return Err(format!("Target domain not found: {}", target_domain_id));
         }
 
-        let connection = Connection {
+        let message = Message {
             id: uuid::Uuid::new_v4().to_string(),
-            source_actor_id: source_actor_id.to_string(),
-            source_port: source_port.to_string(),
-            target_actor_id: target_actor_id.to_string(),
-            target_port: target_port.to_string(),
+            source_domain_id: source_domain_id.to_string(),
+            target_domain_id: target_domain_id.to_string(),
+            name: name.to_string(),
+            description: description.to_string(),
         };
 
-        scene.connections.push(connection.clone());
-        Ok(connection)
+        scene.messages.push(message.clone());
+        Ok(message)
     }
 
     /// プロジェクト概要
@@ -177,10 +158,10 @@ impl ProjectManager {
         let scene_count = project.scenes.len();
         let component_count = project.components.len();
         let mut actor_count = 0;
-        let mut connection_count = 0;
+        let mut message_count = 0;
         for scene in project.scenes.values() {
             actor_count += scene.actors.len();
-            connection_count += scene.connections.len();
+            message_count += scene.messages.len();
         }
 
         let mut lines = vec![
@@ -189,8 +170,8 @@ impl ProjectManager {
             "## 統計".into(),
             format!("- シーン数: {}", scene_count),
             format!("- コンポーネント数: {}", component_count),
-            format!("- アクター数（全シーン合計）: {}", actor_count),
-            format!("- 接続数（全シーン合計）: {}", connection_count),
+            format!("- ドメイン数（全シーン合計）: {}", actor_count),
+            format!("- メッセージ数（全シーン合計）: {}", message_count),
         ];
 
         if scene_count > 0 {
@@ -199,9 +180,9 @@ impl ProjectManager {
             for scene in project.scenes.values() {
                 let actors: Vec<_> = scene.actors.values().collect();
                 let active = if project.active_scene_id.as_deref() == Some(&scene.id) { " (アクティブ)" } else { "" };
-                lines.push(format!("- **{}**{}: アクター {}個, 接続 {}個", scene.name, active, actors.len(), scene.connections.len()));
+                lines.push(format!("- **{}**{}: ドメイン {}個, メッセージ {}個", scene.name, active, actors.len(), scene.messages.len()));
                 for actor in &actors {
-                    lines.push(format!("  - {} [{}] コンポーネント: {}個", actor.name, actor.role, actor.components.len()));
+                    lines.push(format!("  - {} [{}:{}]", actor.name, actor.role, actor.actor_type));
                 }
             }
         }
@@ -293,56 +274,7 @@ mod tests {
     }
 
     #[test]
-    fn test_create_component_and_attach() {
-        let dir = temp_dir();
-        let pm = ProjectManager::new(dir.clone());
-        let mut project = pm.create_project("TestProject");
-        let scene = pm.create_scene(&mut project, "Scene1");
-
-        let comp = pm.create_component(&mut project, "Health", "Logic", "core", vec![], vec![], vec![]);
-        assert_eq!(comp.name, "Health");
-        assert_eq!(comp.category, "Logic");
-        assert!(project.components.contains_key(&comp.id));
-
-        let actor = pm.add_actor(&mut project, &scene.id, "Player", "actor", 0.0, 0.0).unwrap();
-        let scene_id = scene.id.clone();
-        let actor_id = actor.id.clone();
-        let comp_id = comp.id.clone();
-        pm.attach_component(&mut project, &scene_id, &actor_id, &comp_id).unwrap();
-
-        {
-            let scene = project.scenes.get(&scene_id).unwrap();
-            let actor = scene.actors.get(&actor_id).unwrap();
-            assert!(actor.components.contains(&comp_id));
-        }
-
-        // Double attach should not duplicate
-        pm.attach_component(&mut project, &scene_id, &actor_id, &comp_id).unwrap();
-        {
-            let scene = project.scenes.get(&scene_id).unwrap();
-            let actor = scene.actors.get(&actor_id).unwrap();
-            assert_eq!(actor.components.len(), 1);
-        }
-
-        fs::remove_dir_all(&dir).ok();
-    }
-
-    #[test]
-    fn test_attach_nonexistent_component() {
-        let dir = temp_dir();
-        let pm = ProjectManager::new(dir.clone());
-        let mut project = pm.create_project("TestProject");
-        let scene = pm.create_scene(&mut project, "Scene1");
-        let actor = pm.add_actor(&mut project, &scene.id, "Player", "actor", 0.0, 0.0).unwrap();
-
-        let result = pm.attach_component(&mut project, &scene.id, &actor.id, "nonexistent");
-        assert!(result.is_err());
-
-        fs::remove_dir_all(&dir).ok();
-    }
-
-    #[test]
-    fn test_add_connection() {
+    fn test_add_message() {
         let dir = temp_dir();
         let pm = ProjectManager::new(dir.clone());
         let mut project = pm.create_project("TestProject");
@@ -351,25 +283,26 @@ mod tests {
         let a1 = pm.add_actor(&mut project, &scene.id, "A", "actor", 0.0, 0.0).unwrap();
         let a2 = pm.add_actor(&mut project, &scene.id, "B", "actor", 200.0, 0.0).unwrap();
 
-        let conn = pm.add_connection(&mut project, &scene.id, &a1.id, "out", &a2.id, "in").unwrap();
-        assert_eq!(conn.source_actor_id, a1.id);
-        assert_eq!(conn.target_actor_id, a2.id);
+        let msg = pm.add_message(&mut project, &scene.id, &a1.id, &a2.id, "Attack", "ダメージを与える").unwrap();
+        assert_eq!(msg.source_domain_id, a1.id);
+        assert_eq!(msg.target_domain_id, a2.id);
+        assert_eq!(msg.name, "Attack");
 
         let scene = project.scenes.get(&scene.id).unwrap();
-        assert_eq!(scene.connections.len(), 1);
+        assert_eq!(scene.messages.len(), 1);
 
         fs::remove_dir_all(&dir).ok();
     }
 
     #[test]
-    fn test_connection_nonexistent_actor() {
+    fn test_message_nonexistent_actor() {
         let dir = temp_dir();
         let pm = ProjectManager::new(dir.clone());
         let mut project = pm.create_project("TestProject");
         let scene = pm.create_scene(&mut project, "Scene1");
         let a1 = pm.add_actor(&mut project, &scene.id, "A", "actor", 0.0, 0.0).unwrap();
 
-        let result = pm.add_connection(&mut project, &scene.id, &a1.id, "out", "nonexistent", "in");
+        let result = pm.add_message(&mut project, &scene.id, &a1.id, "nonexistent", "Msg", "");
         assert!(result.is_err());
 
         fs::remove_dir_all(&dir).ok();

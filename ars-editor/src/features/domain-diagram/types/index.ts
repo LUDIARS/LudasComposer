@@ -1,4 +1,5 @@
 import type { Node, Edge } from '@xyflow/react';
+import type { ActorType } from '@/types/domain';
 
 /** Diagram layer view modes */
 export type DiagramLayer = 'domain' | 'system' | 'ui';
@@ -11,10 +12,9 @@ export type DiagramLayer = 'domain' | 'system' | 'ui';
 export interface DomainNodeData extends Record<string, unknown> {
   actorId: string;
   name: string;
-  /** Component names attached to this actor */
-  componentNames: string[];
-  /** Number of child actors */
-  childCount: number;
+  actorType: ActorType;
+  /** Overview from requirements */
+  overview: string;
   /** true when this actor is the scene root */
   isRoot: boolean;
   /** Scene name if this actor links to a sub-scene */
@@ -54,16 +54,18 @@ export interface SceneRefNodeData extends Record<string, unknown> {
 export interface ActorDetailNodeData extends Record<string, unknown> {
   actorId: string;
   name: string;
+  actorType: ActorType;
   isRoot: boolean;
-  childCount: number;
   subSceneName: string | null;
-  /** All components grouped by category */
-  componentsByCategory: {
-    category: string;
-    components: { name: string; taskNames: string[]; variableNames: string[] }[];
-  }[];
-  /** Sequence step names */
-  sequenceStepNames: string[];
+  /** Requirements overview */
+  overview: string;
+  goals: string;
+  role: string;
+  behavior: string;
+  /** State names (for state type) */
+  stateNames: string[];
+  /** Flexible content preview */
+  flexibleContentPreview: string;
 }
 
 // ---------------------------------------------------------------------------
@@ -90,9 +92,9 @@ export type AnyDiagramNode =
 
 /** Label info carried by edges */
 export interface MessageEdgeData extends Record<string, unknown> {
-  /** Source port / task name */
+  /** Source domain name */
   sourceLabel: string;
-  /** Target port / task name */
+  /** Target domain name */
   targetLabel: string;
   /** Human-readable description of the message */
   description: string;

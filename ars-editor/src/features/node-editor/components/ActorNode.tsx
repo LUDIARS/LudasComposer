@@ -2,61 +2,33 @@ import { memo } from 'react';
 import { Handle, Position, type NodeProps } from '@xyflow/react';
 import { useProjectStore } from '@/stores/projectStore';
 import { useEditorStore } from '@/stores/editorStore';
-import { useI18n } from '@/hooks/useI18n';
 import type { ActorFlowNode } from '../types/nodes';
-import { ROLE_COLORS } from '../types/nodes';
+import type { ActorType } from '@/types/domain';
+import { ROLE_COLORS, ACTOR_TYPE_COLORS, ACTOR_TYPE_LABELS } from '../types/nodes';
 import { cn } from '@/lib/utils';
 
-const CATEGORY_ICONS: Record<string, string> = {
-  UI: '🖼️',
-  Logic: '🎮',
-  System: '🔧',
-  GameObject: '📦',
-};
-
 export const ActorNode = memo(function ActorNode({ data, selected }: NodeProps<ActorFlowNode>) {
-  const { t } = useI18n();
   const nodeData = data;
-  const components = useProjectStore((s) => s.project.components);
   const scenes = useProjectStore((s) => s.project.scenes);
   const activeSceneId = useProjectStore((s) => s.project.activeSceneId);
   const activeScene = activeSceneId ? scenes[activeSceneId] : null;
   const actor = activeScene?.actors[nodeData.actorId];
-  const openComponentPicker = useEditorStore((s) => s.openComponentPicker);
-  const openSequenceEditor = useEditorStore((s) => s.openSequenceEditor);
   const openSubScenePicker = useEditorStore((s) => s.openSubScenePicker);
   const copyToClipboard = useEditorStore((s) => s.copyToClipboard);
   const duplicateActor = useProjectStore((s) => s.duplicateActor);
   const createPrefab = useProjectStore((s) => s.createPrefab);
-  const prefabs = useProjectStore((s) => s.project.prefabs);
+  const setActorType = useProjectStore((s) => s.setActorType);
   const colors = ROLE_COLORS[nodeData.role];
 
-  const attachedComponents = nodeData.componentIds
-    .map((id) => components[id])
-    .filter(Boolean);
-
-  // Collect all ports from attached components' tasks
-  const inputPorts: { name: string; type: string }[] = [];
-  const outputPorts: { name: string; type: string }[] = [];
-  for (const comp of attachedComponents) {
-    for (const task of comp.tasks) {
-      for (const input of task.inputs) {
-        inputPorts.push(input);
-      }
-      for (const output of task.outputs) {
-        outputPorts.push(output);
-      }
-    }
-  }
-
   const subSceneName = actor?.subSceneId ? scenes[actor.subSceneId]?.name : null;
-  const sequenceCount = actor?.sequences?.length ?? 0;
-  const prefabName = actor?.prefabId ? prefabs[actor.prefabId]?.name : null;
+  const actorType = (actor?.actorType ?? 'simple') as ActorType;
+  const typeColors = ACTOR_TYPE_COLORS[actorType];
+  const requirements = actor?.requirements;
 
   return (
     <div
       className={cn(
-        'rounded-lg border-2 min-w-[220px] shadow-lg',
+        'rounded-lg border-2 min-w-[260px] max-w-[340px] shadow-lg',
         colors.bg,
         colors.border,
         selected && 'ring-2 ring-white ring-offset-2 ring-offset-zinc-900',
@@ -65,97 +37,117 @@ export const ActorNode = memo(function ActorNode({ data, selected }: NodeProps<A
       {/* Header */}
       <div className={cn('px-3 py-2 rounded-t-md flex items-center justify-between', colors.header)}>
         <span className="text-white font-semibold text-sm truncate">{nodeData.name}</span>
-        <div className="flex items-center gap-1 ml-2">
-          {prefabName && (
-            <span className="text-white/50 text-[10px] bg-white/10 px-1 rounded">P</span>
-          )}
-          <span className="text-white/70 text-xs">[{nodeData.role}]</span>
+        <div className="flex items-center gap-1.5 ml-2">
+          <span className={cn('text-[10px] px-1.5 py-0.5 rounded font-medium', typeColors.badge, typeColors.text)}>
+            {ACTOR_TYPE_LABELS[actorType]}
+          </span>
         </div>
       </div>
 
-      {/* Prefab indicator */}
-      {prefabName && (
-        <div className="px-3 py-1 border-t border-zinc-700">
-          <div className="text-purple-400 text-[10px]">{t('actorNode.prefab', { name: prefabName })}</div>
+      {/* Actor Type Selector */}
+      <div className="px-3 py-1.5 border-t border-zinc-700 flex items-center gap-1">
+        {(['simple', 'state', 'flexible'] as ActorType[]).map((type) => (
+          <button
+            key={type}
+            className={cn(
+              'text-[10px] px-2 py-0.5 rounded transition-colors',
+              actorType === type
+                ? `${ACTOR_TYPE_COLORS[type].badge} ${ACTOR_TYPE_COLORS[type].text}`
+                : 'bg-zinc-800 text-zinc-500 hover:text-zinc-300',
+            )}
+            onClick={(e) => {
+              e.stopPropagation();
+              if (activeSceneId && actor) {
+                setActorType(activeSceneId, actor.id, type);
+              }
+            }}
+          >
+            {ACTOR_TYPE_LABELS[type]}
+          </button>
+        ))}
+      </div>
+
+      {/* Requirements */}
+      <div className="px-3 py-2 border-t border-zinc-700 space-y-1">
+        <div className="text-zinc-400 text-[10px] font-semibold uppercase tracking-wider">Requirements</div>
+        {requirements && (requirements.overview || requirements.goals || requirements.role || requirements.behavior) ? (
+          <div className="space-y-0.5">
+            {requirements.overview && (
+              <div className="text-xs text-zinc-300 truncate">
+                <span className="text-zinc-500">概要: </span>{requirements.overview}
+              </div>
+            )}
+            {requirements.goals && (
+              <div className="text-xs text-zinc-300 truncate">
+                <span className="text-zinc-500">達成: </span>{requirements.goals}
+              </div>
+            )}
+            {requirements.role && (
+              <div className="text-xs text-zinc-300 truncate">
+                <span className="text-zinc-500">役割: </span>{requirements.role}
+              </div>
+            )}
+            {requirements.behavior && (
+              <div className="text-xs text-zinc-300 truncate">
+                <span className="text-zinc-500">挙動: </span>{requirements.behavior}
+              </div>
+            )}
+          </div>
+        ) : (
+          <div className="text-zinc-600 text-xs italic">未定義</div>
+        )}
+      </div>
+
+      {/* State type: show state machine states */}
+      {actorType === 'state' && actor && (
+        <div className="px-3 py-2 border-t border-zinc-700">
+          <div className="text-amber-400 text-[10px] font-semibold uppercase tracking-wider">
+            States ({actor.actorStates?.length ?? 0})
+          </div>
+          {actor.actorStates && actor.actorStates.length > 0 ? (
+            <div className="mt-1 space-y-0.5">
+              {actor.actorStates.slice(0, 4).map((state) => (
+                <div key={state.id} className="text-[10px] text-zinc-400 truncate">
+                  <span className="text-amber-500/70">&#9679;</span> {state.name}
+                  {state.processes.length > 0 && (
+                    <span className="text-zinc-600 ml-1">({state.processes.length})</span>
+                  )}
+                </div>
+              ))}
+              {actor.actorStates.length > 4 && (
+                <div className="text-[10px] text-zinc-600">+{actor.actorStates.length - 4} more</div>
+              )}
+            </div>
+          ) : (
+            <div className="text-zinc-600 text-[10px] italic mt-0.5">No states defined</div>
+          )}
         </div>
       )}
 
-      {/* Components */}
-      <div className="px-3 py-2 border-t border-zinc-700">
-        <div className="text-zinc-400 text-xs mb-1">{t('actorNode.components')}</div>
-        {attachedComponents.length > 0 ? (
-          <div className="space-y-1">
-            {attachedComponents.map((comp) => (
-              <div key={comp.id} className="flex items-center gap-1 text-xs text-zinc-300">
-                <span>{CATEGORY_ICONS[comp.category] ?? '📎'}</span>
-                <span className="truncate">{comp.name}</span>
-                <span className="text-zinc-500 ml-auto">[{comp.category}]</span>
-              </div>
-            ))}
-          </div>
-        ) : (
-          <div className="text-zinc-600 text-xs italic">{t('actorNode.noComponents')}</div>
-        )}
-        <button
-          className="mt-1 text-xs text-blue-400 hover:text-blue-300 transition-colors"
-          onClick={(e) => {
-            e.stopPropagation();
-            openComponentPicker(nodeData.actorId);
-          }}
-        >
-          {t('actorNode.addComponent')}
-        </button>
-      </div>
-
-      {/* Sequences */}
-      <div className="px-3 py-2 border-t border-zinc-700">
-        <div className="flex items-center justify-between">
-          <div className="text-zinc-400 text-xs">
-            {t('actorNode.sequences')} {sequenceCount > 0 ? `(${sequenceCount})` : ''}
-          </div>
-          <button
-            className="text-xs text-orange-400 hover:text-orange-300 transition-colors"
-            onClick={(e) => {
-              e.stopPropagation();
-              openSequenceEditor(nodeData.actorId);
-            }}
-          >
-            {t('actorNode.editSequences')}
-          </button>
+      {/* Flexible type: show content preview */}
+      {actorType === 'flexible' && actor && (
+        <div className="px-3 py-2 border-t border-zinc-700">
+          <div className="text-purple-400 text-[10px] font-semibold uppercase tracking-wider">Free Content</div>
+          {actor.flexibleContent ? (
+            <div className="text-[10px] text-zinc-400 mt-0.5 line-clamp-3 whitespace-pre-wrap">
+              {actor.flexibleContent}
+            </div>
+          ) : (
+            <div className="text-zinc-600 text-[10px] italic mt-0.5">No content</div>
+          )}
         </div>
-        {sequenceCount > 0 && actor?.sequences && (
-          <div className="mt-1 space-y-0.5">
-            {actor.sequences.slice(0, 3).map((step) => (
-              <div key={step.id} className="text-[10px] text-zinc-500 truncate">
-                {step.order + 1}. {step.name}
-              </div>
-            ))}
-            {sequenceCount > 3 && (
-              <div className="text-[10px] text-zinc-600">{t('actorNode.moreSequences', { count: sequenceCount - 3 })}</div>
-            )}
-          </div>
-        )}
-      </div>
+      )}
 
       {/* SubScene */}
-      <div className="px-3 py-1.5 border-t border-zinc-700">
-        <div className="flex items-center justify-between">
+      {subSceneName && (
+        <div className="px-3 py-1.5 border-t border-zinc-700">
           <div className="text-zinc-400 text-xs">
-            {t('actorNode.subScene')} {subSceneName ? <span className="text-cyan-400">{subSceneName}</span> : <span className="text-zinc-600 italic">{t('actorNode.none')}</span>}
+            Sub: <span className="text-cyan-400">{subSceneName}</span>
           </div>
-          <button
-            className="text-xs text-cyan-400 hover:text-cyan-300 transition-colors"
-            onClick={(e) => {
-              e.stopPropagation();
-              openSubScenePicker(nodeData.actorId);
-            }}
-          >
-            {t('actorNode.setSubScene')}
-          </button>
         </div>
-      </div>
+      )}
 
-      {/* Actions: Copy, Duplicate, Save as Prefab */}
+      {/* Actions */}
       <div className="px-3 py-1.5 border-t border-zinc-700 flex gap-1 flex-wrap">
         <button
           className="text-[10px] text-zinc-400 hover:text-white bg-zinc-800 hover:bg-zinc-700 px-1.5 py-0.5 rounded transition-colors"
@@ -163,9 +155,8 @@ export const ActorNode = memo(function ActorNode({ data, selected }: NodeProps<A
             e.stopPropagation();
             if (actor) copyToClipboard([actor]);
           }}
-          title={t('actorNode.copyActor')}
         >
-          {t('actorNode.copy')}
+          Copy
         </button>
         <button
           className="text-[10px] text-zinc-400 hover:text-white bg-zinc-800 hover:bg-zinc-700 px-1.5 py-0.5 rounded transition-colors"
@@ -173,74 +164,43 @@ export const ActorNode = memo(function ActorNode({ data, selected }: NodeProps<A
             e.stopPropagation();
             if (activeSceneId) duplicateActor(activeSceneId, nodeData.actorId);
           }}
-          title={t('actorNode.duplicateActor')}
         >
-          {t('actorNode.duplicate')}
+          Duplicate
         </button>
         <button
           className="text-[10px] text-purple-400 hover:text-purple-300 bg-zinc-800 hover:bg-zinc-700 px-1.5 py-0.5 rounded transition-colors"
           onClick={(e) => {
             e.stopPropagation();
             if (activeSceneId) {
-              const name = prompt(t('actorNode.prefabNamePrompt'), nodeData.name);
+              const name = prompt('Prefab name:', nodeData.name);
               if (name) createPrefab(name, activeSceneId, nodeData.actorId);
             }
           }}
-          title={t('actorNode.savePrefab')}
         >
-          {t('actorNode.savePrefabBtn')}
+          Prefab
+        </button>
+        <button
+          className="text-[10px] text-cyan-400 hover:text-cyan-300 bg-zinc-800 hover:bg-zinc-700 px-1.5 py-0.5 rounded transition-colors"
+          onClick={(e) => {
+            e.stopPropagation();
+            openSubScenePicker(nodeData.actorId);
+          }}
+        >
+          SubScene
         </button>
       </div>
 
-      {/* Ports */}
-      {(inputPorts.length > 0 || outputPorts.length > 0) && (
-        <div className="px-3 py-2 border-t border-zinc-700 flex justify-between text-xs">
-          <div className="space-y-1">
-            {inputPorts.map((port, i) => (
-              <div key={`in-${i}`} className="text-zinc-400 flex items-center gap-1">
-                <Handle
-                  type="target"
-                  position={Position.Left}
-                  id={`input-${port.name}`}
-                  className="!w-2.5 !h-2.5 !bg-blue-400 !border-blue-600"
-                  style={{ position: 'relative', top: 'auto', left: 'auto', transform: 'none' }}
-                />
-                <span>{port.name}</span>
-              </div>
-            ))}
-          </div>
-          <div className="space-y-1">
-            {outputPorts.map((port, i) => (
-              <div key={`out-${i}`} className="text-zinc-400 flex items-center gap-1">
-                <span>{port.name}</span>
-                <Handle
-                  type="source"
-                  position={Position.Right}
-                  id={`output-${port.name}`}
-                  className="!w-2.5 !h-2.5 !bg-green-400 !border-green-600"
-                  style={{ position: 'relative', top: 'auto', right: 'auto', transform: 'none' }}
-                />
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Default handles when no ports */}
-      {inputPorts.length === 0 && (
-        <Handle
-          type="target"
-          position={Position.Left}
-          className="!w-3 !h-3 !bg-blue-400 !border-blue-600"
-        />
-      )}
-      {outputPorts.length === 0 && (
-        <Handle
-          type="source"
-          position={Position.Right}
-          className="!w-3 !h-3 !bg-green-400 !border-green-600"
-        />
-      )}
+      {/* Domain connection handles - simple input/output */}
+      <Handle
+        type="target"
+        position={Position.Left}
+        className="!w-3 !h-3 !bg-blue-400 !border-blue-600"
+      />
+      <Handle
+        type="source"
+        position={Position.Right}
+        className="!w-3 !h-3 !bg-green-400 !border-green-600"
+      />
     </div>
   );
 });

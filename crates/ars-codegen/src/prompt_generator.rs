@@ -108,11 +108,10 @@ impl<'a> PromptGenerator<'a> {
             .collect()
     }
 
-    fn get_scene_component_deps<'b>(&self, scene: &Scene, all: &[&'b Component]) -> Vec<&'b Component> {
-        let used_ids: std::collections::HashSet<_> = scene.actors.values()
-            .flat_map(|a| a.components.iter())
-            .collect();
-        all.iter().filter(|c| used_ids.contains(&c.id)).copied().collect()
+    fn get_scene_component_deps<'b>(&self, _scene: &Scene, all: &[&'b Component]) -> Vec<&'b Component> {
+        // In the new architecture, actors don't directly reference components.
+        // Return all components as potential dependencies for now.
+        all.to_vec()
     }
 
     fn build_component_prompt(&self, component: &Component) -> String {
@@ -162,21 +161,21 @@ impl<'a> PromptGenerator<'a> {
             String::new(),
         ];
 
-        lines.push("## アクター構造".into());
+        lines.push("## ドメイン構造".into());
         for actor in scene.actors.values() {
-            let comp_names: Vec<_> = actor.components.iter()
-                .filter_map(|id| self.project.components.get(id).map(|c| c.name.as_str()))
-                .collect();
-            lines.push(format!("- {} [{}]: コンポーネント=[{}]", actor.name, actor.role, comp_names.join(", ")));
+            lines.push(format!("- {} [{}:{}]", actor.name, actor.role, actor.actor_type));
+            if !actor.requirements.overview.is_empty() {
+                lines.push(format!("  概要: {}", actor.requirements.overview));
+            }
         }
 
-        if !scene.connections.is_empty() {
+        if !scene.messages.is_empty() {
             lines.push(String::new());
-            lines.push("## 接続".into());
-            for conn in &scene.connections {
-                let src = scene.actors.get(&conn.source_actor_id).map(|a| a.name.as_str()).unwrap_or(&conn.source_actor_id);
-                let tgt = scene.actors.get(&conn.target_actor_id).map(|a| a.name.as_str()).unwrap_or(&conn.target_actor_id);
-                lines.push(format!("- {}:{} → {}:{}", src, conn.source_port, tgt, conn.target_port));
+            lines.push("## メッセージ".into());
+            for msg in &scene.messages {
+                let src = scene.actors.get(&msg.source_domain_id).map(|a| a.name.as_str()).unwrap_or(&msg.source_domain_id);
+                let tgt = scene.actors.get(&msg.target_domain_id).map(|a| a.name.as_str()).unwrap_or(&msg.target_domain_id);
+                lines.push(format!("- {} → {}: {} ({})", src, tgt, msg.name, msg.description));
             }
         }
 

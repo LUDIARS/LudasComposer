@@ -42,33 +42,29 @@ function createSceneWithRoot(sceneName: string): Scene {
         id: rootId,
         name: 'Root',
         role: 'actor',
-        components: [],
-        children: [],
+        actorType: 'simple',
+        requirements: { overview: '', goals: '', role: '', behavior: '' },
+        actorStates: [],
+        flexibleContent: '',
         position: { x: 250, y: 50 },
-        parentId: null,
-        sequences: [],
         subSceneId: null,
-        prefabId: null,
       },
     },
-    connections: [],
-    states: [],
-    activeStateId: null,
+    messages: [],
   };
 }
 
-function createActor(name: string, role: Actor['role'], x: number, y: number, parentId?: string): Actor {
+function createActor(name: string, role: Actor['role'], x: number, y: number): Actor {
   return {
     id: generateId(),
     name,
     role,
-    components: [],
-    children: [],
+    actorType: 'simple',
+    requirements: { overview: '', goals: '', role: '', behavior: '' },
+    actorStates: [],
+    flexibleContent: '',
     position: { x, y },
-    parentId: parentId ?? null,
-    sequences: [],
     subSceneId: null,
-    prefabId: null,
   };
 }
 
@@ -119,11 +115,11 @@ const templates: ProjectTemplate[] = [
       const gameScene = createSceneWithRoot('Game');
 
       // Add a Player actor to the game scene
-      const player = createActor('Player', 'actor', 400, 200, gameScene.rootActorId);
+      const player = createActor('Player', 'actor', 400, 200);
+      player.requirements = { overview: 'プレイヤーキャラクター', goals: 'ユーザー入力に応じて動作する', role: '主人公', behavior: '移動・操作' };
       gameScene.actors[player.id] = player;
-      gameScene.actors[gameScene.rootActorId].children.push(player.id);
 
-      // Basic components
+      // Basic components (project-level, not attached to actors)
       const transform = createComponent('Transform', 'System', 'Core');
       transform.variables = [
         { name: 'x', type: 'number', defaultValue: 0 },
@@ -142,8 +138,6 @@ const templates: ProjectTemplate[] = [
       input.variables = [
         { name: 'enabled', type: 'boolean', defaultValue: true },
       ];
-
-      player.components = [transform.id, sprite.id, input.id];
 
       const components: Record<string, Component> = {
         [transform.id]: transform,
@@ -193,10 +187,9 @@ const templates: ProjectTemplate[] = [
       ];
 
       // Add some actors to Home
-      const header = createActor('Header', 'actor', 250, 150, homeScene.rootActorId);
-      header.components = [text.id, layout.id];
+      const header = createActor('Header', 'actor', 250, 150);
+      header.requirements = { overview: 'ヘッダーUI', goals: 'ページ上部に表示', role: 'UI Container', behavior: 'テキストとレイアウト表示' };
       homeScene.actors[header.id] = header;
-      homeScene.actors[homeScene.rootActorId].children.push(header.id);
 
       const components: Record<string, Component> = {
         [button.id]: button,
