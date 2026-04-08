@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef } from 'react';
 import { SceneList } from '../scene-manager';
 import { NodeCanvas } from '../node-editor';
+import { DomainDiagramCanvas } from '../domain-diagram';
 import { ComponentPicker } from '../component-picker';
 import { ComponentEditor } from '../component-editor';
 import { ComponentList } from '../component-list';
@@ -120,7 +121,7 @@ export function EditorPage() {
         <Toolbar />
 
         <div className="flex-1 flex flex-col overflow-hidden relative">
-          <NodeCanvas />
+          {panelVisibility.domainDiagram ? <DomainDiagramCanvas /> : <NodeCanvas />}
 
           {mobileSceneMenuOpen && (
             <div
@@ -237,7 +238,7 @@ export function EditorPage() {
         )}
 
         <div className="flex-1 flex flex-col overflow-hidden" data-help-target="nodeCanvas">
-          <NodeCanvas />
+          {panelVisibility.domainDiagram ? <DomainDiagramCanvas /> : <NodeCanvas />}
         </div>
 
         {panelVisibility.preview && (

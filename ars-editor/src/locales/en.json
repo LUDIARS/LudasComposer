@@ -41,6 +41,8 @@
     "togglePrefabList": "Toggle Prefab List",
     "toggleBehaviorEditor": "Toggle Behavior Editor",
     "togglePreview": "Toggle Preview",
+    "toggleDomainDiagram": "Toggle Domain Diagram",
+    "domainDiagram": "Domain",
     "togglePanel": "Toggle Panel",
     "pushToRepo": "Push to {{repo}}",
     "pushToGithub": "Push to GitHub",
@@ -563,6 +565,19 @@
     "back": "Back",
     "next": "Next",
     "cancel": "Cancel"
+  },
+  "domainDiagram": {
+    "emptyPrompt": "Select a scene to view the domain diagram",
+    "layer": {
+      "domain": "Domain",
+      "system": "System",
+      "ui": "UI"
+    },
+    "description": {
+      "domain": "Shows how domains (actors) message each other — who sends what to whom. Scene transitions are shown as dashed links.",
+      "system": "Shows how system/logic modules attach to domains — which functions affect which domain, and what they do.",
+      "ui": "Shows which UI components display which domain information — what data the UI reads from each domain."
+    }
   },
   "common": {
     "cancel": "Cancel",

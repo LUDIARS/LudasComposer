@@ -41,6 +41,8 @@
     "togglePrefabList": "プレハブ一覧の表示切替",
     "toggleBehaviorEditor": "ビヘイビアエディタの表示切替",
     "togglePreview": "プレビューの表示切替",
+    "toggleDomainDiagram": "ドメイン関係図の表示切替",
+    "domainDiagram": "ドメイン",
     "togglePanel": "パネル切替",
     "pushToRepo": "{{repo}} にプッシュ",
     "pushToGithub": "GitHubにプッシュ",
@@ -563,6 +565,19 @@
     "back": "戻る",
     "next": "次へ",
     "cancel": "キャンセル"
+  },
+  "domainDiagram": {
+    "emptyPrompt": "ドメイン関係図を表示するにはシーンを選択してください",
+    "layer": {
+      "domain": "ドメイン",
+      "system": "システム",
+      "ui": "UI"
+    },
+    "description": {
+      "domain": "ドメイン（アクター）間のメッセージングを図示します — 誰が、誰に対して、どのように。シーン遷移は点線で表示されます。",
+      "system": "システム/ロジックモジュールがドメインにどのように干渉するかを図示します — どの機能が、どのドメインに、何をするか。",
+      "ui": "UIコンポーネントがどのドメインの情報を表示するかを図示します — UIが各ドメインから読み取るデータ。"
+    }
   },
   "common": {
     "cancel": "キャンセル",
