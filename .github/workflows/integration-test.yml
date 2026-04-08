@@ -16,60 +16,34 @@ jobs:
     runs-on: self-hosted
     timeout-minutes: 30
 
-    # ── Infisical シークレット ──
-    # Organization secrets: INFISICAL_CLIENT_ID, INFISICAL_CLIENT_SECRET
-    # Repository secrets:   INFISICAL_PROJECT_ID, INFISICAL_HOST, INFISICAL_ENVIRONMENT
-    env:
-      INFISICAL_CLIENT_ID: ${{ secrets.INFISICAL_CLIENT_ID }}
-      INFISICAL_CLIENT_SECRET: ${{ secrets.INFISICAL_CLIENT_SECRET }}
-      INFISICAL_PROJECT_ID: ${{ secrets.INFISICAL_PROJECT_ID }}
-      INFISICAL_HOST: ${{ secrets.INFISICAL_HOST }}
-      INFISICAL_ENVIRONMENT: ${{ secrets.INFISICAL_ENVIRONMENT }}
+    # ── Infisical シークレットは self-hosted 環境に配置済み ──
+    # secrets.toml を ~/.config/ars/secrets.toml または ./secrets.toml に配置すること
 
     steps:
       - uses: actions/checkout@v4
 
-      # ── ツールチェーン ──
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          cache: npm
-          cache-dependency-path: |
-            ars-editor/package-lock.json
-            tests/integration/package-lock.json
-
-      - uses: dtolnay/rust-toolchain@stable
-
-      - uses: Swatinem/rust-cache@v2
-        with:
-          workspaces: ars-editor/src-tauri -> target
-
-      # ── システム依存関係 ──
-      - name: Install system dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y --no-install-recommends clang libclang-dev cmake
-
-      # ── フロントエンドビルド ──
-      - name: Build frontend
+      # ── インクリメンタルビルド: フロントエンド ──
+      - name: Install frontend dependencies
         working-directory: ars-editor
-        run: |
-          npm ci
-          npm run build
+        run: npm ci --prefer-offline
 
-      # ── バックエンドビルド ──
-      - name: Build web server
+      - name: Build frontend (incremental)
+        working-directory: ars-editor
+        run: npm run build
+
+      # ── インクリメンタルビルド: バックエンド (cargo は差分ビルド) ──
+      - name: Build web server (incremental)
         working-directory: ars-editor/src-tauri
         run: cargo build --features web-server --no-default-features --bin ars-web-server
 
       # ── テスト準備 ──
       - name: Install test dependencies
         working-directory: tests/integration
-        run: npm ci
+        run: npm ci --prefer-offline
 
-      - name: Install Playwright browsers
+      - name: Ensure Playwright chromium
         working-directory: tests/integration
-        run: npx playwright install chromium --with-deps
+        run: npx playwright install chromium
 
       # ── テスト実行 ──
       - name: Run integration tests
