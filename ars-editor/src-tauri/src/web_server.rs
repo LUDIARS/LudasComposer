@@ -34,8 +34,7 @@ fn build_cors(allowed_origins: &[String]) -> CorsLayer {
         .allow_credentials(true)
 }
 
-pub async fn serve(port: u16, static_dir: Option<String>) -> Result<(), Box<dyn std::error::Error>> {
-    let addr = std::net::SocketAddr::from(([0, 0, 0, 0], port));
+pub async fn serve(addr: std::net::SocketAddr, static_dir: Option<String>) -> Result<(), Box<dyn std::error::Error>> {
 
     let state = AppState::new();
     let collab_state = CollabState::new();
@@ -67,7 +66,7 @@ pub async fn serve(port: u16, static_dir: Option<String>) -> Result<(), Box<dyn 
         app
     };
 
-    println!("Ars web server listening on http://localhost:{}", port);
+    println!("Ars web server listening on http://{}", addr);
     println!("  Editor:        /api/project/*, /api/cloud/*, /api/git/*");
     println!("  Modules:       /api/modules/*");
     println!("  Collaboration: /ws/collab (WebSocket)");

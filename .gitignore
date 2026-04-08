@@ -1,5 +1,8 @@
 target/
 .env
+.env.secrets
 secrets.toml
+.ars.pid
+.ars.log
 # Auto-generated ts-rs bindings
 crates/ars-core/bindings/

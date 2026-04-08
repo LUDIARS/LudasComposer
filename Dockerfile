@@ -74,5 +74,5 @@ EXPOSE 5173
 VOLUME ["/app/data"]
 
 # secrets.toml はボリュームマウントで /app/ に配置される
-# ポートはCLI引数で指定（デフォルト: 5173）
-CMD ["./ars-web-server", "./dist", "5173"]
+# リッスン設定: ARS_LISTEN_ADDR or ARS_HOST+ARS_PORT (デフォルト: 0.0.0.0:5173)
+CMD ["./ars-web-server", "./dist"]
