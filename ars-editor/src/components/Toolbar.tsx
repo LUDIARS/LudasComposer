@@ -114,14 +114,18 @@ export function Toolbar() {
     ? t('toolbar.lastSaved', { time: new Date(lastSavedAt).toLocaleTimeString() })
     : '';
 
-  // --- Mobile Toolbar ---
+  // --- Mobile Toolbar (Foundation: min 44px touch targets) ---
   if (isMobile) {
     return (
-      <div className="flex items-center gap-1 px-2 py-1 bg-zinc-800 border-b border-zinc-700 text-xs relative">
+      <div
+        className="flex items-center gap-0.5 px-1 text-xs relative"
+        style={{ background: 'var(--bg-surface)', borderBottom: '1px solid var(--border)', minHeight: '44px' }}
+      >
         {/* Hamburger - open scene drawer */}
         <button
           onClick={() => setMobileSceneMenu(true)}
-          className="px-2 py-1 text-zinc-300 hover:bg-zinc-700 rounded transition-colors text-base"
+          className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded transition-colors text-base"
+          style={{ color: 'var(--text)' }}
           title={t('toolbar.scenes')}
         >
           ☰
@@ -130,17 +134,19 @@ export function Toolbar() {
         {/* Save */}
         <button
           onClick={handleSave}
-          className="px-2 py-1 text-zinc-300 hover:bg-zinc-700 rounded transition-colors"
+          className="min-h-[44px] px-3 flex items-center rounded transition-colors"
+          style={{ color: isDirty ? 'var(--orange)' : 'var(--text-muted)' }}
           title={t('toolbar.save')}
         >
-          {t('toolbar.save')}{isDirty ? t('toolbar.unsavedMark') : ''}
+          {t('toolbar.save')}{isDirty ? '*' : ''}
         </button>
 
         {/* Undo/Redo */}
         <button
           onClick={() => { if (isGenerating) abortGeneration(); undo(); markDirty(); }}
           disabled={!canUndo()}
-          className="px-2 py-1 text-zinc-300 hover:bg-zinc-700 rounded transition-colors disabled:opacity-30"
+          className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded transition-colors disabled:opacity-30"
+          style={{ color: 'var(--text-muted)' }}
           title={t('toolbar.undo')}
         >
           ↩
@@ -148,7 +154,8 @@ export function Toolbar() {
         <button
           onClick={() => { redo(); markDirty(); }}
           disabled={!canRedo()}
-          className="px-2 py-1 text-zinc-300 hover:bg-zinc-700 rounded transition-colors disabled:opacity-30"
+          className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded transition-colors disabled:opacity-30"
+          style={{ color: 'var(--text-muted)' }}
           title={t('toolbar.redo')}
         >
           ↪
@@ -157,11 +164,8 @@ export function Toolbar() {
         {/* Bottom sheet toggle */}
         <button
           onClick={() => setMobileBottomSheet(!mobileBottomSheetOpen)}
-          className={`px-2 py-1 rounded transition-colors ${
-            mobileBottomSheetOpen
-              ? 'bg-blue-600 text-white'
-              : 'text-zinc-300 hover:bg-zinc-700'
-          }`}
+          className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded transition-colors"
+          style={{ color: mobileBottomSheetOpen ? 'var(--accent)' : 'var(--text-muted)' }}
           title={t('toolbar.togglePanel')}
         >
           ▤
@@ -172,7 +176,8 @@ export function Toolbar() {
         {/* More menu */}
         <button
           onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-          className="px-2 py-1 text-zinc-300 hover:bg-zinc-700 rounded transition-colors"
+          className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded transition-colors"
+          style={{ color: 'var(--text-muted)' }}
         >
           ⋯
         </button>
@@ -328,7 +333,7 @@ export function Toolbar() {
 
   // --- Desktop Toolbar ---
   return (
-    <div className="flex items-center gap-1 px-2 py-1 bg-zinc-800 border-b border-zinc-700 text-xs">
+    <div className="flex items-center gap-1 px-2 py-1 text-xs" style={{ background: 'var(--bg-surface)', borderBottom: '1px solid var(--border)' }}>
       {/* File operations */}
       <button
         onClick={handleNew}
