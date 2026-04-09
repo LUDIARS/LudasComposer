@@ -3,6 +3,7 @@ import { useProjectStore } from '@/stores/projectStore';
 import type { ActorType } from '@/types/domain';
 import { useCallback, useEffect, useRef } from 'react';
 import { generateId } from '@/lib/utils';
+import { useIsMobile } from '@/hooks/useIsMobile';
 
 interface ContextMenuProps {
   flowPosition: { x: number; y: number } | null;
@@ -74,6 +75,8 @@ export function ContextMenu({ flowPosition }: ContextMenuProps) {
     [activeSceneId, instantiatePrefab, closeContextMenu, flowPosition],
   );
 
+  const isMobile = useIsMobile();
+
   if (!contextMenu) return null;
 
   const items: { label: string; actorType: ActorType; icon: string }[] = [
@@ -84,12 +87,8 @@ export function ContextMenu({ flowPosition }: ContextMenuProps) {
 
   const prefabList = Object.values(prefabs);
 
-  return (
-    <div
-      ref={menuRef}
-      className="absolute z-50 bg-zinc-800 border border-zinc-600 rounded-lg shadow-xl py-1 min-w-[200px]"
-      style={{ left: contextMenu.x, top: contextMenu.y }}
-    >
+  const menuContent = (
+    <>
       <div className="px-3 py-1 text-xs text-zinc-500 uppercase tracking-wider">Add Domain</div>
       {items.map(({ label, actorType, icon }) => (
         <button
@@ -133,6 +132,35 @@ export function ContextMenu({ flowPosition }: ContextMenuProps) {
           ))}
         </>
       )}
+    </>
+  );
+
+  if (isMobile) {
+    return (
+      <div
+        className="fixed inset-0 z-50 flex items-center justify-center"
+        style={{ background: 'rgba(0,0,0,0.6)' }}
+        onClick={closeContextMenu}
+      >
+        <div
+          ref={menuRef}
+          className="rounded-lg shadow-xl py-1 min-w-[220px] mx-4"
+          style={{ background: 'var(--bg-surface-2)', border: '1px solid var(--border)' }}
+          onClick={(e) => e.stopPropagation()}
+        >
+          {menuContent}
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div
+      ref={menuRef}
+      className="absolute z-50 rounded-lg shadow-xl py-1 min-w-[200px]"
+      style={{ left: contextMenu.x, top: contextMenu.y, background: 'var(--bg-surface-2)', border: '1px solid var(--border)' }}
+    >
+      {menuContent}
     </div>
   );
 }

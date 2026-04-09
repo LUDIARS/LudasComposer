@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useProjectStore } from '@/stores/projectStore';
 import type { MessageType } from '@/types/generated/MessageType';
 import { cn } from '@/lib/utils';
+import { ModalOverlay } from '@/components/ModalOverlay';
 
 interface MessageEditorProps {
   sceneId: string;
@@ -37,10 +38,7 @@ export function MessageEditor({ sceneId, messageId, onClose }: MessageEditorProp
   };
 
   return (
-    <div
-      className="absolute bottom-4 left-1/2 -translate-x-1/2 z-50 rounded-lg shadow-2xl p-4 w-[420px] max-h-[80vh] overflow-y-auto"
-      style={{ background: 'var(--bg-surface)', border: '1px solid var(--border)' }}
-    >
+    <ModalOverlay onClose={onClose} width="420px">
       <div className="flex items-center justify-between mb-3">
         <h3 className="text-sm font-semibold" style={{ color: 'var(--text)' }}>Message Definition</h3>
         <button
@@ -176,6 +174,6 @@ export function MessageEditor({ sceneId, messageId, onClose }: MessageEditorProp
           OK
         </button>
       </div>
-    </div>
+    </ModalOverlay>
   );
 }
