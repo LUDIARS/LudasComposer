@@ -3,7 +3,7 @@ import { useProjectStore } from '@/stores/projectStore';
 import { useEditorStore } from '@/stores/editorStore';
 import { HelpTooltip } from '@/components/HelpTooltip';
 import { helpContent } from '@/lib/help-content';
-import type { ActorType, ActorState, Display, RequirementRef, Requirements } from '@/types/domain';
+import type { ActorType, ActorState, Display, Requirements } from '@/types/domain';
 
 export function BehaviorEditor() {
   const activeSceneId = useProjectStore((s) => s.project.activeSceneId);

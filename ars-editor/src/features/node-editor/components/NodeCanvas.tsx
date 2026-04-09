@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState, useMemo } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import {
   ReactFlow,
   Background,
@@ -26,7 +26,6 @@ import { HelpTooltip } from '@/components/HelpTooltip';
 import { helpContent } from '@/lib/help-content';
 import { useIsMobile } from '@/hooks/useIsMobile';
 import { useProjectStore } from '@/stores/projectStore';
-import { generateId } from '@/lib/utils';
 import type { ActorType } from '@/types/domain';
 import type { AnyFlowNode } from '../types/nodes';
 
