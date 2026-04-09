@@ -18,9 +18,15 @@ export function useAutoSave() {
     if (timerRef.current) clearTimeout(timerRef.current);
 
     timerRef.current = setTimeout(async () => {
+      // 保存直前に最新の状態を再確認
+      // (loadProject → markSaved で isDirty=false になっている場合はスキップ)
+      const current = useEditorStore.getState();
+      if (!current.isDirty || !current.projectPath) return;
+
       try {
-        await backend.saveProject(projectPath, project);
-        markSaved(projectPath);
+        const latestProject = useProjectStore.getState().project;
+        await backend.saveProject(current.projectPath, latestProject);
+        markSaved(current.projectPath);
       } catch {
         // 自動保存の失敗は静かに無視（手動保存は別途可能）
       }
