@@ -21,6 +21,7 @@ interface EditorState {
   isDirty: boolean;
   lastSavedAt: number | null;
   projectPath: string | null;
+  autoSaveEnabled: boolean;
   mobileSceneMenuOpen: boolean;
   mobileBottomSheetOpen: boolean;
 
@@ -50,6 +51,7 @@ interface EditorState {
   setProjectPath: (path: string | null) => void;
   setMobileSceneMenu: (open: boolean) => void;
   setMobileBottomSheet: (open: boolean) => void;
+  setAutoSave: (enabled: boolean) => void;
 
   startMessageCreation: (sourceActorId: string) => void;
   cancelMessageCreation: () => void;
@@ -82,6 +84,7 @@ export const useEditorStore = create<EditorState>()((set) => ({
   isDirty: false,
   lastSavedAt: null,
   projectPath: null,
+  autoSaveEnabled: false,
   mobileSceneMenuOpen: false,
   mobileBottomSheetOpen: false,
   messageSourceActorId: null,
@@ -127,6 +130,7 @@ export const useEditorStore = create<EditorState>()((set) => ({
   setProjectPath: (path) => set({ projectPath: path }),
   setMobileSceneMenu: (open) => set({ mobileSceneMenuOpen: open }),
   setMobileBottomSheet: (open) => set({ mobileBottomSheetOpen: open }),
+  setAutoSave: (enabled) => set({ autoSaveEnabled: enabled }),
 
   startMessageCreation: (sourceActorId) => set({ messageSourceActorId: sourceActorId }),
   cancelMessageCreation: () => set({ messageSourceActorId: null }),
