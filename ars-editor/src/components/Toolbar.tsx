@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import { useProjectStore } from '@/stores/projectStore';
 import { useEditorStore } from '@/stores/editorStore';
 import { useAuthStore } from '@/stores/authStore';
@@ -14,9 +14,85 @@ import { ProjectWizard } from './ProjectWizard';
 import { ArchetypeWizard } from '@/features/archetype-wizard';
 import { GettingStartedGuide } from './GettingStartedGuide';
 import { ProjectListDialog } from './ProjectListDialog';
-import { HelpTooltip } from './HelpTooltip';
-import { helpContent } from '@/lib/help-content';
 import { useBackendHealth } from '@/hooks/useBackendHealth';
+
+// ── Menu Dropdown ────────────────────────────────────────────
+
+interface MenuItem {
+  label: string;
+  onClick: () => void;
+  disabled?: boolean;
+  active?: boolean;
+  color?: string;
+  dividerAfter?: boolean;
+}
+
+function MenuDropdown({
+  label,
+  items,
+  open,
+  onToggle,
+  onClose,
+}: {
+  label: string;
+  items: MenuItem[];
+  open: boolean;
+  onToggle: () => void;
+  onClose: () => void;
+}) {
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const handleClick = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) onClose();
+    };
+    document.addEventListener('mousedown', handleClick);
+    return () => document.removeEventListener('mousedown', handleClick);
+  }, [open, onClose]);
+
+  return (
+    <div ref={ref} className="relative">
+      <button
+        onClick={onToggle}
+        className="px-3 h-8 text-xs font-medium rounded transition-colors"
+        style={{
+          color: open ? 'var(--text)' : 'var(--text-muted)',
+          background: open ? 'var(--bg-surface-2)' : 'transparent',
+        }}
+      >
+        {label}
+      </button>
+      {open && (
+        <div
+          className="absolute left-0 top-full mt-0.5 py-1 min-w-[200px] rounded-lg shadow-xl z-50"
+          style={{ background: 'var(--bg-surface-2)', border: '1px solid var(--border)' }}
+        >
+          {items.map((item, i) => (
+            <div key={i}>
+              <button
+                onClick={() => { item.onClick(); onClose(); }}
+                disabled={item.disabled}
+                className="w-full text-left px-4 py-2 text-xs transition-colors disabled:opacity-30"
+                style={{
+                  color: item.color ?? (item.active ? 'var(--accent)' : 'var(--text)'),
+                }}
+                onMouseEnter={(e) => { if (!item.disabled) (e.target as HTMLElement).style.background = 'var(--bg-surface)'; }}
+                onMouseLeave={(e) => { (e.target as HTMLElement).style.background = 'transparent'; }}
+              >
+                {item.active && <span className="mr-1.5">✓</span>}
+                {item.label}
+              </button>
+              {item.dividerAfter && <div className="h-px my-1" style={{ background: 'var(--border)' }} />}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── Main Toolbar ─────────────────────────────────────────────
 
 export function Toolbar() {
   const { t } = useI18n();
@@ -35,7 +111,7 @@ export function Toolbar() {
   const abortGeneration = useEditorStore((s) => s.abortGeneration);
   const activeGitRepo = useAuthStore((s) => s.activeGitRepo);
   const [status, setStatus] = useState<string>('');
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [openMenu, setOpenMenu] = useState<string | null>(null);
   const [showProjectManager, setShowProjectManager] = useState(false);
   const [showWizard, setShowWizard] = useState(false);
   const [showArchetypeWizard, setShowArchetypeWizard] = useState(false);
@@ -72,7 +148,7 @@ export function Toolbar() {
       markSaved();
       showStatus(t('toolbar.toast.downloaded'));
     }
-  }, [project, projectPath, markSaved]);
+  }, [project, projectPath, markSaved, t]);
 
   const handleLoad = useCallback(async () => {
     if (backend.isTauri()) {
@@ -98,7 +174,6 @@ export function Toolbar() {
   const handleGitPush = useCallback(async () => {
     if (!activeGitRepo) return;
     setPushing(true);
-    showStatus(t('toolbar.toast.pushingGithub'));
     try {
       await authApi.pushGitProject(activeGitRepo, project);
       markSaved();
@@ -108,46 +183,70 @@ export function Toolbar() {
     } finally {
       setPushing(false);
     }
-  }, [activeGitRepo, project, markSaved]);
+  }, [activeGitRepo, project, markSaved, t]);
 
   const lastSavedLabel = lastSavedAt
     ? t('toolbar.lastSaved', { time: new Date(lastSavedAt).toLocaleTimeString() })
     : '';
 
-  // --- Mobile Toolbar (Foundation: min 44px touch targets) ---
+  const closeMenu = useCallback(() => setOpenMenu(null), []);
+
+  // ── Menu Items ──────────────────────────────────────
+
+  const fileItems: MenuItem[] = [
+    { label: t('toolbar.newProject'), onClick: handleNew },
+    { label: t('toolbar.openProject'), onClick: handleLoad },
+    { label: `${t('toolbar.save')}${isDirty ? ' *' : ''}`, onClick: handleSave, dividerAfter: true },
+    { label: t('toolbar.archetypeWizard'), onClick: () => setShowArchetypeWizard(true), color: 'var(--accent)', dividerAfter: true },
+    ...(activeGitRepo ? [{ label: t('toolbar.pushToGithub'), onClick: handleGitPush, disabled: pushing, color: 'var(--green)', dividerAfter: true }] : []),
+    ...(!backend.isTauri() ? [{ label: t('toolbar.projects'), onClick: () => setShowProjectManager(true) }] : []),
+  ];
+
+  const toolItems: MenuItem[] = [
+    { label: t('toolbar.undo'), onClick: () => { if (isGenerating) abortGeneration(); undo(); markDirty(); }, disabled: !canUndo() },
+    { label: t('toolbar.redo'), onClick: () => { redo(); markDirty(); }, disabled: !canRedo() },
+  ];
+
+  const windowItems: MenuItem[] = [
+    { label: 'Scene Manager', onClick: () => togglePanel('sceneManager'), active: panelVisibility.sceneManager },
+    { label: t('toolbar.components'), onClick: () => togglePanel('componentList'), active: panelVisibility.componentList },
+    { label: t('toolbar.prefabs'), onClick: () => togglePanel('prefabList'), active: panelVisibility.prefabList },
+    { label: t('toolbar.behavior'), onClick: () => togglePanel('behaviorEditor'), active: panelVisibility.behaviorEditor },
+    { label: t('toolbar.preview'), onClick: () => togglePanel('preview'), active: panelVisibility.preview, dividerAfter: true },
+    { label: 'Domain Diagram', onClick: () => togglePanel('domainDiagram'), active: panelVisibility.domainDiagram },
+  ];
+
+  const helpItems: MenuItem[] = [
+    { label: t('toolbar.help'), onClick: () => setShowGuide(true), color: 'var(--orange)' },
+  ];
+
+  // ── Mobile Toolbar ──────────────────────────────────
+
   if (isMobile) {
     return (
       <div
         className="flex items-center gap-0.5 px-1 text-xs relative"
         style={{ background: 'var(--bg-surface)', borderBottom: '1px solid var(--border)', minHeight: '44px' }}
       >
-        {/* Hamburger - open scene drawer */}
         <button
           onClick={() => setMobileSceneMenu(true)}
           className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded transition-colors text-base"
           style={{ color: 'var(--text)' }}
-          title={t('toolbar.scenes')}
         >
           ☰
         </button>
-
-        {/* Save */}
         <button
           onClick={handleSave}
           className="min-h-[44px] px-3 flex items-center rounded transition-colors"
           style={{ color: isDirty ? 'var(--orange)' : 'var(--text-muted)' }}
-          title={t('toolbar.save')}
         >
           {t('toolbar.save')}{isDirty ? '*' : ''}
         </button>
-
-        {/* Undo/Redo */}
         <button
           onClick={() => { if (isGenerating) abortGeneration(); undo(); markDirty(); }}
           disabled={!canUndo()}
           className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded transition-colors disabled:opacity-30"
           style={{ color: 'var(--text-muted)' }}
-          title={t('toolbar.undo')}
         >
           ↩
         </button>
@@ -156,364 +255,103 @@ export function Toolbar() {
           disabled={!canRedo()}
           className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded transition-colors disabled:opacity-30"
           style={{ color: 'var(--text-muted)' }}
-          title={t('toolbar.redo')}
         >
           ↪
         </button>
-
-        {/* Bottom sheet toggle */}
         <button
           onClick={() => setMobileBottomSheet(!mobileBottomSheetOpen)}
           className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded transition-colors"
           style={{ color: mobileBottomSheetOpen ? 'var(--accent)' : 'var(--text-muted)' }}
-          title={t('toolbar.togglePanel')}
         >
           ▤
         </button>
-
         <div className="flex-1" />
-
-        {/* More menu */}
-        <button
-          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-          className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded transition-colors"
-          style={{ color: 'var(--text-muted)' }}
-        >
-          ⋯
-        </button>
-
-        {status && (
-          <span className="text-green-400 ml-1">{status}</span>
-        )}
         <span
-          className={`w-2 h-2 rounded-full ml-1 ${
+          className={`w-2 h-2 rounded-full mr-1 ${
             backendHealth === 'ok' ? 'bg-green-500' :
             backendHealth === 'down' ? 'bg-red-500 animate-pulse' :
             'bg-zinc-500'
           }`}
         />
-
-        {/* Dropdown menu */}
-        {mobileMenuOpen && (
-          <>
-            <div
-              className="fixed inset-0 z-40"
-              onClick={() => setMobileMenuOpen(false)}
-            />
-            <div className="absolute right-2 top-full mt-1 bg-zinc-800 border border-zinc-600 rounded-lg shadow-xl z-50 py-1 min-w-[160px]">
-              <button
-                onClick={() => { handleNew(); setMobileMenuOpen(false); }}
-                className="w-full text-left px-3 py-2 text-zinc-300 hover:bg-zinc-700 transition-colors"
-              >
-                {t('toolbar.newProject')}
-              </button>
-              <button
-                onClick={() => { handleLoad(); setMobileMenuOpen(false); }}
-                className="w-full text-left px-3 py-2 text-zinc-300 hover:bg-zinc-700 transition-colors"
-              >
-                {t('toolbar.openProject')}
-              </button>
-              <button
-                onClick={() => { setShowArchetypeWizard(true); setMobileMenuOpen(false); }}
-                className="w-full text-left px-3 py-2 text-cyan-400 hover:bg-zinc-700 transition-colors"
-              >
-                {t('toolbar.archetypeWizard')}
-              </button>
-              <div className="h-px bg-zinc-700 my-1" />
-              <button
-                onClick={() => {
-                  togglePanel('componentList');
-                  setMobileBottomSheet(true);
-                  setMobileMenuOpen(false);
-                }}
-                className={`w-full text-left px-3 py-2 transition-colors ${
-                  panelVisibility.componentList ? 'text-blue-400' : 'text-zinc-300 hover:bg-zinc-700'
-                }`}
-              >
-                {t('toolbar.components')}
-              </button>
-              <button
-                onClick={() => {
-                  togglePanel('prefabList');
-                  setMobileBottomSheet(true);
-                  setMobileMenuOpen(false);
-                }}
-                className={`w-full text-left px-3 py-2 transition-colors ${
-                  panelVisibility.prefabList ? 'text-purple-400' : 'text-zinc-300 hover:bg-zinc-700'
-                }`}
-              >
-                {t('toolbar.prefabs')}
-              </button>
-              <button
-                onClick={() => {
-                  togglePanel('behaviorEditor');
-                  setMobileBottomSheet(true);
-                  setMobileMenuOpen(false);
-                }}
-                className={`w-full text-left px-3 py-2 transition-colors ${
-                  panelVisibility.behaviorEditor ? 'text-cyan-400' : 'text-zinc-300 hover:bg-zinc-700'
-                }`}
-              >
-                {t('toolbar.behavior')}
-              </button>
-              <button
-                onClick={() => {
-                  togglePanel('preview');
-                  setMobileBottomSheet(true);
-                  setMobileMenuOpen(false);
-                }}
-                className={`w-full text-left px-3 py-2 transition-colors ${
-                  panelVisibility.preview ? 'text-blue-400' : 'text-zinc-300 hover:bg-zinc-700'
-                }`}
-              >
-                {t('toolbar.preview')}
-              </button>
-              <button
-                onClick={() => {
-                  togglePanel('domainDiagram');
-                  setMobileMenuOpen(false);
-                }}
-                className={`w-full text-left px-3 py-2 transition-colors ${
-                  panelVisibility.domainDiagram ? 'text-emerald-400' : 'text-zinc-300 hover:bg-zinc-700'
-                }`}
-              >
-                {t('toolbar.domainDiagram') === 'toolbar.domainDiagram' ? 'Domain Diagram' : t('toolbar.domainDiagram')}
-              </button>
-              <div className="h-px bg-zinc-700 my-1" />
-              {!backend.isTauri() && (
-                <button
-                  onClick={() => { setShowProjectManager(true); setMobileMenuOpen(false); }}
-                  className="w-full text-left px-3 py-2 text-zinc-300 hover:bg-zinc-700 transition-colors"
-                >
-                  {t('toolbar.projects')}
-                </button>
-              )}
-              {activeGitRepo && (
-                <button
-                  onClick={() => { handleGitPush(); setMobileMenuOpen(false); }}
-                  disabled={pushing}
-                  className="w-full text-left px-3 py-2 text-green-400 hover:bg-zinc-700 transition-colors disabled:opacity-50"
-                >
-                  {t('toolbar.pushToGithub')}
-                </button>
-              )}
-              <div className="h-px bg-zinc-700 my-1" />
-              <button
-                onClick={() => { setShowGuide(true); setMobileMenuOpen(false); }}
-                className="w-full text-left px-3 py-2 text-amber-400 hover:bg-zinc-700 transition-colors"
-              >
-                {t('toolbar.help')}
-              </button>
-              <div className="h-px bg-zinc-700 my-1" />
-              <div className="px-3 py-2 text-zinc-500 truncate">
-                {project.name}
-                {isDirty && <span className="text-amber-400 ml-1">*</span>}
-              </div>
-            </div>
-          </>
-        )}
-        {showProjectManager && (
-          <ProjectManager onClose={() => setShowProjectManager(false)} />
-        )}
-        {showWizard && (
-          <ProjectWizard onClose={() => setShowWizard(false)} />
-        )}
-        {showArchetypeWizard && (
-          <ArchetypeWizard onClose={() => setShowArchetypeWizard(false)} />
-        )}
-        {showGuide && (
-          <GettingStartedGuide onClose={() => setShowGuide(false)} />
-        )}
-        {showProjectList && (
-          <ProjectListDialog onClose={() => setShowProjectList(false)} />
-        )}
+        {status && <span style={{ color: 'var(--green)' }} className="text-[10px] mr-1">{status}</span>}
+        {showProjectManager && <ProjectManager onClose={() => setShowProjectManager(false)} />}
+        {showWizard && <ProjectWizard onClose={() => setShowWizard(false)} />}
+        {showArchetypeWizard && <ArchetypeWizard onClose={() => setShowArchetypeWizard(false)} />}
+        {showGuide && <GettingStartedGuide onClose={() => setShowGuide(false)} />}
+        {showProjectList && <ProjectListDialog onClose={() => setShowProjectList(false)} />}
       </div>
     );
   }
 
-  // --- Desktop Toolbar ---
+  // ── Desktop Menu Bar ────────────────────────────────
+
   return (
-    <div className="flex items-center gap-1 px-2 py-1 text-xs" style={{ background: 'var(--bg-surface)', borderBottom: '1px solid var(--border)' }}>
-      {/* File operations */}
-      <button
-        onClick={handleNew}
-        className="px-2 py-1 text-zinc-300 hover:bg-zinc-700 rounded transition-colors"
-        title={t('toolbar.newProject')}
-      >
-        {t('toolbar.new')}
-      </button>
-      <button
-        onClick={handleLoad}
-        className="px-2 py-1 text-zinc-300 hover:bg-zinc-700 rounded transition-colors"
-        title={t('toolbar.openProject')}
-      >
-        {t('toolbar.open')}
-      </button>
-      <button
-        onClick={() => setShowArchetypeWizard(true)}
-        className="px-2 py-1 text-cyan-400 hover:bg-zinc-700 rounded transition-colors"
-        title={t('toolbar.archetypeWizard')}
-      >
-        {t('toolbar.archetype')}
-      </button>
-      <button
-        onClick={handleSave}
-        className="px-2 py-1 text-zinc-300 hover:bg-zinc-700 rounded transition-colors"
-        title={t('toolbar.saveProject')}
-      >
-        {t('toolbar.save')}{isDirty ? t('toolbar.unsavedMark') : ''}
-      </button>
+    <div
+      className="flex items-center h-9 px-1 text-xs"
+      style={{ background: 'var(--bg-surface)', borderBottom: '1px solid var(--border)' }}
+    >
+      {/* Menu dropdowns */}
+      <MenuDropdown
+        label={t('toolbar.file') === 'toolbar.file' ? 'File' : t('toolbar.file')}
+        items={fileItems}
+        open={openMenu === 'file'}
+        onToggle={() => setOpenMenu(openMenu === 'file' ? null : 'file')}
+        onClose={closeMenu}
+      />
+      <MenuDropdown
+        label={t('toolbar.tools') === 'toolbar.tools' ? 'Tools' : t('toolbar.tools')}
+        items={toolItems}
+        open={openMenu === 'tools'}
+        onToggle={() => setOpenMenu(openMenu === 'tools' ? null : 'tools')}
+        onClose={closeMenu}
+      />
+      <MenuDropdown
+        label={t('toolbar.window') === 'toolbar.window' ? 'Window' : t('toolbar.window')}
+        items={windowItems}
+        open={openMenu === 'window'}
+        onToggle={() => setOpenMenu(openMenu === 'window' ? null : 'window')}
+        onClose={closeMenu}
+      />
+      <MenuDropdown
+        label={t('toolbar.helpMenu') === 'toolbar.helpMenu' ? 'Help' : t('toolbar.helpMenu')}
+        items={helpItems}
+        open={openMenu === 'help'}
+        onToggle={() => setOpenMenu(openMenu === 'help' ? null : 'help')}
+        onClose={closeMenu}
+      />
 
-      <div className="w-px h-4 bg-zinc-600 mx-1" />
-
-      {/* Undo/Redo */}
-      <button
-        onClick={() => { undo(); markDirty(); }}
-        disabled={!canUndo()}
-        className="px-2 py-1 text-zinc-300 hover:bg-zinc-700 rounded transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
-        title={t('toolbar.undoAction')}
-      >
-        {t('toolbar.undo')}
-      </button>
-      <button
-        onClick={() => { redo(); markDirty(); }}
-        disabled={!canRedo()}
-        className="px-2 py-1 text-zinc-300 hover:bg-zinc-700 rounded transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
-        title={t('toolbar.redoAction')}
-      >
-        {t('toolbar.redo')}
-      </button>
-
-      <div className="w-px h-4 bg-zinc-600 mx-1" />
-
-      {/* View toggles */}
-      <button
-        onClick={() => togglePanel('componentList')}
-        className={`px-2 py-1 rounded transition-colors ${
-          panelVisibility.componentList
-            ? 'bg-blue-600 text-white'
-            : 'text-zinc-300 hover:bg-zinc-700'
-        }`}
-        title={t('toolbar.toggleComponentList')}
-      >
-        {t('toolbar.components')}
-      </button>
-      <button
-        onClick={() => togglePanel('prefabList')}
-        className={`px-2 py-1 rounded transition-colors ${
-          panelVisibility.prefabList
-            ? 'bg-purple-600 text-white'
-            : 'text-zinc-300 hover:bg-zinc-700'
-        }`}
-        title={t('toolbar.togglePrefabList')}
-      >
-        {t('toolbar.prefabs')}
-      </button>
-      <button
-        onClick={() => togglePanel('behaviorEditor')}
-        className={`px-2 py-1 rounded transition-colors ${
-          panelVisibility.behaviorEditor
-            ? 'bg-cyan-600 text-white'
-            : 'text-zinc-300 hover:bg-zinc-700'
-        }`}
-        title={t('toolbar.toggleBehaviorEditor')}
-      >
-        {t('toolbar.behavior')}
-      </button>
-      <button
-        onClick={() => togglePanel('preview')}
-        className={`px-2 py-1 rounded transition-colors ${
-          panelVisibility.preview
-            ? 'bg-blue-600 text-white'
-            : 'text-zinc-300 hover:bg-zinc-700'
-        }`}
-        title={t('toolbar.togglePreview')}
-      >
-        {t('toolbar.preview')}
-      </button>
-
-      <div className="w-px h-4 bg-zinc-600 mx-1" />
-
-      <button
-        onClick={() => togglePanel('domainDiagram')}
-        className={`px-2 py-1 rounded transition-colors ${
-          panelVisibility.domainDiagram
-            ? 'bg-emerald-600 text-white'
-            : 'text-zinc-300 hover:bg-zinc-700'
-        }`}
-        title={t('toolbar.toggleDomainDiagram') === 'toolbar.toggleDomainDiagram' ? 'Toggle Domain Diagram' : t('toolbar.toggleDomainDiagram')}
-      >
-        {t('toolbar.domainDiagram') === 'toolbar.domainDiagram' ? 'Domain' : t('toolbar.domainDiagram')}
-      </button>
-
-      {/* Project name & status */}
+      {/* Spacer */}
       <div className="flex-1" />
+
+      {/* Status area */}
       <span
         className={`w-2 h-2 rounded-full mr-2 ${
           backendHealth === 'ok' ? 'bg-green-500' :
           backendHealth === 'down' ? 'bg-red-500 animate-pulse' :
           'bg-zinc-500'
         }`}
-        title={backendHealth === 'ok' ? 'Backend: connected' : backendHealth === 'down' ? 'Backend: offline' : 'Backend: checking...'}
+        title={backendHealth === 'ok' ? 'Backend: connected' : backendHealth === 'down' ? 'Backend: offline' : 'Checking...'}
       />
       {backendHealth === 'down' && (
-        <span className="text-red-400 text-[10px] mr-2">Backend offline</span>
+        <span className="mr-2" style={{ color: 'var(--red)', fontSize: '10px' }}>Offline</span>
       )}
       {lastSavedLabel && !status && backendHealth !== 'down' && (
-        <span className="text-zinc-600 mr-2">{lastSavedLabel}</span>
+        <span className="mr-2" style={{ color: 'var(--text-muted)', fontSize: '10px' }}>{lastSavedLabel}</span>
       )}
-      <span className="text-zinc-500 truncate max-w-[200px]">
+      <span className="truncate max-w-[200px] mr-2" style={{ color: 'var(--text-muted)' }}>
         {project.name}
-        {isDirty && <span className="text-amber-400 ml-1">{t('toolbar.unsaved')}</span>}
+        {isDirty && <span className="ml-1" style={{ color: 'var(--orange)' }}>*</span>}
       </span>
-      {status && (
-        <span className="text-green-400 ml-2">{status}</span>
-      )}
-      <div className="w-px h-4 bg-zinc-600 mx-1" />
-      {activeGitRepo && (
-        <button
-          onClick={handleGitPush}
-          disabled={pushing}
-          className="px-2 py-1 text-green-400 hover:bg-zinc-700 rounded transition-colors disabled:opacity-50"
-          title={t('toolbar.pushToRepo', { repo: activeGitRepo })}
-        >
-          {t('toolbar.push')}{pushing ? t('toolbar.pushing') : ''}
-        </button>
-      )}
-      {!backend.isTauri() && (
-        <button
-          onClick={() => setShowProjectManager(true)}
-          className="px-2 py-1 text-zinc-300 hover:bg-zinc-700 rounded transition-colors"
-          title={t('toolbar.projectManager')}
-        >
-          {t('toolbar.projects')}
-        </button>
-      )}
+      {status && <span className="mr-2" style={{ color: 'var(--green)', fontSize: '10px' }}>{status}</span>}
+
       <UserMenu onOpenProjectManager={() => setShowProjectManager(true)} />
-      <div className="w-px h-4 bg-zinc-600 mx-1" />
-      <HelpTooltip content={helpContent.toolbar} position="bottom" className="mr-1" />
-      <button
-        onClick={() => setShowGuide(true)}
-        className="px-2 py-1 text-amber-400 hover:bg-zinc-700 rounded transition-colors font-medium"
-        title={t('toolbar.gettingStarted')}
-      >
-        {t('toolbar.help')}
-      </button>
-      {showProjectManager && (
-        <ProjectManager onClose={() => setShowProjectManager(false)} />
-      )}
-      {showWizard && (
-        <ProjectWizard onClose={() => setShowWizard(false)} />
-      )}
-      {showArchetypeWizard && (
-        <ArchetypeWizard onClose={() => setShowArchetypeWizard(false)} />
-      )}
-      {showGuide && (
-        <GettingStartedGuide onClose={() => setShowGuide(false)} />
-      )}
-      {showProjectList && (
-        <ProjectListDialog onClose={() => setShowProjectList(false)} />
-      )}
+
+      {/* Modals */}
+      {showProjectManager && <ProjectManager onClose={() => setShowProjectManager(false)} />}
+      {showWizard && <ProjectWizard onClose={() => setShowWizard(false)} />}
+      {showArchetypeWizard && <ArchetypeWizard onClose={() => setShowArchetypeWizard(false)} />}
+      {showGuide && <GettingStartedGuide onClose={() => setShowGuide(false)} />}
+      {showProjectList && <ProjectListDialog onClose={() => setShowProjectList(false)} />}
     </div>
   );
 }
