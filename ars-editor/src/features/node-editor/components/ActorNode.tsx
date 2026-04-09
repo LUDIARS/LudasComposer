@@ -54,21 +54,34 @@ export const ActorNode = memo(function ActorNode({ data, selected }: NodeProps<A
   }, [editName, nodeData.name, nodeData.actorId, activeSceneId, renameActor]);
 
   const startEditReq = useCallback((field: string) => {
-    const requirements = actor?.requirements;
-    if (!requirements) return;
-    const current = (requirements as Record<string, string[]>)[field] ?? [];
-    setEditReqText(current.join('\n'));
+    const reqs = actor?.requirements;
+    if (!reqs) return;
+    const current = (reqs as Record<string, string[]>)[field] ?? [];
+    setEditReqText(field === 'overview' ? (current[0] ?? '') : current.join('\n'));
     setEditingReq(field);
-    requestAnimationFrame(() => reqRef.current?.focus());
+    requestAnimationFrame(() => {
+      if (field === 'overview') inputRef.current?.focus();
+      else reqRef.current?.focus();
+    });
   }, [actor]);
 
   const commitReq = useCallback(() => {
     if (!editingReq || !activeSceneId || !actor) return;
-    const lines = editReqText.split('\n').map(s => s.trim()).filter(Boolean);
-    setActorRequirements(activeSceneId, nodeData.actorId, {
-      ...actor.requirements,
-      [editingReq]: lines,
-    });
+    if (editingReq === 'overview') {
+      // 概要は単一テキスト (配列の1要素として保存)
+      const text = editReqText.trim();
+      setActorRequirements(activeSceneId, nodeData.actorId, {
+        ...actor.requirements,
+        overview: text ? [text] : [],
+      });
+    } else {
+      // 動作は箇条書き
+      const lines = editReqText.split('\n').map(s => s.trim()).filter(Boolean);
+      setActorRequirements(activeSceneId, nodeData.actorId, {
+        ...actor.requirements,
+        [editingReq]: lines,
+      });
+    }
     setEditingReq(null);
   }, [editingReq, editReqText, activeSceneId, nodeData.actorId, actor, setActorRequirements]);
 
@@ -77,12 +90,8 @@ export const ActorNode = memo(function ActorNode({ data, selected }: NodeProps<A
   const typeColors = ACTOR_TYPE_COLORS[actorType];
   const requirements = actor?.requirements;
 
-  const REQ_FIELDS = [
-    { key: 'overview', label: '概要', color: 'var(--accent)' },
-    { key: 'goals', label: '達成', color: 'var(--green)' },
-    { key: 'role', label: '役割', color: 'var(--purple)' },
-    { key: 'behavior', label: '挙動', color: 'var(--orange)' },
-  ];
+  const overviewText = requirements?.overview?.[0] ?? '';
+  const behaviorItems = requirements?.behavior ?? [];
 
   return (
     <div
@@ -122,70 +131,89 @@ export const ActorNode = memo(function ActorNode({ data, selected }: NodeProps<A
         </span>
       </div>
 
-      {/* Requirements (メイン、タップで編集) */}
-      <div className="px-3 py-3" style={{ borderTop: '1px solid var(--border)' }}>
-        <div className="text-[10px] font-semibold uppercase tracking-wider mb-2" style={{ color: 'var(--text-muted)' }}>
-          Requirements
+      {/* 概要 (単一テキスト) */}
+      <div className="px-3 py-2.5" style={{ borderTop: '1px solid var(--border)' }}>
+        <div className="flex items-center gap-1.5 mb-1">
+          <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ background: 'var(--accent)' }} />
+          <span className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: 'var(--accent)' }}>概要</span>
         </div>
-        <div className="space-y-2">
-          {REQ_FIELDS.map(({ key, label, color }) => {
-            const items = requirements ? (requirements as Record<string, string[]>)[key] ?? [] : [];
-            const isEditingThis = editingReq === key;
+        {editingReq === 'overview' ? (
+          <input
+            ref={inputRef}
+            className="w-full text-xs rounded px-2 py-1.5"
+            style={{
+              background: 'var(--bg)',
+              color: 'var(--text)',
+              border: '1px solid var(--accent)',
+              outline: 'none',
+            }}
+            value={editReqText}
+            onChange={(e) => setEditReqText(e.target.value)}
+            onBlur={commitReq}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') commitReq();
+              if (e.key === 'Escape') setEditingReq(null);
+            }}
+            onClick={(e) => e.stopPropagation()}
+            placeholder="このアクターの概要..."
+          />
+        ) : (
+          <div
+            className="text-sm cursor-pointer rounded px-1 py-0.5 -mx-1 transition-colors hover:bg-white/5 min-h-[24px]"
+            style={{ color: overviewText ? 'var(--text)' : 'var(--text-muted)' }}
+            onClick={(e) => { e.stopPropagation(); startEditReq('overview'); }}
+          >
+            {overviewText || 'タップして概要を入力...'}
+          </div>
+        )}
+      </div>
 
-            return (
-              <div key={key}>
-                <div
-                  className="flex items-center gap-1.5 mb-0.5 cursor-pointer"
-                  onClick={(e) => { e.stopPropagation(); startEditReq(key); }}
-                >
-                  <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ background: color }} />
-                  <span className="text-xs font-medium" style={{ color }}>{label}</span>
-                </div>
-
-                {isEditingThis ? (
-                  <textarea
-                    ref={reqRef}
-                    className="w-full text-xs rounded px-2 py-1.5 resize-none"
-                    style={{
-                      background: 'var(--bg)',
-                      color: 'var(--text)',
-                      border: `1px solid ${color}`,
-                      outline: 'none',
-                    }}
-                    rows={3}
-                    value={editReqText}
-                    onChange={(e) => setEditReqText(e.target.value)}
-                    onBlur={commitReq}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Escape') { setEditingReq(null); }
-                    }}
-                    onClick={(e) => e.stopPropagation()}
-                    placeholder="1行に1項目..."
-                  />
-                ) : items.length > 0 ? (
-                  <div
-                    className="pl-3 cursor-pointer rounded px-1 py-0.5 -mx-1 transition-colors hover:bg-white/5"
-                    onClick={(e) => { e.stopPropagation(); startEditReq(key); }}
-                  >
-                    {items.map((item, i) => (
-                      <div key={i} className="text-xs truncate" style={{ color: 'var(--text)' }}>
-                        • {item}
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div
-                    className="pl-3 text-xs italic cursor-pointer rounded px-1 py-0.5 -mx-1 transition-colors hover:bg-white/5"
-                    style={{ color: 'var(--text-muted)' }}
-                    onClick={(e) => { e.stopPropagation(); startEditReq(key); }}
-                  >
-                    タップして追加...
-                  </div>
-                )}
+      {/* 動作 (箇条書き) */}
+      <div className="px-3 py-2.5" style={{ borderTop: '1px solid var(--border)' }}>
+        <div className="flex items-center gap-1.5 mb-1">
+          <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ background: 'var(--orange)' }} />
+          <span className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: 'var(--orange)' }}>動作</span>
+        </div>
+        {editingReq === 'behavior' ? (
+          <textarea
+            ref={reqRef}
+            className="w-full text-xs rounded px-2 py-1.5 resize-none"
+            style={{
+              background: 'var(--bg)',
+              color: 'var(--text)',
+              border: '1px solid var(--orange)',
+              outline: 'none',
+            }}
+            rows={4}
+            value={editReqText}
+            onChange={(e) => setEditReqText(e.target.value)}
+            onBlur={commitReq}
+            onKeyDown={(e) => {
+              if (e.key === 'Escape') setEditingReq(null);
+            }}
+            onClick={(e) => e.stopPropagation()}
+            placeholder="1行に1つの動作..."
+          />
+        ) : behaviorItems.length > 0 ? (
+          <div
+            className="cursor-pointer rounded px-1 py-0.5 -mx-1 transition-colors hover:bg-white/5"
+            onClick={(e) => { e.stopPropagation(); startEditReq('behavior'); }}
+          >
+            {behaviorItems.map((item, i) => (
+              <div key={i} className="text-xs" style={{ color: 'var(--text)' }}>
+                • {item}
               </div>
-            );
-          })}
-        </div>
+            ))}
+          </div>
+        ) : (
+          <div
+            className="text-xs italic cursor-pointer rounded px-1 py-0.5 -mx-1 transition-colors hover:bg-white/5"
+            style={{ color: 'var(--text-muted)' }}
+            onClick={(e) => { e.stopPropagation(); startEditReq('behavior'); }}
+          >
+            タップして動作を追加...
+          </div>
+        )}
       </div>
 
       {/* State type: show states */}
