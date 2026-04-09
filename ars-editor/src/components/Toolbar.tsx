@@ -1,4 +1,5 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router';
 import { useProjectStore } from '@/stores/projectStore';
 import { useEditorStore } from '@/stores/editorStore';
 import { useAuthStore } from '@/stores/authStore';
@@ -13,6 +14,7 @@ import { ProjectWizard } from './ProjectWizard';
 import { ArchetypeWizard } from '@/features/archetype-wizard';
 import { GettingStartedGuide } from './GettingStartedGuide';
 import { ProjectListDialog } from './ProjectListDialog';
+import { LanguageSettings } from './LanguageSettings';
 
 // ── Menu Dropdown ────────────────────────────────────────────
 
@@ -53,7 +55,7 @@ function MenuDropdown({
     <div ref={ref} className="relative">
       <button
         onClick={onToggle}
-        className="px-4 h-10 text-sm font-medium rounded transition-colors"
+        className="px-3 h-10 text-sm font-medium rounded transition-colors"
         style={{
           color: open ? 'var(--text)' : 'var(--text-muted)',
           background: open ? 'var(--bg-surface-2)' : 'transparent',
@@ -97,7 +99,9 @@ function MenuDropdown({
 // ── Main Toolbar ─────────────────────────────────────────────
 
 export function Toolbar() {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
+  const navigate = useNavigate();
+  const location = useLocation();
   const project = useProjectStore((s) => s.project);
   const isDirty = useEditorStore((s) => s.isDirty);
   const projectPath = useEditorStore((s) => s.projectPath);
@@ -105,19 +109,26 @@ export function Toolbar() {
   const markSaved = useEditorStore((s) => s.markSaved);
   const togglePanel = useEditorStore((s) => s.togglePanel);
   const panelVisibility = useEditorStore((s) => s.panelVisibility);
+  const autoSaveEnabled = useEditorStore((s) => s.autoSaveEnabled);
+  const setAutoSave = useEditorStore((s) => s.setAutoSave);
   const setMobileSceneMenu = useEditorStore((s) => s.setMobileSceneMenu);
   const mobileBottomSheetOpen = useEditorStore((s) => s.mobileBottomSheetOpen);
   const setMobileBottomSheet = useEditorStore((s) => s.setMobileBottomSheet);
   const isGenerating = useEditorStore((s) => s.isGenerating);
   const abortGeneration = useEditorStore((s) => s.abortGeneration);
   const activeGitRepo = useAuthStore((s) => s.activeGitRepo);
-  const [status, setStatus] = useState<string>('');
+  const user = useAuthStore((s) => s.user);
+  const fetchUser = useAuthStore((s) => s.fetchUser);
+  const logout = useAuthStore((s) => s.logout);
+
+  const [status, setStatus] = useState('');
   const [openMenu, setOpenMenu] = useState<string | null>(null);
   const [showProjectManager, setShowProjectManager] = useState(false);
   const [showWizard, setShowWizard] = useState(false);
   const [showArchetypeWizard, setShowArchetypeWizard] = useState(false);
   const [showGuide, setShowGuide] = useState(false);
   const [showProjectList, setShowProjectList] = useState(false);
+  const [showLanguageSettings, setShowLanguageSettings] = useState(false);
   const [pushing, setPushing] = useState(false);
   const isMobile = useIsMobile();
 
@@ -192,15 +203,12 @@ export function Toolbar() {
   const fileItems: MenuItem[] = [
     { label: t('toolbar.newProject'), onClick: handleNew },
     { label: t('toolbar.openProject'), onClick: handleLoad },
-    { label: `${t('toolbar.save')}${isDirty ? ' *' : ''}`, onClick: handleSave, dividerAfter: true },
+    { label: `${t('toolbar.save')}${isDirty ? ' *' : ''}`, onClick: handleSave },
     { label: t('toolbar.archetypeWizard'), onClick: () => setShowArchetypeWizard(true), color: 'var(--accent)', dividerAfter: true },
-    ...(activeGitRepo ? [{ label: t('toolbar.pushToGithub'), onClick: handleGitPush, disabled: pushing, color: 'var(--green)', dividerAfter: true }] : []),
-    ...(!backend.isTauri() ? [{ label: t('toolbar.projects'), onClick: () => setShowProjectManager(true) }] : []),
-  ];
-
-  const toolItems: MenuItem[] = [
     { label: t('toolbar.undo'), onClick: () => { if (isGenerating) abortGeneration(); undo(); markDirty(); }, disabled: !canUndo() },
-    { label: t('toolbar.redo'), onClick: () => { redo(); markDirty(); }, disabled: !canRedo() },
+    { label: t('toolbar.redo'), onClick: () => { redo(); markDirty(); }, disabled: !canRedo(), dividerAfter: true },
+    ...(activeGitRepo ? [{ label: t('toolbar.pushToGithub'), onClick: handleGitPush, disabled: pushing, color: 'var(--green)', dividerAfter: true as const }] : []),
+    ...(!backend.isTauri() ? [{ label: t('toolbar.projects'), onClick: () => setShowProjectManager(true) }] : []),
   ];
 
   const windowItems: MenuItem[] = [
@@ -208,15 +216,41 @@ export function Toolbar() {
     { label: t('toolbar.components'), onClick: () => togglePanel('componentList'), active: panelVisibility.componentList },
     { label: t('toolbar.prefabs'), onClick: () => togglePanel('prefabList'), active: panelVisibility.prefabList },
     { label: t('toolbar.behavior'), onClick: () => togglePanel('behaviorEditor'), active: panelVisibility.behaviorEditor },
-    { label: t('toolbar.preview'), onClick: () => togglePanel('preview'), active: panelVisibility.preview, dividerAfter: true },
-    { label: 'Domain Diagram', onClick: () => togglePanel('domainDiagram'), active: panelVisibility.domainDiagram },
+    { label: t('toolbar.preview'), onClick: () => togglePanel('preview'), active: panelVisibility.preview },
+  ];
+
+  const settingsItems: MenuItem[] = [
+    { label: `Language: ${locale === 'ja' ? '日本語' : 'English'}`, onClick: () => setShowLanguageSettings(true) },
+    { label: `Auto Save: ${autoSaveEnabled ? 'ON' : 'OFF'}`, onClick: () => setAutoSave(!autoSaveEnabled), active: autoSaveEnabled, dividerAfter: true },
+    { label: 'Project Settings', onClick: () => navigate('/settings'), active: location.pathname === '/settings', dividerAfter: true },
+    ...(!backend.isTauri() ? (
+      user
+        ? [
+            { label: `${user.displayName}`, onClick: () => {}, disabled: true },
+            { label: 'Sign out', onClick: logout, color: 'var(--red)' },
+          ]
+        : [{ label: 'Sign in with GitHub', onClick: async () => { const r = await authApi.openOAuthPopup(); if (r.success) await fetchUser(); }, color: 'var(--accent)' }]
+    ) : []),
   ];
 
   const helpItems: MenuItem[] = [
-    { label: t('toolbar.help'), onClick: () => setShowGuide(true), color: 'var(--orange)' },
+    { label: 'Getting Started', onClick: () => setShowGuide(true), color: 'var(--orange)' },
   ];
 
-  // ── Mobile Toolbar ──────────────────────────────────
+  // ── Modals ──────────────────────────────────────────
+
+  const modals = (
+    <>
+      {showProjectManager && <ProjectManager onClose={() => setShowProjectManager(false)} />}
+      {showWizard && <ProjectWizard onClose={() => setShowWizard(false)} />}
+      {showArchetypeWizard && <ArchetypeWizard onClose={() => setShowArchetypeWizard(false)} />}
+      {showGuide && <GettingStartedGuide onClose={() => setShowGuide(false)} />}
+      {showProjectList && <ProjectListDialog onClose={() => setShowProjectList(false)} />}
+      {showLanguageSettings && <LanguageSettings onClose={() => setShowLanguageSettings(false)} />}
+    </>
+  );
+
+  // ── Mobile ──────────────────────────────────────────
 
   if (isMobile) {
     return (
@@ -224,17 +258,18 @@ export function Toolbar() {
         className="flex items-center gap-0.5 px-1 text-xs relative"
         style={{ background: 'var(--bg-surface)', borderBottom: '1px solid var(--border)', minHeight: '44px' }}
       >
+        <span className="text-xs font-bold text-white mx-2 tracking-wider shrink-0">ARS</span>
         <button
           onClick={() => setMobileSceneMenu(true)}
           className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded transition-colors text-base"
-          style={{ color: 'var(--text)' }}
+          style={{ color: 'var(--text)', border: 'none', background: 'transparent' }}
         >
           ☰
         </button>
         <button
           onClick={handleSave}
           className="min-h-[44px] px-3 flex items-center rounded transition-colors"
-          style={{ color: isDirty ? 'var(--orange)' : 'var(--text-muted)' }}
+          style={{ color: isDirty ? 'var(--orange)' : 'var(--text-muted)', border: 'none', background: 'transparent' }}
         >
           {t('toolbar.save')}{isDirty ? '*' : ''}
         </button>
@@ -242,7 +277,7 @@ export function Toolbar() {
           onClick={() => { if (isGenerating) abortGeneration(); undo(); markDirty(); }}
           disabled={!canUndo()}
           className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded transition-colors disabled:opacity-30"
-          style={{ color: 'var(--text-muted)' }}
+          style={{ color: 'var(--text-muted)', border: 'none', background: 'transparent' }}
         >
           ↩
         </button>
@@ -250,81 +285,78 @@ export function Toolbar() {
           onClick={() => { redo(); markDirty(); }}
           disabled={!canRedo()}
           className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded transition-colors disabled:opacity-30"
-          style={{ color: 'var(--text-muted)' }}
+          style={{ color: 'var(--text-muted)', border: 'none', background: 'transparent' }}
         >
           ↪
         </button>
         <button
           onClick={() => setMobileBottomSheet(!mobileBottomSheetOpen)}
           className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded transition-colors"
-          style={{ color: mobileBottomSheetOpen ? 'var(--accent)' : 'var(--text-muted)' }}
+          style={{ color: mobileBottomSheetOpen ? 'var(--accent)' : 'var(--text-muted)', border: 'none', background: 'transparent' }}
         >
           ▤
         </button>
         <div className="flex-1" />
         {status && <span style={{ color: 'var(--green)' }} className="text-[10px] mr-1">{status}</span>}
-        {showProjectManager && <ProjectManager onClose={() => setShowProjectManager(false)} />}
-        {showWizard && <ProjectWizard onClose={() => setShowWizard(false)} />}
-        {showArchetypeWizard && <ArchetypeWizard onClose={() => setShowArchetypeWizard(false)} />}
-        {showGuide && <GettingStartedGuide onClose={() => setShowGuide(false)} />}
-        {showProjectList && <ProjectListDialog onClose={() => setShowProjectList(false)} />}
+        {modals}
       </div>
     );
   }
 
-  // ── Desktop Menu Bar ────────────────────────────────
+  // ── Desktop ─────────────────────────────────────────
 
   return (
     <div
       className="flex items-center h-10 px-1 text-sm"
       style={{ background: 'var(--bg-surface)', borderBottom: '1px solid var(--border)' }}
     >
-      {/* Menu dropdowns */}
+      <span className="text-xs font-bold text-white mx-2 tracking-wider shrink-0">ARS</span>
+
       <MenuDropdown
-        label={t('toolbar.file') === 'toolbar.file' ? 'File' : t('toolbar.file')}
+        label="File"
         items={fileItems}
         open={openMenu === 'file'}
         onToggle={() => setOpenMenu(openMenu === 'file' ? null : 'file')}
         onClose={closeMenu}
       />
       <MenuDropdown
-        label={t('toolbar.tools') === 'toolbar.tools' ? 'Tools' : t('toolbar.tools')}
-        items={toolItems}
-        open={openMenu === 'tools'}
-        onToggle={() => setOpenMenu(openMenu === 'tools' ? null : 'tools')}
-        onClose={closeMenu}
-      />
-      <MenuDropdown
-        label={t('toolbar.window') === 'toolbar.window' ? 'Window' : t('toolbar.window')}
+        label="Window"
         items={windowItems}
         open={openMenu === 'window'}
         onToggle={() => setOpenMenu(openMenu === 'window' ? null : 'window')}
         onClose={closeMenu}
       />
       <MenuDropdown
-        label={t('toolbar.helpMenu') === 'toolbar.helpMenu' ? 'Help' : t('toolbar.helpMenu')}
+        label="Settings"
+        items={settingsItems}
+        open={openMenu === 'settings'}
+        onToggle={() => setOpenMenu(openMenu === 'settings' ? null : 'settings')}
+        onClose={closeMenu}
+      />
+      <MenuDropdown
+        label="Help"
         items={helpItems}
         open={openMenu === 'help'}
         onToggle={() => setOpenMenu(openMenu === 'help' ? null : 'help')}
         onClose={closeMenu}
       />
 
-      {/* Spacer */}
       <div className="flex-1" />
 
-      {/* Project name only — details in StatusBar */}
       <span className="truncate max-w-[200px] mr-3 text-sm" style={{ color: 'var(--text-muted)' }}>
         {project.name}
         {isDirty && <span className="ml-1" style={{ color: 'var(--orange)' }}>*</span>}
       </span>
       {status && <span className="mr-2 text-xs" style={{ color: 'var(--green)' }}>{status}</span>}
 
-      {/* Modals */}
-      {showProjectManager && <ProjectManager onClose={() => setShowProjectManager(false)} />}
-      {showWizard && <ProjectWizard onClose={() => setShowWizard(false)} />}
-      {showArchetypeWizard && <ArchetypeWizard onClose={() => setShowArchetypeWizard(false)} />}
-      {showGuide && <GettingStartedGuide onClose={() => setShowGuide(false)} />}
-      {showProjectList && <ProjectListDialog onClose={() => setShowProjectList(false)} />}
+      {user && (
+        <div className="flex items-center gap-1.5 mr-2">
+          <img src={user.avatarUrl} alt="" className="w-5 h-5 rounded-full" />
+          <span className="text-xs" style={{ color: 'var(--text-muted)' }}>{user.displayName}</span>
+        </div>
+      )}
+
+      {modals}
     </div>
   );
 }
