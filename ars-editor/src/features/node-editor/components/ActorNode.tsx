@@ -15,6 +15,14 @@ export const ActorNode = memo(function ActorNode({ data, selected }: NodeProps<A
   const actor = activeScene?.actors[nodeData.actorId];
   const openSubScenePicker = useEditorStore((s) => s.openSubScenePicker);
   const copyToClipboard = useEditorStore((s) => s.copyToClipboard);
+  const messageSourceActorId = useEditorStore((s) => s.messageSourceActorId);
+  const startMessageCreation = useEditorStore((s) => s.startMessageCreation);
+  const cancelMessageCreation = useEditorStore((s) => s.cancelMessageCreation);
+  const addMessage = useProjectStore((s) => s.addMessage);
+
+  const isTargetSelectionMode = messageSourceActorId !== null;
+  const isSource = messageSourceActorId === nodeData.actorId;
+  const isSelectableTarget = isTargetSelectionMode && !isSource;
   const duplicateActor = useProjectStore((s) => s.duplicateActor);
   const createPrefab = useProjectStore((s) => s.createPrefab);
   const setActorType = useProjectStore((s) => s.setActorType);
@@ -51,6 +59,8 @@ export const ActorNode = memo(function ActorNode({ data, selected }: NodeProps<A
         colors.bg,
         colors.border,
         selected && 'ring-2 ring-white ring-offset-2 ring-offset-zinc-900',
+        isSource && 'ring-2 ring-blue-400 ring-offset-2 ring-offset-zinc-900',
+        isSelectableTarget && 'ring-2 ring-blue-400/50 ring-offset-1 ring-offset-zinc-900 cursor-pointer',
       )}
     >
       {/* Header */}
@@ -211,6 +221,30 @@ export const ActorNode = memo(function ActorNode({ data, selected }: NodeProps<A
         </div>
       )}
 
+      {/* ターゲット選択モード: このノードをターゲットとして選択 */}
+      {isSelectableTarget && (
+        <div className="px-3 py-2 border-t border-zinc-700">
+          <button
+            className="w-full text-xs font-semibold text-blue-400 bg-blue-500/10 hover:bg-blue-500/20 border border-blue-500/30 px-2 py-1.5 rounded transition-colors"
+            onClick={(e) => {
+              e.stopPropagation();
+              if (activeSceneId && messageSourceActorId) {
+                addMessage(activeSceneId, {
+                  sourceDomainId: messageSourceActorId,
+                  targetDomainId: nodeData.actorId,
+                  name: '',
+                  description: '',
+                  messageType: 'simple',
+                });
+                cancelMessageCreation();
+              }
+            }}
+          >
+            ← このアクターに接続
+          </button>
+        </div>
+      )}
+
       {/* Actions */}
       <div className="px-3 py-1.5 border-t border-zinc-700 flex gap-1 flex-wrap">
         <button
@@ -252,6 +286,27 @@ export const ActorNode = memo(function ActorNode({ data, selected }: NodeProps<A
         >
           SubScene
         </button>
+        {!isTargetSelectionMode ? (
+          <button
+            className="text-[10px] text-blue-400 hover:text-blue-300 bg-zinc-800 hover:bg-zinc-700 px-1.5 py-0.5 rounded transition-colors"
+            onClick={(e) => {
+              e.stopPropagation();
+              startMessageCreation(nodeData.actorId);
+            }}
+          >
+            + Message
+          </button>
+        ) : isSource ? (
+          <button
+            className="text-[10px] text-red-400 hover:text-red-300 bg-zinc-800 hover:bg-zinc-700 px-1.5 py-0.5 rounded transition-colors"
+            onClick={(e) => {
+              e.stopPropagation();
+              cancelMessageCreation();
+            }}
+          >
+            Cancel
+          </button>
+        ) : null}
       </div>
 
       {/* Connection handles (minimal style — edges use arrow markers) */}

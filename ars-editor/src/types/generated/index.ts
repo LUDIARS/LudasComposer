@@ -9,6 +9,7 @@ export type { RequirementRef } from './RequirementRef';
 export type { GitProjectInfo } from './GitProjectInfo';
 export type { GitRepo } from './GitRepo';
 export type { Message } from './Message';
+export type { MessageType } from './MessageType';
 export type { PortDefinition } from './PortDefinition';
 export type { Position } from './Position';
 export type { Prefab } from './Prefab';

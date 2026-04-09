@@ -1,5 +1,5 @@
 use ars_core::models::{
-    Actor, Component, Message, Position, Prefab, PrefabActor, Project,
+    Actor, Component, Display, Message, MessageType, Position, Prefab, PrefabActor, Project,
     Requirements, Scene, Task, Variable,
 };
 use std::collections::HashMap;
@@ -69,6 +69,7 @@ impl ProjectManager {
             requirements: Requirements::default(),
             actor_states: vec![],
             flexible_content: String::new(),
+            displays: vec![],
             position: Position { x: 0.0, y: 0.0 },
             sub_scene_id: None,
         };
@@ -104,6 +105,7 @@ impl ProjectManager {
             requirements: Requirements::default(),
             actor_states: vec![],
             flexible_content: String::new(),
+            displays: vec![],
             position: Position { x, y },
             sub_scene_id: None,
         };
@@ -147,6 +149,7 @@ impl ProjectManager {
             target_domain_id: target_domain_id.to_string(),
             name: name.to_string(),
             description: description.to_string(),
+            message_type: MessageType::default(),
         };
 
         scene.messages.push(message.clone());

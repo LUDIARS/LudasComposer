@@ -182,6 +182,19 @@ pub struct Prefab {
 
 // ── Scene ───────────────────────────────────────────
 
+/// メッセージの種別
+#[derive(Debug, Clone, Serialize, Deserialize, TS, Default, PartialEq)]
+#[ts(export)]
+pub enum MessageType {
+    /// 単純なメッセージ (実線 + 塗り矢印)
+    #[default]
+    #[serde(rename = "simple")]
+    Simple,
+    /// インターフェース (実線 + 白抜き三角)
+    #[serde(rename = "interface")]
+    Interface,
+}
+
 /// ドメイン間のメッセージ定義
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
 #[ts(export)]
@@ -198,6 +211,9 @@ pub struct Message {
     /// メッセージの説明
     #[serde(default)]
     pub description: String,
+    /// メッセージの種別
+    #[serde(rename = "messageType", default)]
+    pub message_type: MessageType,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
@@ -391,6 +407,7 @@ mod tests {
             target_domain_id: "a2".to_string(),
             name: "TakeDamage".to_string(),
             description: "ダメージを与える".to_string(),
+            message_type: MessageType::default(),
         };
         let json = serde_json::to_string(&msg).unwrap();
         let loaded: Message = serde_json::from_str(&json).unwrap();

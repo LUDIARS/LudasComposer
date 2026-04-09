@@ -1,6 +1,6 @@
 import { useCallback, useMemo } from 'react';
 import type { Connection as FlowConnection, NodeChange, EdgeChange } from '@xyflow/react';
-import { applyNodeChanges, applyEdgeChanges, MarkerType } from '@xyflow/react';
+import { applyNodeChanges, applyEdgeChanges } from '@xyflow/react';
 import { useProjectStore } from '@/stores/projectStore';
 import type { AnyFlowNode, FlowEdge, ActorNodeData } from '../types/nodes';
 import type { ActorRole, ActorType } from '@/types/domain';
@@ -38,10 +38,13 @@ export function useNodeEditor() {
       id: msg.id,
       source: msg.sourceDomainId,
       target: msg.targetDomainId,
+      type: 'actor' as const,
       animated: true,
-      label: msg.name || undefined,
-      style: { stroke: '#6b7280' },
-      markerEnd: { type: MarkerType.ArrowClosed, color: '#6b7280', width: 20, height: 20 },
+      data: {
+        name: msg.name,
+        description: msg.description,
+        messageType: msg.messageType ?? 'simple',
+      },
     }));
   }, [activeScene]);
 
@@ -90,6 +93,7 @@ export function useNodeEditor() {
         targetDomainId: connection.target,
         name: '',
         description: '',
+        messageType: 'simple',
       });
     },
     [activeScene, addMessage],

@@ -24,6 +24,9 @@ interface EditorState {
   mobileSceneMenuOpen: boolean;
   mobileBottomSheetOpen: boolean;
 
+  /** メッセージ作成モード: ターゲット選択中のソースアクターID */
+  messageSourceActorId: string | null;
+
   /** AI code generation state */
   isGenerating: boolean;
   generationAbortController: AbortController | null;
@@ -47,6 +50,9 @@ interface EditorState {
   setProjectPath: (path: string | null) => void;
   setMobileSceneMenu: (open: boolean) => void;
   setMobileBottomSheet: (open: boolean) => void;
+
+  startMessageCreation: (sourceActorId: string) => void;
+  cancelMessageCreation: () => void;
 
   /** Start AI code generation, returns an AbortController to cancel it */
   startGeneration: () => AbortController;
@@ -78,6 +84,7 @@ export const useEditorStore = create<EditorState>()((set) => ({
   projectPath: null,
   mobileSceneMenuOpen: false,
   mobileBottomSheetOpen: false,
+  messageSourceActorId: null,
   isGenerating: false,
   generationAbortController: null,
 
@@ -120,6 +127,9 @@ export const useEditorStore = create<EditorState>()((set) => ({
   setProjectPath: (path) => set({ projectPath: path }),
   setMobileSceneMenu: (open) => set({ mobileSceneMenuOpen: open }),
   setMobileBottomSheet: (open) => set({ mobileBottomSheetOpen: open }),
+
+  startMessageCreation: (sourceActorId) => set({ messageSourceActorId: sourceActorId }),
+  cancelMessageCreation: () => set({ messageSourceActorId: null }),
 
   startGeneration: () => {
     const controller = new AbortController();

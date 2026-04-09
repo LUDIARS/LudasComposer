@@ -1,5 +1,7 @@
 import { useState } from 'react';
 import { useProjectStore } from '@/stores/projectStore';
+import type { MessageType } from '@/types/generated/MessageType';
+import { cn } from '@/lib/utils';
 
 interface MessageEditorProps {
   sceneId: string;
@@ -14,6 +16,7 @@ export function MessageEditor({ sceneId, messageId, onClose }: MessageEditorProp
 
   const [name, setName] = useState(message?.name ?? '');
   const [description, setDescription] = useState(message?.description ?? '');
+  const [messageType, setMessageType] = useState<MessageType>(message?.messageType ?? 'simple');
 
   if (!message || !scene) return null;
 
@@ -21,7 +24,7 @@ export function MessageEditor({ sceneId, messageId, onClose }: MessageEditorProp
   const targetDomain = scene.actors[message.targetDomainId];
 
   const handleSave = () => {
-    updateMessage(sceneId, messageId, { name, description });
+    updateMessage(sceneId, messageId, { name, description, messageType });
   };
 
   return (
@@ -43,10 +46,41 @@ export function MessageEditor({ sceneId, messageId, onClose }: MessageEditorProp
         <span className="text-blue-400 font-medium">{targetDomain?.name ?? '?'}</span>
       </div>
 
+      {/* Message Type Selector */}
+      <div className="mb-3">
+        <label className="text-zinc-400 text-[10px] uppercase tracking-wider block mb-1.5">
+          Type (種別)
+        </label>
+        <div className="flex gap-2">
+          <button
+            className={cn(
+              'flex-1 text-xs px-3 py-1.5 rounded border transition-colors flex items-center justify-center gap-1.5',
+              messageType === 'simple'
+                ? 'bg-zinc-700 border-zinc-500 text-white'
+                : 'bg-zinc-900 border-zinc-700 text-zinc-500 hover:text-zinc-300',
+            )}
+            onClick={() => { setMessageType('simple'); }}
+          >
+            <span>▶</span> Simple
+          </button>
+          <button
+            className={cn(
+              'flex-1 text-xs px-3 py-1.5 rounded border transition-colors flex items-center justify-center gap-1.5',
+              messageType === 'interface'
+                ? 'bg-blue-600/20 border-blue-500/50 text-blue-300'
+                : 'bg-zinc-900 border-zinc-700 text-zinc-500 hover:text-zinc-300',
+            )}
+            onClick={() => { setMessageType('interface'); }}
+          >
+            <span>▷</span> Interface
+          </button>
+        </div>
+      </div>
+
       {/* Message Name */}
       <div className="mb-2">
         <label className="text-zinc-400 text-[10px] uppercase tracking-wider block mb-1">
-          Name (何を)
+          Name (何をするか)
         </label>
         <input
           type="text"

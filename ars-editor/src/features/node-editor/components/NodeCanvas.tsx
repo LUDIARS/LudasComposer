@@ -90,11 +90,13 @@ export function NodeCanvas() {
     setSelectedEdgeId(edge.id);
   }, []);
 
+  const cancelMessageCreation = useEditorStore((s) => s.cancelMessageCreation);
   const onPaneClick = useCallback(() => {
     closeContextMenu();
     setSelectedEdgeId(null);
     setFabOpen(false);
-  }, [closeContextMenu]);
+    cancelMessageCreation();
+  }, [closeContextMenu, cancelMessageCreation]);
 
   const handleFabAdd = useCallback((actorType: ActorType) => {
     if (!activeScene) return;
