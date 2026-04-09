@@ -79,10 +79,11 @@ pub fn load_project_impl(path: String) -> Result<Project, String> {
 }
 
 pub fn get_default_project_path_impl() -> Result<String, String> {
-    let home = dirs_next::document_dir()
-        .or_else(dirs_next::home_dir)
-        .ok_or_else(|| "Cannot determine home directory".to_string())?;
-    let path: PathBuf = home.join("ars-projects");
+    // ARS_PROJECT_DIR > cwd を基準に ./ars-projects
+    let base = std::env::var("ARS_PROJECT_DIR")
+        .map(PathBuf::from)
+        .unwrap_or_else(|_| std::env::current_dir().unwrap_or_else(|_| PathBuf::from(".")));
+    let path: PathBuf = base.join("ars-projects");
     fs::create_dir_all(&path)
         .map_err(|e| format!("Failed to create directory: {}", e))?;
     Ok(path.to_string_lossy().to_string())

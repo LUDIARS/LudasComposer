@@ -40,9 +40,10 @@ export function ContextMenu({ flowPosition }: ContextMenuProps) {
         name: labels[actorType],
         role: 'actor',
         actorType,
-        requirements: { overview: '', goals: '', role: '', behavior: '' },
+        requirements: { overview: [], goals: [], role: [], behavior: [] },
         actorStates: [],
         flexibleContent: '',
+        displays: [],
         position: flowPosition,
         subSceneId: null,
       });

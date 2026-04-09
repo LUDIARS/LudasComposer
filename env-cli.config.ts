@@ -9,9 +9,11 @@ const config: EnvCliConfig = {
    */
   infraKeys: {
     // ─── Ars Web Server ───────────────────────────────────
-    ARS_LISTEN_ADDR: "0.0.0.0:5173",
+    ARS_AXUM_ADDR: "0.0.0.0:5173",
+    ARS_PROJECT_DIR: ".",
 
     // ─── Vite Dev Server ────────────────────────────────────
+    ARS_FRONTEND_PORT: "5174",
     ARS_BACKEND_URL: "http://localhost:5173",
     VITE_ALLOWED_HOSTS: "",
 

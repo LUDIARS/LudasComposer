@@ -1,4 +1,4 @@
-import { memo } from 'react';
+import { memo, useState, useRef, useCallback } from 'react';
 import { Handle, Position, type NodeProps } from '@xyflow/react';
 import { useProjectStore } from '@/stores/projectStore';
 import { useEditorStore } from '@/stores/editorStore';
@@ -18,7 +18,26 @@ export const ActorNode = memo(function ActorNode({ data, selected }: NodeProps<A
   const duplicateActor = useProjectStore((s) => s.duplicateActor);
   const createPrefab = useProjectStore((s) => s.createPrefab);
   const setActorType = useProjectStore((s) => s.setActorType);
+  const renameActor = useProjectStore((s) => s.renameActor);
   const colors = ROLE_COLORS[nodeData.role];
+
+  const [editing, setEditing] = useState(false);
+  const [editName, setEditName] = useState('');
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  const startEditing = useCallback(() => {
+    setEditName(nodeData.name);
+    setEditing(true);
+    requestAnimationFrame(() => inputRef.current?.select());
+  }, [nodeData.name]);
+
+  const commitName = useCallback(() => {
+    setEditing(false);
+    const trimmed = editName.trim();
+    if (trimmed && trimmed !== nodeData.name && activeSceneId) {
+      renameActor(activeSceneId, nodeData.actorId, trimmed);
+    }
+  }, [editName, nodeData.name, nodeData.actorId, activeSceneId, renameActor]);
 
   const subSceneName = actor?.subSceneId ? scenes[actor.subSceneId]?.name : null;
   const actorType = (actor?.actorType ?? 'simple') as ActorType;
@@ -36,7 +55,26 @@ export const ActorNode = memo(function ActorNode({ data, selected }: NodeProps<A
     >
       {/* Header */}
       <div className={cn('px-3 py-2 rounded-t-md flex items-center justify-between', colors.header)}>
-        <span className="text-white font-semibold text-sm truncate">{nodeData.name}</span>
+        {editing ? (
+          <input
+            ref={inputRef}
+            className="bg-transparent text-white font-semibold text-sm border-b border-white/50 outline-none w-full mr-2"
+            value={editName}
+            onChange={(e) => setEditName(e.target.value)}
+            onBlur={commitName}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') commitName();
+              if (e.key === 'Escape') setEditing(false);
+            }}
+          />
+        ) : (
+          <span
+            className="text-white font-semibold text-sm truncate cursor-text"
+            onDoubleClick={startEditing}
+          >
+            {nodeData.name}
+          </span>
+        )}
         <div className="flex items-center gap-1.5 ml-2">
           <span className={cn('text-[10px] px-1.5 py-0.5 rounded font-medium', typeColors.badge, typeColors.text)}>
             {ACTOR_TYPE_LABELS[actorType]}
@@ -70,26 +108,30 @@ export const ActorNode = memo(function ActorNode({ data, selected }: NodeProps<A
       {/* Requirements */}
       <div className="px-3 py-2 border-t border-zinc-700 space-y-1">
         <div className="text-zinc-400 text-[10px] font-semibold uppercase tracking-wider">Requirements</div>
-        {requirements && (requirements.overview || requirements.goals || requirements.role || requirements.behavior) ? (
+        {requirements && (requirements.overview?.length || requirements.goals?.length || requirements.role?.length || requirements.behavior?.length) ? (
           <div className="space-y-0.5">
-            {requirements.overview && (
-              <div className="text-xs text-zinc-300 truncate">
-                <span className="text-zinc-500">概要: </span>{requirements.overview}
+            {requirements.overview?.length > 0 && (
+              <div className="text-xs text-zinc-300">
+                <span className="text-zinc-500">概要: </span>
+                {requirements.overview.map((item, i) => <div key={i} className="truncate pl-3">• {item}</div>)}
               </div>
             )}
-            {requirements.goals && (
-              <div className="text-xs text-zinc-300 truncate">
-                <span className="text-zinc-500">達成: </span>{requirements.goals}
+            {requirements.goals?.length > 0 && (
+              <div className="text-xs text-zinc-300">
+                <span className="text-zinc-500">達成: </span>
+                {requirements.goals.map((item, i) => <div key={i} className="truncate pl-3">• {item}</div>)}
               </div>
             )}
-            {requirements.role && (
-              <div className="text-xs text-zinc-300 truncate">
-                <span className="text-zinc-500">役割: </span>{requirements.role}
+            {requirements.role?.length > 0 && (
+              <div className="text-xs text-zinc-300">
+                <span className="text-zinc-500">役割: </span>
+                {requirements.role.map((item, i) => <div key={i} className="truncate pl-3">• {item}</div>)}
               </div>
             )}
-            {requirements.behavior && (
-              <div className="text-xs text-zinc-300 truncate">
-                <span className="text-zinc-500">挙動: </span>{requirements.behavior}
+            {requirements.behavior?.length > 0 && (
+              <div className="text-xs text-zinc-300">
+                <span className="text-zinc-500">挙動: </span>
+                {requirements.behavior.map((item, i) => <div key={i} className="truncate pl-3">• {item}</div>)}
               </div>
             )}
           </div>
@@ -135,6 +177,28 @@ export const ActorNode = memo(function ActorNode({ data, selected }: NodeProps<A
           ) : (
             <div className="text-zinc-600 text-[10px] italic mt-0.5">No content</div>
           )}
+        </div>
+      )}
+
+      {/* Displays (表示物) */}
+      {actor && (actor.displays?.length ?? 0) > 0 && (
+        <div className="px-3 py-2 border-t border-zinc-700">
+          <div className="text-orange-400 text-[10px] font-semibold uppercase tracking-wider">
+            Displays ({actor.displays.length})
+          </div>
+          <div className="mt-1 space-y-0.5">
+            {actor.displays.slice(0, 4).map((display) => (
+              <div key={display.id} className="text-[10px] text-zinc-400 truncate">
+                <span className="text-orange-500/70">&#9632;</span> {display.name}
+                {display.satisfies.length > 0 && (
+                  <span className="text-zinc-600 ml-1">({display.satisfies.length} req)</span>
+                )}
+              </div>
+            ))}
+            {actor.displays.length > 4 && (
+              <div className="text-[10px] text-zinc-600">+{actor.displays.length - 4} more</div>
+            )}
+          </div>
         </div>
       )}
 
@@ -190,16 +254,16 @@ export const ActorNode = memo(function ActorNode({ data, selected }: NodeProps<A
         </button>
       </div>
 
-      {/* Domain connection handles - simple input/output */}
+      {/* Connection handles (minimal style — edges use arrow markers) */}
       <Handle
         type="target"
         position={Position.Left}
-        className="!w-3 !h-3 !bg-blue-400 !border-blue-600"
+        className="!w-2 !h-2 !bg-zinc-500 !border-zinc-600 !opacity-0 hover:!opacity-100 !transition-opacity"
       />
       <Handle
         type="source"
         position={Position.Right}
-        className="!w-3 !h-3 !bg-green-400 !border-green-600"
+        className="!w-2 !h-2 !bg-zinc-500 !border-zinc-600 !opacity-0 hover:!opacity-100 !transition-opacity"
       />
     </div>
   );

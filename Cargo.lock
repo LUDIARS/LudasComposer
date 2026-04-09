@@ -131,6 +131,7 @@ version = "0.1.0"
 dependencies = [
  "ars-core",
  "ars-project",
+ "ars-secrets",
  "async-trait",
  "axum",
  "axum-extra",

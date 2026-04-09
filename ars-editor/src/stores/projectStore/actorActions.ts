@@ -1,4 +1,4 @@
-import type { Project, Actor, Requirements, ActorState } from '@/types/domain';
+import type { Project, Actor, Requirements, ActorState, Display } from '@/types/domain';
 import { generateId } from '@/lib/utils';
 import { updateScene, updateActor } from './storeHelpers';
 
@@ -12,9 +12,10 @@ export function addActorAction(
     ...actorData,
     id,
     actorType: actorData.actorType ?? 'simple',
-    requirements: actorData.requirements ?? { overview: '', goals: '', role: '', behavior: '' },
+    requirements: actorData.requirements ?? { overview: [], goals: [], role: [], behavior: [] },
     actorStates: actorData.actorStates ?? [],
     flexibleContent: actorData.flexibleContent ?? '',
+    displays: actorData.displays ?? [],
     subSceneId: actorData.subSceneId ?? null,
   };
   return {
@@ -139,6 +140,52 @@ export function setFlexibleContentAction(
   flexibleContent: string,
 ): Project {
   return updateActor(project, sceneId, actorId, (actor) => ({ ...actor, flexibleContent }));
+}
+
+// ── Display CRUD ──────────────────────────────────────
+
+export function addDisplayAction(
+  project: Project,
+  sceneId: string,
+  actorId: string,
+  name: string,
+): { project: Project; displayId: string } {
+  const displayId = generateId();
+  const display: Display = { id: displayId, name, satisfies: [], pipelineConfig: '' };
+  return {
+    project: updateActor(project, sceneId, actorId, (actor) => ({
+      ...actor,
+      displays: [...(actor.displays ?? []), display],
+    })),
+    displayId,
+  };
+}
+
+export function removeDisplayAction(
+  project: Project,
+  sceneId: string,
+  actorId: string,
+  displayId: string,
+): Project {
+  return updateActor(project, sceneId, actorId, (actor) => ({
+    ...actor,
+    displays: (actor.displays ?? []).filter((d) => d.id !== displayId),
+  }));
+}
+
+export function updateDisplayAction(
+  project: Project,
+  sceneId: string,
+  actorId: string,
+  displayId: string,
+  updates: Partial<Display>,
+): Project {
+  return updateActor(project, sceneId, actorId, (actor) => ({
+    ...actor,
+    displays: (actor.displays ?? []).map((d) =>
+      d.id === displayId ? { ...d, ...updates } : d,
+    ),
+  }));
 }
 
 export function setActorSubSceneAction(

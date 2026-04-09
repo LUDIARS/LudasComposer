@@ -51,9 +51,13 @@ pub async fn serve(addr: std::net::SocketAddr, static_dir: Option<String>) -> Re
         .route("/ws/collab", get(collab::ws_handler))
         .with_state(collab_state);
 
+    let health_router = Router::new()
+        .route("/api/health", get(|| async { "ok" }));
+
     let app = editor_router
         .merge(module_router)
         .merge(collab_router)
+        .merge(health_router)
         .layer(cors);
 
     let app = if let Some(ref dir) = static_dir {

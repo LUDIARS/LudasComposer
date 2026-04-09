@@ -17,8 +17,10 @@ import { useProjectStore } from '@/stores/projectStore';
 import { generateId } from '@/lib/utils';
 import { useIsMobile } from '@/hooks/useIsMobile';
 import * as backend from '@/lib/backend';
+import { useAutoSave } from '@/hooks/useAutoSave';
 
 export function EditorPage() {
+  useAutoSave();
   const componentPickerTarget = useEditorStore((s) => s.componentPickerTarget);
   const sequenceEditorTarget = useEditorStore((s) => s.sequenceEditorTarget);
   const subScenePickerTarget = useEditorStore((s) => s.subScenePickerTarget);

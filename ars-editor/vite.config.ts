@@ -3,6 +3,7 @@ import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 import path from 'path'
 
+const frontendPort = Number(process.env.ARS_FRONTEND_PORT) || 5174
 const backendUrl = process.env.ARS_BACKEND_URL || 'http://localhost:5173'
 const backendWs = backendUrl.replace(/^http/, 'ws')
 const extraHosts = process.env.VITE_ALLOWED_HOSTS?.split(',').filter(Boolean) || []
@@ -16,7 +17,7 @@ export default defineConfig({
   },
   clearScreen: false,
   server: {
-    port: 5174,
+    port: frontendPort,
     strictPort: true,
     allowedHosts: [...extraHosts],
     proxy: {

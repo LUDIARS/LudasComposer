@@ -52,9 +52,9 @@ function ActorPreviewNode({
       </div>
 
       {/* Requirements preview */}
-      {actor.requirements?.overview && (
+      {actor.requirements?.overview?.length > 0 && (
         <div className="text-xs text-zinc-400 mt-1 truncate">
-          {actor.requirements.overview}
+          {actor.requirements.overview[0]}{actor.requirements.overview.length > 1 && ` (+${actor.requirements.overview.length - 1})`}
         </div>
       )}
 

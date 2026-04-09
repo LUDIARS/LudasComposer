@@ -12,8 +12,10 @@ import { ProjectManager } from './ProjectManager';
 import { ProjectWizard } from './ProjectWizard';
 import { ArchetypeWizard } from '@/features/archetype-wizard';
 import { GettingStartedGuide } from './GettingStartedGuide';
+import { ProjectListDialog } from './ProjectListDialog';
 import { HelpTooltip } from './HelpTooltip';
 import { helpContent } from '@/lib/help-content';
+import { useBackendHealth } from '@/hooks/useBackendHealth';
 
 export function Toolbar() {
   const { t } = useI18n();
@@ -39,8 +41,10 @@ export function Toolbar() {
   const [showWizard, setShowWizard] = useState(false);
   const [showArchetypeWizard, setShowArchetypeWizard] = useState(false);
   const [showGuide, setShowGuide] = useState(false);
+  const [showProjectList, setShowProjectList] = useState(false);
   const [pushing, setPushing] = useState(false);
   const isMobile = useIsMobile();
+  const backendHealth = useBackendHealth();
 
   const showStatus = (msg: string) => {
     setStatus(msg);
@@ -86,24 +90,7 @@ export function Toolbar() {
         showStatus(t('toolbar.toast.loadFailed'));
       }
     } else {
-      const input = document.createElement('input');
-      input.type = 'file';
-      input.accept = '.json';
-      input.onchange = async () => {
-        const file = input.files?.[0];
-        if (!file) return;
-        const text = await file.text();
-        try {
-          const parsed = JSON.parse(text);
-          loadProject(parsed);
-          clearHistory();
-          markSaved();
-          showStatus(t('toolbar.toast.loaded'));
-        } catch {
-          showStatus(t('toolbar.toast.invalidFile'));
-        }
-      };
-      input.click();
+      setShowProjectList(true);
     }
   }, [loadProject, setProjectPath, markSaved]);
 
@@ -197,6 +184,13 @@ export function Toolbar() {
         {status && (
           <span className="text-green-400 ml-1">{status}</span>
         )}
+        <span
+          className={`w-2 h-2 rounded-full ml-1 ${
+            backendHealth === 'ok' ? 'bg-green-500' :
+            backendHealth === 'down' ? 'bg-red-500 animate-pulse' :
+            'bg-zinc-500'
+          }`}
+        />
 
         {/* Dropdown menu */}
         {mobileMenuOpen && (
@@ -329,6 +323,9 @@ export function Toolbar() {
         {showGuide && (
           <GettingStartedGuide onClose={() => setShowGuide(false)} />
         )}
+        {showProjectList && (
+          <ProjectListDialog onClose={() => setShowProjectList(false)} />
+        )}
       </div>
     );
   }
@@ -450,7 +447,18 @@ export function Toolbar() {
 
       {/* Project name & status */}
       <div className="flex-1" />
-      {lastSavedLabel && !status && (
+      <span
+        className={`w-2 h-2 rounded-full mr-2 ${
+          backendHealth === 'ok' ? 'bg-green-500' :
+          backendHealth === 'down' ? 'bg-red-500 animate-pulse' :
+          'bg-zinc-500'
+        }`}
+        title={backendHealth === 'ok' ? 'Backend: connected' : backendHealth === 'down' ? 'Backend: offline' : 'Backend: checking...'}
+      />
+      {backendHealth === 'down' && (
+        <span className="text-red-400 text-[10px] mr-2">Backend offline</span>
+      )}
+      {lastSavedLabel && !status && backendHealth !== 'down' && (
         <span className="text-zinc-600 mr-2">{lastSavedLabel}</span>
       )}
       <span className="text-zinc-500 truncate max-w-[200px]">
@@ -501,6 +509,9 @@ export function Toolbar() {
       )}
       {showGuide && (
         <GettingStartedGuide onClose={() => setShowGuide(false)} />
+      )}
+      {showProjectList && (
+        <ProjectListDialog onClose={() => setShowProjectList(false)} />
       )}
     </div>
   );

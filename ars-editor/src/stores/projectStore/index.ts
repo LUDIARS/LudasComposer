@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import type { Project, Actor, Message, Component, Scene, Requirements, ActorState } from '@/types/domain';
+import type { Project, Actor, Message, Component, Scene, Requirements, ActorState, Display } from '@/types/domain';
 
 import { createSceneAction, deleteSceneAction, renameSceneAction } from './sceneActions';
 import {
@@ -8,6 +8,7 @@ import {
   setActorTypeAction, setActorRequirementsAction,
   setActorStatesAction, addActorStateAction, removeActorStateAction, updateActorStateAction,
   setFlexibleContentAction, setActorSubSceneAction,
+  addDisplayAction, removeDisplayAction, updateDisplayAction,
 } from './actorActions';
 import { createPrefabAction, deletePrefabAction, renamePrefabAction, instantiatePrefabAction } from './prefabActions';
 import { addMessageAction, removeMessageAction, updateMessageAction, upsertComponentAction, deleteComponentAction } from './connectionActions';
@@ -38,6 +39,11 @@ interface ProjectActions {
 
   // Flexible content
   setFlexibleContent: (sceneId: string, actorId: string, content: string) => void;
+
+  // Display actions
+  addDisplay: (sceneId: string, actorId: string, name: string) => string;
+  removeDisplay: (sceneId: string, actorId: string, displayId: string) => void;
+  updateDisplay: (sceneId: string, actorId: string, displayId: string, updates: Partial<Display>) => void;
 
   // SubScene actions
   setActorSubScene: (sceneId: string, actorId: string, subSceneId: string | null) => void;
@@ -115,6 +121,15 @@ export const useProjectStore = create<ProjectState & ProjectActions>()((set, get
   // Flexible content
   setFlexibleContent: (sceneId, actorId, content) => set((state) => ({ project: setFlexibleContentAction(state.project, sceneId, actorId, content) })),
 
+  // Display
+  addDisplay: (sceneId, actorId, name) => {
+    const { project, displayId } = addDisplayAction(get().project, sceneId, actorId, name);
+    set({ project });
+    return displayId;
+  },
+  removeDisplay: (sceneId, actorId, displayId) => set((state) => ({ project: removeDisplayAction(state.project, sceneId, actorId, displayId) })),
+  updateDisplay: (sceneId, actorId, displayId, updates) => set((state) => ({ project: updateDisplayAction(state.project, sceneId, actorId, displayId, updates) })),
+
   // SubScene
   setActorSubScene: (sceneId, actorId, subSceneId) => set((state) => ({ project: setActorSubSceneAction(state.project, sceneId, actorId, subSceneId) })),
 
@@ -158,9 +173,10 @@ export const useProjectStore = create<ProjectState & ProjectActions>()((set, get
                 {
                   ...actor,
                   actorType: actor.actorType ?? 'simple',
-                  requirements: actor.requirements ?? { overview: '', goals: '', role: '', behavior: '' },
+                  requirements: actor.requirements ?? { overview: [], goals: [], role: [], behavior: [] },
                   actorStates: actor.actorStates ?? [],
                   flexibleContent: actor.flexibleContent ?? '',
+                  displays: actor.displays ?? [],
                   subSceneId: actor.subSceneId ?? null,
                 },
               ]),

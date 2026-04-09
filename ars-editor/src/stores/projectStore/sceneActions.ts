@@ -9,9 +9,10 @@ export function createSceneAction(project: Project, name: string): { project: Pr
     name,
     role: 'scene',
     actorType: 'simple',
-    requirements: { overview: '', goals: '', role: '', behavior: '' },
+    requirements: { overview: [], goals: [], role: [], behavior: [] },
     actorStates: [],
     flexibleContent: '',
+    displays: [],
     position: { x: 250, y: 50 },
     subSceneId: null,
   };

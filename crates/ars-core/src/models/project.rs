@@ -65,13 +65,43 @@ pub struct Position {
 #[ts(export)]
 pub struct Requirements {
     /// 概要
-    pub overview: String,
+    #[serde(default)]
+    pub overview: Vec<String>,
     /// 達成する事
-    pub goals: String,
+    #[serde(default)]
+    pub goals: Vec<String>,
     /// 役割
-    pub role: String,
+    #[serde(default)]
+    pub role: Vec<String>,
     /// 挙動
-    pub behavior: String,
+    #[serde(default)]
+    pub behavior: Vec<String>,
+}
+
+/// 表示物エンティティ — 外部エンジンのパイプライン依存処理
+///
+/// アクター内に内包され、要件定義を満たす表示レイヤーを表現する。
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
+#[ts(export)]
+pub struct Display {
+    pub id: String,
+    pub name: String,
+    /// この表示物が満たす要件（要件フィールド名 + インデックスの組）
+    pub satisfies: Vec<RequirementRef>,
+    /// パイプライン設定・説明
+    #[serde(rename = "pipelineConfig")]
+    #[serde(default)]
+    pub pipeline_config: String,
+}
+
+/// 要件への参照
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
+#[ts(export)]
+pub struct RequirementRef {
+    /// 要件フィールド名: "overview" | "goals" | "role" | "behavior"
+    pub field: String,
+    /// フィールド内のインデックス
+    pub index: usize,
 }
 
 /// ステートマシン内の1つのステート定義 (State型アクター用)
@@ -106,6 +136,9 @@ pub struct Actor {
     #[serde(rename = "flexibleContent")]
     #[serde(default)]
     pub flexible_content: String,
+    /// 表示物エンティティ（外部エンジンパイプライン依存）
+    #[serde(default)]
+    pub displays: Vec<Display>,
     pub position: Position,
     #[serde(rename = "subSceneId")]
     #[serde(skip_serializing_if = "Option::is_none")]

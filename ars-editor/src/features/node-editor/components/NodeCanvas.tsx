@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useRef, useState, useMemo } from 'react';
 import {
   ReactFlow,
   Background,
@@ -24,6 +24,10 @@ import { CollabLocks } from './CollabLocks';
 import { MessageEditor } from './MessageEditor';
 import { HelpTooltip } from '@/components/HelpTooltip';
 import { helpContent } from '@/lib/help-content';
+import { useIsMobile } from '@/hooks/useIsMobile';
+import { useProjectStore } from '@/stores/projectStore';
+import { generateId } from '@/lib/utils';
+import type { ActorType } from '@/types/domain';
 import type { AnyFlowNode } from '../types/nodes';
 
 const nodeTypes = {
@@ -47,7 +51,10 @@ export function NodeCanvas() {
   const [rfInstance, setRfInstance] = useState<ReactFlowInstance<AnyFlowNode> | null>(null);
   const [flowClickPos, setFlowClickPos] = useState<{ x: number; y: number } | null>(null);
   const [selectedEdgeId, setSelectedEdgeId] = useState<string | null>(null);
+  const [fabOpen, setFabOpen] = useState(false);
   const wrapperRef = useRef<HTMLDivElement>(null);
+  const isMobile = useIsMobile();
+  const addActor = useProjectStore((s) => s.addActor);
 
   const onContextMenu = useCallback(
     (event: React.MouseEvent) => {
@@ -87,7 +94,32 @@ export function NodeCanvas() {
   const onPaneClick = useCallback(() => {
     closeContextMenu();
     setSelectedEdgeId(null);
+    setFabOpen(false);
   }, [closeContextMenu]);
+
+  const handleFabAdd = useCallback((actorType: ActorType) => {
+    if (!activeScene) return;
+    const viewport = rfInstance?.getViewport();
+    const centerX = viewport ? (-viewport.x + 200) / viewport.zoom : 250;
+    const centerY = viewport ? (-viewport.y + 300) / viewport.zoom : 200;
+    const labels: Record<ActorType, string> = {
+      simple: 'New Domain',
+      state: 'New State Domain',
+      flexible: 'New Flexible Domain',
+    };
+    addActor(activeScene.id, {
+      name: labels[actorType],
+      role: 'actor',
+      actorType,
+      requirements: { overview: [], goals: [], role: [], behavior: [] },
+      actorStates: [],
+      flexibleContent: '',
+      displays: [],
+      position: { x: centerX, y: centerY },
+      subSceneId: null,
+    });
+    setFabOpen(false);
+  }, [activeScene, rfInstance, addActor]);
 
   const onMouseMove = useCallback(
     (event: React.MouseEvent) => {
@@ -157,6 +189,43 @@ export function NodeCanvas() {
           messageId={selectedEdgeId}
           onClose={() => setSelectedEdgeId(null)}
         />
+      )}
+
+      {/* Mobile FAB */}
+      {isMobile && (
+        <div className="absolute bottom-4 right-4 z-20 flex flex-col-reverse items-end gap-2">
+          <button
+            onClick={() => setFabOpen(!fabOpen)}
+            className="w-14 h-14 rounded-full bg-blue-600 text-white text-2xl shadow-lg active:bg-blue-500 transition-colors flex items-center justify-center"
+          >
+            {fabOpen ? '×' : '+'}
+          </button>
+          {fabOpen && (
+            <>
+              <button
+                onClick={() => handleFabAdd('simple')}
+                className="flex items-center gap-2 px-4 py-2.5 rounded-full bg-zinc-700 text-zinc-200 text-sm shadow-lg active:bg-zinc-600"
+              >
+                <span className="w-2 h-2 rounded-full bg-zinc-400" />
+                Simple
+              </button>
+              <button
+                onClick={() => handleFabAdd('state')}
+                className="flex items-center gap-2 px-4 py-2.5 rounded-full bg-zinc-700 text-zinc-200 text-sm shadow-lg active:bg-zinc-600"
+              >
+                <span className="w-2 h-2 rounded-full bg-amber-400" />
+                State
+              </button>
+              <button
+                onClick={() => handleFabAdd('flexible')}
+                className="flex items-center gap-2 px-4 py-2.5 rounded-full bg-zinc-700 text-zinc-200 text-sm shadow-lg active:bg-zinc-600"
+              >
+                <span className="w-2 h-2 rounded-full bg-purple-400" />
+                Flexible
+              </button>
+            </>
+          )}
+        </div>
       )}
     </div>
   );

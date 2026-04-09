@@ -4,6 +4,8 @@
 export type { Actor } from './Actor';
 export type { ActorState } from './ActorState';
 export type { Component } from './Component';
+export type { Display } from './Display';
+export type { RequirementRef } from './RequirementRef';
 export type { GitProjectInfo } from './GitProjectInfo';
 export type { GitRepo } from './GitRepo';
 export type { Message } from './Message';

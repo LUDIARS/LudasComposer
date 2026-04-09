@@ -165,7 +165,9 @@ impl<'a> PromptGenerator<'a> {
         for actor in scene.actors.values() {
             lines.push(format!("- {} [{}:{}]", actor.name, actor.role, actor.actor_type));
             if !actor.requirements.overview.is_empty() {
-                lines.push(format!("  概要: {}", actor.requirements.overview));
+                for item in &actor.requirements.overview {
+                    lines.push(format!("  - 概要: {}", item));
+                }
             }
         }
 

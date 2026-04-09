@@ -2,8 +2,9 @@ use std::net::SocketAddr;
 
 #[tokio::main]
 async fn main() {
-    // リッスンアドレス解決: ARS_LISTEN_ADDR > ARS_HOST+ARS_PORT > CLI引数 > デフォルト
+    // リッスンアドレス解決: ARS_AXUM_ADDR > ARS_HOST+ARS_PORT > CLI引数 > デフォルト
     let addr = resolve_listen_addr();
+    eprintln!("[ars-web-server] Resolved listen address: {}", addr);
 
     let static_dir = std::env::args().nth(1);
 
@@ -14,10 +15,10 @@ async fn main() {
 }
 
 fn resolve_listen_addr() -> SocketAddr {
-    // 1. ARS_LISTEN_ADDR (e.g. "0.0.0.0:5173")
-    if let Ok(val) = std::env::var("ARS_LISTEN_ADDR") {
+    // 1. ARS_AXUM_ADDR (e.g. "0.0.0.0:5173")
+    if let Ok(val) = std::env::var("ARS_AXUM_ADDR") {
         return val.parse().unwrap_or_else(|e| {
-            eprintln!("Invalid ARS_LISTEN_ADDR '{}': {}", val, e);
+            eprintln!("Invalid ARS_AXUM_ADDR '{}': {}", val, e);
             std::process::exit(1);
         });
     }

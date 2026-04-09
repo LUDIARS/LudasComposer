@@ -3,7 +3,7 @@ import { useProjectStore } from '@/stores/projectStore';
 import { useEditorStore } from '@/stores/editorStore';
 import { HelpTooltip } from '@/components/HelpTooltip';
 import { helpContent } from '@/lib/help-content';
-import type { ActorType, ActorState } from '@/types/domain';
+import type { ActorType, ActorState, Display, RequirementRef, Requirements } from '@/types/domain';
 
 export function BehaviorEditor() {
   const activeSceneId = useProjectStore((s) => s.project.activeSceneId);
@@ -14,6 +14,9 @@ export function BehaviorEditor() {
   const addActorState = useProjectStore((s) => s.addActorState);
   const removeActorState = useProjectStore((s) => s.removeActorState);
   const updateActorState = useProjectStore((s) => s.updateActorState);
+  const addDisplay = useProjectStore((s) => s.addDisplay);
+  const removeDisplay = useProjectStore((s) => s.removeDisplay);
+  const updateDisplay = useProjectStore((s) => s.updateDisplay);
   const selectedNodeIds = useEditorStore((s) => s.selectedNodeIds);
 
   if (!activeSceneId) {
@@ -48,11 +51,7 @@ export function BehaviorEditor() {
   }
 
   const actorType = (actor.actorType ?? 'simple') as ActorType;
-  const req = actor.requirements ?? { overview: '', goals: '', role: '', behavior: '' };
-
-  const handleReqChange = (field: string, value: string) => {
-    setActorRequirements(activeSceneId, actorId, { ...req, [field]: value });
-  };
+  const req = actor.requirements ?? { overview: [], goals: [], role: [], behavior: [] };
 
   return (
     <div className="h-full flex flex-col overflow-hidden">
@@ -91,10 +90,11 @@ export function BehaviorEditor() {
         {/* Requirements */}
         <div className="px-4 py-3 border-b border-zinc-700 space-y-2">
           <div className="text-xs text-zinc-400 font-semibold uppercase tracking-wider">Requirements</div>
-          <RequirementsField label="概要 (Overview)" value={req.overview} onChange={(v) => handleReqChange('overview', v)} />
-          <RequirementsField label="達成する事 (Goals)" value={req.goals} onChange={(v) => handleReqChange('goals', v)} />
-          <RequirementsField label="役割 (Role)" value={req.role} onChange={(v) => handleReqChange('role', v)} />
-          <RequirementsField label="挙動 (Behavior)" value={req.behavior} onChange={(v) => handleReqChange('behavior', v)} multiline />
+          <p className="text-[10px] text-zinc-600">単一責任を満たすよう、要件は箇条書きで小分けにしてください。Enter で確定して次の要件を追加できます。</p>
+          <RequirementsList label="概要 (Overview)" items={req.overview} onChange={(v) => setActorRequirements(activeSceneId, actorId, { ...req, overview: v })} />
+          <RequirementsList label="達成する事 (Goals)" items={req.goals} onChange={(v) => setActorRequirements(activeSceneId, actorId, { ...req, goals: v })} />
+          <RequirementsList label="役割 (Role)" items={req.role} onChange={(v) => setActorRequirements(activeSceneId, actorId, { ...req, role: v })} />
+          <RequirementsList label="挙動 (Behavior)" items={req.behavior} onChange={(v) => setActorRequirements(activeSceneId, actorId, { ...req, behavior: v })} />
         </div>
 
         {/* State Machine Editor (State type only) */}
@@ -123,35 +123,69 @@ export function BehaviorEditor() {
             />
           </div>
         )}
+
+        {/* Displays (表示物) */}
+        <div className="px-4 py-3 border-b border-zinc-700 space-y-2">
+          <div className="text-xs text-orange-400 font-semibold uppercase tracking-wider">Displays (表示物)</div>
+          <p className="text-[10px] text-zinc-600">外部エンジンのパイプライン依存処理。要件を満たす表示レイヤーを定義します。</p>
+          <DisplayEditor
+            displays={actor.displays ?? []}
+            requirements={req}
+            onAdd={(name) => addDisplay(activeSceneId, actorId, name)}
+            onRemove={(displayId) => removeDisplay(activeSceneId, actorId, displayId)}
+            onUpdate={(displayId, updates) => updateDisplay(activeSceneId, actorId, displayId, updates)}
+          />
+        </div>
       </div>
     </div>
   );
 }
 
-function RequirementsField({ label, value, onChange, multiline }: {
+function RequirementsList({ label, items, onChange }: {
   label: string;
-  value: string;
-  onChange: (value: string) => void;
-  multiline?: boolean;
+  items: string[];
+  onChange: (items: string[]) => void;
 }) {
+  const [draft, setDraft] = useState('');
+
+  const addItem = () => {
+    const trimmed = draft.trim();
+    if (!trimmed) return;
+    onChange([...items, trimmed]);
+    setDraft('');
+  };
+
+  const removeItem = (index: number) => {
+    onChange(items.filter((_, i) => i !== index));
+  };
+
   return (
     <div>
       <label className="text-[10px] text-zinc-500 block mb-0.5">{label}</label>
-      {multiline ? (
-        <textarea
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-          rows={3}
-          className="w-full bg-zinc-900 border border-zinc-700 rounded px-2 py-1.5 text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-blue-500 resize-none"
-        />
-      ) : (
-        <input
-          type="text"
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-          className="w-full bg-zinc-900 border border-zinc-700 rounded px-2 py-1.5 text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-blue-500"
-        />
+      {items.length > 0 && (
+        <ul className="space-y-0.5 mb-1">
+          {items.map((item, idx) => (
+            <li key={idx} className="flex items-start gap-1 text-[11px] text-zinc-300 group">
+              <span className="text-zinc-600 mt-px">•</span>
+              <span className="flex-1">{item}</span>
+              <button
+                onClick={() => removeItem(idx)}
+                className="text-zinc-700 hover:text-red-400 text-[10px] opacity-0 group-hover:opacity-100 transition-opacity"
+              >
+                ×
+              </button>
+            </li>
+          ))}
+        </ul>
       )}
+      <input
+        type="text"
+        value={draft}
+        onChange={(e) => setDraft(e.target.value)}
+        onKeyDown={(e) => { if (e.key === 'Enter') addItem(); }}
+        placeholder="要件を入力して Enter..."
+        className="w-full bg-zinc-900 border border-zinc-700 rounded px-2 py-1.5 text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-blue-500"
+      />
     </div>
   );
 }
@@ -252,6 +286,117 @@ function StateEditor({ states, onAddState, onRemoveState, onUpdateState }: {
           className="text-amber-400 hover:text-amber-300 text-xs px-2 py-1.5 bg-zinc-800 rounded border border-zinc-700 disabled:opacity-30"
         >
           + State
+        </button>
+      </div>
+    </div>
+  );
+}
+
+const REQ_FIELDS = [
+  { key: 'overview', label: '概要' },
+  { key: 'goals', label: '達成' },
+  { key: 'role', label: '役割' },
+  { key: 'behavior', label: '挙動' },
+] as const;
+
+function DisplayEditor({ displays, requirements, onAdd, onRemove, onUpdate }: {
+  displays: Display[];
+  requirements: Requirements;
+  onAdd: (name: string) => void;
+  onRemove: (displayId: string) => void;
+  onUpdate: (displayId: string, updates: Partial<Display>) => void;
+}) {
+  const [newName, setNewName] = useState('');
+
+  const handleAdd = () => {
+    const name = newName.trim();
+    if (!name) return;
+    onAdd(name);
+    setNewName('');
+  };
+
+  const toggleSatisfy = (display: Display, field: string, index: number) => {
+    const exists = display.satisfies.some((r) => r.field === field && r.index === index);
+    const updated = exists
+      ? display.satisfies.filter((r) => !(r.field === field && r.index === index))
+      : [...display.satisfies, { field, index }];
+    onUpdate(display.id, { satisfies: updated });
+  };
+
+  return (
+    <div className="space-y-2">
+      {displays.map((display) => (
+        <div key={display.id} className="bg-zinc-900 rounded border border-orange-900/50 p-2">
+          <div className="flex items-center justify-between mb-1">
+            <input
+              className="bg-transparent text-orange-300 text-sm font-medium outline-none border-b border-transparent focus:border-orange-500 flex-1"
+              value={display.name}
+              onChange={(e) => onUpdate(display.id, { name: e.target.value })}
+            />
+            <button
+              onClick={() => onRemove(display.id)}
+              className="text-red-400 hover:text-red-300 text-xs px-1"
+            >
+              ×
+            </button>
+          </div>
+
+          {/* Pipeline Config */}
+          <textarea
+            value={display.pipelineConfig}
+            onChange={(e) => onUpdate(display.id, { pipelineConfig: e.target.value })}
+            placeholder="パイプライン設定..."
+            rows={2}
+            className="w-full bg-zinc-800 border border-zinc-700 rounded px-2 py-1 text-[11px] text-white placeholder-zinc-600 focus:outline-none focus:border-orange-500 resize-none mt-1"
+          />
+
+          {/* Satisfies Requirements */}
+          <div className="mt-1.5">
+            <div className="text-[10px] text-zinc-500 mb-0.5">満たす要件:</div>
+            {REQ_FIELDS.map(({ key, label }) => {
+              const items = requirements[key] ?? [];
+              if (items.length === 0) return null;
+              return (
+                <div key={key} className="mb-0.5">
+                  <span className="text-[10px] text-zinc-600">{label}:</span>
+                  {items.map((item, idx) => {
+                    const active = display.satisfies.some((r) => r.field === key && r.index === idx);
+                    return (
+                      <button
+                        key={idx}
+                        onClick={() => toggleSatisfy(display, key, idx)}
+                        className={`block w-full text-left text-[10px] pl-3 py-0.5 rounded transition-colors ${
+                          active
+                            ? 'text-orange-300 bg-orange-900/30'
+                            : 'text-zinc-500 hover:text-zinc-300'
+                        }`}
+                      >
+                        {active ? '✓' : '○'} {item}
+                      </button>
+                    );
+                  })}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      ))}
+
+      {/* Add new display */}
+      <div className="flex gap-1">
+        <input
+          className="flex-1 bg-zinc-800 text-white text-xs px-2 py-1.5 rounded border border-zinc-700 outline-none focus:border-orange-500"
+          placeholder="New display name..."
+          value={newName}
+          onChange={(e) => setNewName(e.target.value)}
+          onKeyDown={(e) => { if (e.key === 'Enter') handleAdd(); }}
+        />
+        <button
+          onClick={handleAdd}
+          disabled={!newName.trim()}
+          className="text-orange-400 hover:text-orange-300 text-xs px-2 py-1.5 bg-zinc-800 rounded border border-zinc-700 disabled:opacity-30"
+        >
+          + Display
         </button>
       </div>
     </div>
