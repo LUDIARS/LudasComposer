@@ -1,14 +1,7 @@
 import { useState, useCallback } from 'react';
 import { useProjectStore } from '@/stores/projectStore';
 import type { Action, ConcreteAction } from '@/types/domain';
-import type { ActionType } from '@/types/generated/ActionType';
 import { generateId } from '@/lib/utils';
-
-const ACTION_TYPE_LABELS: Record<ActionType, { label: string; color: string }> = {
-  interface: { label: 'Interface', color: 'var(--accent)' },
-  usecase: { label: 'UseCase', color: 'var(--green)' },
-  event: { label: 'Event', color: 'var(--orange)' },
-};
 
 export function ActionListView() {
   const project = useProjectStore((s) => s.project);
@@ -45,7 +38,6 @@ export function ActionListView() {
 
   return (
     <div className="flex-1 flex flex-col overflow-hidden" style={{ background: 'var(--bg)' }}>
-      {/* Header */}
       <div
         className="flex items-center justify-between px-4 py-3 shrink-0"
         style={{ borderBottom: '1px solid var(--border)' }}
@@ -63,7 +55,6 @@ export function ActionListView() {
         </button>
       </div>
 
-      {/* List */}
       <div className="flex-1 overflow-y-auto p-3 space-y-2">
         {actions.length === 0 ? (
           <div className="text-center py-8" style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>
@@ -98,7 +89,15 @@ export function ActionListView() {
 
 // ── Action Card ──────────────────────────────────────
 
-interface ActionCardProps {
+function ActionCard({
+  action,
+  scene,
+  isEditing,
+  onEdit,
+  onSave,
+  onCancel,
+  onDelete,
+}: {
   action: Action;
   scene: { messages: Array<{ id: string; name: string; actionIds: string[] }> };
   sceneId: string;
@@ -107,10 +106,7 @@ interface ActionCardProps {
   onSave: (updates: Partial<Action>) => void;
   onCancel: () => void;
   onDelete: () => void;
-}
-
-function ActionCard({ action, scene, isEditing, onEdit, onSave, onCancel, onDelete }: ActionCardProps) {
-  const typeInfo = ACTION_TYPE_LABELS[action.actionType];
+}) {
   const linkedMessages = scene.messages.filter(m => m.actionIds.includes(action.id));
 
   if (isEditing) {
@@ -130,42 +126,27 @@ function ActionCard({ action, scene, isEditing, onEdit, onSave, onCancel, onDele
       style={{ background: 'var(--bg-surface)', border: '1px solid var(--border)' }}
       onClick={onEdit}
     >
-      {/* Header */}
-      <div className="flex items-center gap-2 mb-1.5">
-        <span className="text-sm font-semibold" style={{ color: 'var(--text)' }}>{action.name}</span>
-        <span
-          className="text-[10px] px-1.5 py-0.5 rounded font-medium"
-          style={{
-            color: typeInfo.color,
-            background: `color-mix(in srgb, ${typeInfo.color} 15%, transparent)`,
-            border: `1px solid color-mix(in srgb, ${typeInfo.color} 30%, transparent)`,
-          }}
-        >
-          {typeInfo.label}
-        </span>
-      </div>
-
+      {/* Name + description */}
+      <div className="text-sm font-semibold mb-0.5" style={{ color: 'var(--text)' }}>{action.name}</div>
       {action.description && (
         <div className="text-xs mb-2" style={{ color: 'var(--text-muted)' }}>{action.description}</div>
       )}
 
-      {/* 抽象 (Abstract) */}
+      {/* 抽象 */}
       <div className="mb-2 rounded p-2" style={{ background: 'var(--bg)', border: '1px solid var(--border)' }}>
         <div className="text-[10px] font-semibold uppercase tracking-wider mb-1" style={{ color: 'var(--purple)' }}>
-          抽象 (Interface)
+          抽象
         </div>
         {action.baseClass && (
           <div className="text-xs" style={{ color: 'var(--text)' }}>
-            <span style={{ color: 'var(--text-muted)' }}>class: </span>
+            <span style={{ color: 'var(--text-muted)' }}>base: </span>
             <span style={{ color: 'var(--purple)' }}>{action.baseClass}</span>
           </div>
         )}
         {action.abstractMethods.length > 0 ? (
           <div className="mt-1">
             {action.abstractMethods.map((m, i) => (
-              <div key={i} className="text-[11px] font-mono" style={{ color: 'var(--text-muted)' }}>
-                {m}
-              </div>
+              <div key={i} className="text-[11px] font-mono" style={{ color: 'var(--text-muted)' }}>{m}</div>
             ))}
           </div>
         ) : !action.baseClass ? (
@@ -173,13 +154,13 @@ function ActionCard({ action, scene, isEditing, onEdit, onSave, onCancel, onDele
         ) : null}
       </div>
 
-      {/* 具体 (Concrete) */}
+      {/* 具体 */}
       <div className="rounded p-2" style={{ background: 'var(--bg)', border: '1px solid var(--border)' }}>
         <div className="text-[10px] font-semibold uppercase tracking-wider mb-1" style={{ color: 'var(--green)' }}>
-          具体 (Implementations)
+          具体
         </div>
         {action.concretes.length > 0 ? (
-          <div className="space-y-1">
+          <div className="space-y-0.5">
             {action.concretes.map((c) => (
               <div key={c.id} className="text-xs">
                 <span style={{ color: 'var(--green)' }}>{c.name}</span>
@@ -207,7 +188,6 @@ function ActionCard({ action, scene, isEditing, onEdit, onSave, onCancel, onDele
         </div>
       )}
 
-      {/* Delete */}
       <div className="flex justify-end mt-2">
         <button
           className="text-[9px] rounded"
@@ -233,7 +213,6 @@ function ActionEditForm({
   onCancel: () => void;
 }) {
   const [name, setName] = useState(action.name);
-  const [actionType, setActionType] = useState<ActionType>(action.actionType);
   const [description, setDescription] = useState(action.description);
   const [baseClass, setBaseClass] = useState(action.baseClass);
   const [abstractMethods, setAbstractMethods] = useState(action.abstractMethods.join('\n'));
@@ -251,17 +230,6 @@ function ActionEditForm({
     setConcretes(concretes.filter(c => c.id !== id));
   };
 
-  const handleSave = () => {
-    onSave({
-      name,
-      actionType,
-      description,
-      baseClass,
-      abstractMethods: abstractMethods.split('\n').map(s => s.trim()).filter(Boolean),
-      concretes,
-    });
-  };
-
   return (
     <div className="space-y-3">
       {/* Name */}
@@ -273,28 +241,6 @@ function ActionEditForm({
         autoFocus
       />
 
-      {/* Type */}
-      <div className="flex gap-1.5">
-        {(['interface', 'usecase', 'event'] as ActionType[]).map((t) => {
-          const info = ACTION_TYPE_LABELS[t];
-          const isActive = actionType === t;
-          return (
-            <button
-              key={t}
-              onClick={() => setActionType(t)}
-              className="flex-1 text-xs py-1.5 rounded transition-colors"
-              style={{
-                color: isActive ? info.color : 'var(--text-muted)',
-                background: isActive ? `color-mix(in srgb, ${info.color} 15%, transparent)` : 'var(--bg)',
-                border: isActive ? `1px solid ${info.color}` : '1px solid var(--border)',
-              }}
-            >
-              {info.label}
-            </button>
-          );
-        })}
-      </div>
-
       {/* Description */}
       <textarea
         value={description}
@@ -304,7 +250,7 @@ function ActionEditForm({
         className="w-full resize-none"
       />
 
-      {/* ── 抽象 ── */}
+      {/* 抽象 */}
       <div className="rounded p-2.5" style={{ background: 'var(--bg)', border: '1px solid var(--border)' }}>
         <div className="text-[10px] font-semibold uppercase tracking-wider mb-2" style={{ color: 'var(--purple)' }}>
           抽象 (Interface / Base)
@@ -313,7 +259,7 @@ function ActionEditForm({
           type="text"
           value={baseClass}
           onChange={(e) => setBaseClass(e.target.value)}
-          placeholder="Interface / Base class (e.g. IAction)"
+          placeholder="Base class (e.g. IAction)"
           className="mb-2"
         />
         <label className="text-[10px] mb-1 block" style={{ color: 'var(--text-muted)' }}>
@@ -328,7 +274,7 @@ function ActionEditForm({
         />
       </div>
 
-      {/* ── 具体 ── */}
+      {/* 具体 */}
       <div className="rounded p-2.5" style={{ background: 'var(--bg)', border: '1px solid var(--border)' }}>
         <div className="flex items-center justify-between mb-2">
           <div className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: 'var(--green)' }}>
@@ -384,7 +330,17 @@ function ActionEditForm({
         <button onClick={onCancel} style={{ padding: '0.3rem 0.75rem', fontSize: '0.8rem' }}>
           Cancel
         </button>
-        <button onClick={handleSave} className="primary" style={{ padding: '0.3rem 0.75rem', fontSize: '0.8rem' }}>
+        <button
+          onClick={() => onSave({
+            name,
+            description,
+            baseClass,
+            abstractMethods: abstractMethods.split('\n').map(s => s.trim()).filter(Boolean),
+            concretes,
+          })}
+          className="primary"
+          style={{ padding: '0.3rem 0.75rem', fontSize: '0.8rem' }}
+        >
           Save
         </button>
       </div>
