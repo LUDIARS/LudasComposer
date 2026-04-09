@@ -1,17 +1,12 @@
 import { useState, useEffect, useCallback } from 'react';
-import { useProjectStore } from '@/stores/projectStore';
-import { useEditorStore } from '@/stores/editorStore';
-import { clearHistory } from '@/stores/historyMiddleware';
 import * as backend from '@/lib/backend';
+import { safeLoadProject } from '@/lib/project-loader';
 
 interface ProjectListDialogProps {
   onClose: () => void;
 }
 
 export function ProjectListDialog({ onClose }: ProjectListDialogProps) {
-  const loadProject = useProjectStore((s) => s.loadProject);
-  const markSaved = useEditorStore((s) => s.markSaved);
-  const setProjectPath = useEditorStore((s) => s.setProjectPath);
 
   const [projects, setProjects] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
@@ -29,15 +24,12 @@ export function ProjectListDialog({ onClose }: ProjectListDialogProps) {
       const defaultDir = await backend.getDefaultProjectPath();
       const path = `${defaultDir}/${filename}`;
       const project = await backend.loadProject(path);
-      loadProject(project);
-      clearHistory();
-      setProjectPath(path);
-      markSaved(path);
+      safeLoadProject(project, path);
       onClose();
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
     }
-  }, [loadProject, markSaved, setProjectPath, onClose]);
+  }, [onClose]);
 
   return (
     <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center" onClick={onClose}>

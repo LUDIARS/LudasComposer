@@ -3,7 +3,7 @@ import { useAuthStore } from '@/stores/authStore';
 import { useProjectStore } from '@/stores/projectStore';
 import { useEditorStore } from '@/stores/editorStore';
 import { useI18n } from '@/hooks/useI18n';
-import { clearHistory } from '@/stores/historyMiddleware';
+import { safeLoadProject } from '@/lib/project-loader';
 import * as authApi from '@/lib/auth-api';
 import type { GitRepo } from '@/types/auth';
 
@@ -22,7 +22,6 @@ export function ProjectManager({ onClose }: ProjectManagerProps) {
   const fetchGitRepos = useAuthStore((s) => s.fetchGitRepos);
   const fetchLocalGitProjects = useAuthStore((s) => s.fetchLocalGitProjects);
   const setActiveGitRepo = useAuthStore((s) => s.setActiveGitRepo);
-  const loadProject = useProjectStore((s) => s.loadProject);
   const project = useProjectStore((s) => s.project);
   const markSaved = useEditorStore((s) => s.markSaved);
 
@@ -57,10 +56,8 @@ export function ProjectManager({ onClose }: ProjectManagerProps) {
       // Try to load project from the cloned repo
       const loadedProject = await authApi.loadGitProject(info.repo_full_name);
       if (loadedProject) {
-        loadProject(loadedProject);
-        clearHistory();
+        safeLoadProject(loadedProject);
         setActiveGitRepo(info.repo_full_name);
-        markSaved();
         showStatus(t('projectManager.toast.projectLoaded'));
       } else {
         setActiveGitRepo(info.repo_full_name);
@@ -72,7 +69,7 @@ export function ProjectManager({ onClose }: ProjectManagerProps) {
     } finally {
       setLoading(false);
     }
-  }, [loadProject, setActiveGitRepo, markSaved, fetchLocalGitProjects, t]);
+  }, [setActiveGitRepo, fetchLocalGitProjects, t]);
 
   const handleLoadLocal = useCallback(async (repoFullName: string) => {
     setLoading(true);
@@ -80,10 +77,8 @@ export function ProjectManager({ onClose }: ProjectManagerProps) {
     try {
       const loadedProject = await authApi.loadGitProject(repoFullName);
       if (loadedProject) {
-        loadProject(loadedProject);
-        clearHistory();
+        safeLoadProject(loadedProject);
         setActiveGitRepo(repoFullName);
-        markSaved();
         showStatus(t('projectManager.toast.projectLoaded'));
       } else {
         showStatus(t('projectManager.toast.noProjectJson'));
@@ -93,7 +88,7 @@ export function ProjectManager({ onClose }: ProjectManagerProps) {
     } finally {
       setLoading(false);
     }
-  }, [loadProject, setActiveGitRepo, markSaved, t]);
+  }, [setActiveGitRepo, t]);
 
   const handlePush = useCallback(async (repoFullName: string) => {
     setLoading(true);
