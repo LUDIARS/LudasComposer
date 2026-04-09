@@ -22,6 +22,7 @@ export function createSceneAction(project: Project, name: string): { project: Pr
     rootActorId,
     actors: { [rootActorId]: rootActor },
     messages: [],
+    actions: {},
   };
   return {
     project: {

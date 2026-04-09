@@ -83,6 +83,7 @@ impl ProjectManager {
             root_actor_id,
             actors,
             messages: vec![],
+            actions: HashMap::new(),
         };
 
         project.scenes.insert(scene_id, scene.clone());
@@ -150,6 +151,7 @@ impl ProjectManager {
             name: name.to_string(),
             description: description.to_string(),
             message_type: MessageType::default(),
+            action_ids: vec![],
         };
 
         scene.messages.push(message.clone());

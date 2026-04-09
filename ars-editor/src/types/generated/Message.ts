@@ -2,4 +2,4 @@
 
 import type { MessageType } from "./MessageType";
 
-export type Message = { id: string, sourceDomainId: string, targetDomainId: string, name: string, description: string, messageType: MessageType, };
+export type Message = { id: string, sourceDomainId: string, targetDomainId: string, name: string, description: string, messageType: MessageType, actionIds: string[], };

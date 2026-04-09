@@ -1,6 +1,8 @@
 // Auto-generated from ars-core Rust types. Do not edit.
 // Run ./scripts/generate-types.sh to regenerate.
 
+export type { Action } from './Action';
+export type { ActionType } from './ActionType';
 export type { Actor } from './Actor';
 export type { ActorState } from './ActorState';
 export type { Component } from './Component';

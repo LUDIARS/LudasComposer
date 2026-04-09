@@ -286,6 +286,7 @@ export const ActorNode = memo(function ActorNode({ data, selected }: NodeProps<A
                   name: '',
                   description: '',
                   messageType: 'simple',
+                  actionIds: [],
                 });
                 cancelMessageCreation();
               }

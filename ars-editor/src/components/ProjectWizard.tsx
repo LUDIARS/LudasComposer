@@ -51,6 +51,7 @@ function createSceneWithRoot(sceneName: string): Scene {
       },
     },
     messages: [],
+    actions: {},
   };
 }
 

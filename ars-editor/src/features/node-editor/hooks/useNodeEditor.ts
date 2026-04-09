@@ -94,6 +94,7 @@ export function useNodeEditor() {
         name: '',
         description: '',
         messageType: 'simple',
+        actionIds: [],
       });
     },
     [activeScene, addMessage],
