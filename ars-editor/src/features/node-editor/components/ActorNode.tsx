@@ -15,6 +15,7 @@ export const ActorNode = memo(function ActorNode({ data, selected }: NodeProps<A
   const actor = activeScene?.actors[nodeData.actorId];
   const openSubScenePicker = useEditorStore((s) => s.openSubScenePicker);
   const copyToClipboard = useEditorStore((s) => s.copyToClipboard);
+  const removeActor = useProjectStore((s) => s.removeActor);
   const messageSourceActorId = useEditorStore((s) => s.messageSourceActorId);
   const startMessageCreation = useEditorStore((s) => s.startMessageCreation);
   const cancelMessageCreation = useEditorStore((s) => s.cancelMessageCreation);
@@ -307,6 +308,32 @@ export const ActorNode = memo(function ActorNode({ data, selected }: NodeProps<A
             Cancel
           </button>
         ) : null}
+        {!nodeData.isRoot && (
+          <button
+            className="text-[10px] text-red-400 hover:text-red-300 bg-zinc-800 hover:bg-zinc-700 px-1.5 py-0.5 rounded transition-colors ml-auto"
+            onClick={(e) => {
+              e.stopPropagation();
+              if (!activeSceneId) return;
+              const hasData = !!(
+                actor &&
+                (actor.requirements?.overview?.length ||
+                  actor.requirements?.goals?.length ||
+                  actor.requirements?.role?.length ||
+                  actor.requirements?.behavior?.length ||
+                  actor.actorStates?.length ||
+                  actor.flexibleContent ||
+                  actor.displays?.length ||
+                  actor.subSceneId)
+              );
+              if (hasData) {
+                if (!confirm(`「${nodeData.name}」にはデータがあります。削除しますか？`)) return;
+              }
+              removeActor(activeSceneId, nodeData.actorId);
+            }}
+          >
+            Delete
+          </button>
+        )}
       </div>
 
       {/* Connection handles (minimal style — edges use arrow markers) */}

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useSettingsStore } from '@/stores/settingsStore';
 import { useAuthStore } from '@/stores/authStore';
+import { useEditorStore } from '@/stores/editorStore';
 import type { SaveMethod, GoogleDriveConfig, ResourceDepotConnection, ProjectMember } from '@/types/settings';
 
 type SettingsTab = 'general' | 'members' | 'google-drive' | 'resource-depot';
@@ -93,9 +94,22 @@ function Toggle({
 function GeneralTab() {
   const saveMethod = useSettingsStore((s) => s.settings.saveMethod);
   const setSaveMethod = useSettingsStore((s) => s.setSaveMethod);
+  const autoSaveEnabled = useEditorStore((s) => s.autoSaveEnabled);
+  const setAutoSave = useEditorStore((s) => s.setAutoSave);
 
   return (
     <div className="space-y-4">
+      <SectionCard title="Auto Save">
+        <Toggle
+          label="Enable auto save (2 seconds after changes)"
+          checked={autoSaveEnabled}
+          onChange={setAutoSave}
+        />
+        <p className="text-[10px] text-zinc-500 mt-1">
+          When disabled, use Ctrl+S to save manually.
+        </p>
+      </SectionCard>
+
       <SectionCard title="Save Method">
         <div className="space-y-2">
           {SAVE_METHODS.map((m) => (

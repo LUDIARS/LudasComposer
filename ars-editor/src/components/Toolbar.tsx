@@ -2,11 +2,12 @@ import { useState, useCallback } from 'react';
 import { useProjectStore } from '@/stores/projectStore';
 import { useEditorStore } from '@/stores/editorStore';
 import { useAuthStore } from '@/stores/authStore';
-import { canUndo, canRedo, undo, redo, clearHistory } from '@/stores/historyMiddleware';
+import { canUndo, canRedo, undo, redo } from '@/stores/historyMiddleware';
 import { useIsMobile } from '@/hooks/useIsMobile';
 import { useI18n } from '@/hooks/useI18n';
 import * as backend from '@/lib/backend';
 import * as authApi from '@/lib/auth-api';
+import { safeLoadProject } from '@/lib/project-loader';
 import { UserMenu } from './UserMenu';
 import { ProjectManager } from './ProjectManager';
 import { ProjectWizard } from './ProjectWizard';
@@ -20,13 +21,11 @@ import { useBackendHealth } from '@/hooks/useBackendHealth';
 export function Toolbar() {
   const { t } = useI18n();
   const project = useProjectStore((s) => s.project);
-  const loadProject = useProjectStore((s) => s.loadProject);
   const isDirty = useEditorStore((s) => s.isDirty);
   const lastSavedAt = useEditorStore((s) => s.lastSavedAt);
   const projectPath = useEditorStore((s) => s.projectPath);
   const markDirty = useEditorStore((s) => s.markDirty);
   const markSaved = useEditorStore((s) => s.markSaved);
-  const setProjectPath = useEditorStore((s) => s.setProjectPath);
   const togglePanel = useEditorStore((s) => s.togglePanel);
   const panelVisibility = useEditorStore((s) => s.panelVisibility);
   const setMobileSceneMenu = useEditorStore((s) => s.setMobileSceneMenu);
@@ -81,10 +80,7 @@ export function Toolbar() {
         const input = prompt(t('toolbar.enterProjectPath'));
         if (!input) return;
         const loaded = await backend.loadProject(input);
-        loadProject(loaded);
-        clearHistory();
-        setProjectPath(input);
-        markSaved(input);
+        safeLoadProject(loaded, input);
         showStatus(t('toolbar.toast.loaded'));
       } catch {
         showStatus(t('toolbar.toast.loadFailed'));
@@ -92,7 +88,7 @@ export function Toolbar() {
     } else {
       setShowProjectList(true);
     }
-  }, [loadProject, setProjectPath, markSaved]);
+  }, [t]);
 
   const handleNew = useCallback(() => {
     if (isDirty && !confirm(t('toolbar.confirmNew'))) return;

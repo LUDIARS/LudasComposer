@@ -1,10 +1,8 @@
 import { useState, useCallback } from 'react';
-import { useProjectStore } from '@/stores/projectStore';
-import { useEditorStore } from '@/stores/editorStore';
 import { useAuthStore } from '@/stores/authStore';
-import { clearHistory } from '@/stores/historyMiddleware';
 import * as authApi from '@/lib/auth-api';
 import * as backend from '@/lib/backend';
+import { safeLoadProject } from '@/lib/project-loader';
 import { generateId } from '@/lib/utils';
 import type { Project, Actor, Scene, Component } from '@/types/domain';
 
@@ -215,9 +213,6 @@ const templates: ProjectTemplate[] = [
 ];
 
 export function ProjectWizard({ onClose }: ProjectWizardProps) {
-  const loadProject = useProjectStore((s) => s.loadProject);
-  const markSaved = useEditorStore((s) => s.markSaved);
-  const setProjectPath = useEditorStore((s) => s.setProjectPath);
   const setActiveGitRepo = useAuthStore((s) => s.setActiveGitRepo);
   const fetchGitRepos = useAuthStore((s) => s.fetchGitRepos);
   const fetchLocalGitProjects = useAuthStore((s) => s.fetchLocalGitProjects);
@@ -254,18 +249,18 @@ export function ProjectWizard({ onClose }: ProjectWizardProps) {
 
     try {
       const project = selectedTemplate.create(projectName.trim());
-      loadProject(project);
-      clearHistory();
 
       // ローカルファイルに自動保存
+      let localPath: string | undefined;
       try {
         const defaultDir = await backend.getDefaultProjectPath();
-        const localPath = `${defaultDir}/${projectName.trim().replace(/\s+/g, '_')}.json`;
+        localPath = `${defaultDir}/${projectName.trim().replace(/\s+/g, '_')}.json`;
         await backend.saveProject(localPath, project);
-        setProjectPath(localPath);
       } catch {
-        setProjectPath(null);
+        localPath = undefined;
       }
+
+      safeLoadProject(project, localPath);
 
       if (withGitHub && user) {
         const repoName = projectName.trim().replace(/\s+/g, '-').toLowerCase();
@@ -277,14 +272,13 @@ export function ProjectWizard({ onClose }: ProjectWizardProps) {
         fetchLocalGitProjects();
       }
 
-      markSaved();
       onClose();
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
     } finally {
       setLoading(false);
     }
-  }, [selectedTemplate, projectName, repoPrivate, user, loadProject, markSaved, setProjectPath, setActiveGitRepo, fetchGitRepos, fetchLocalGitProjects, onClose]);
+  }, [selectedTemplate, projectName, repoPrivate, user, setActiveGitRepo, fetchGitRepos, fetchLocalGitProjects, onClose]);
 
   const handleBack = useCallback(() => {
     setError('');

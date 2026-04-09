@@ -12,6 +12,7 @@ interface MessageEditorProps {
 export function MessageEditor({ sceneId, messageId, onClose }: MessageEditorProps) {
   const scene = useProjectStore((s) => s.project.scenes[sceneId]);
   const updateMessage = useProjectStore((s) => s.updateMessage);
+  const removeMessage = useProjectStore((s) => s.removeMessage);
   const message = scene?.messages.find((m) => m.id === messageId);
 
   const [name, setName] = useState(message?.name ?? '');
@@ -107,7 +108,20 @@ export function MessageEditor({ sceneId, messageId, onClose }: MessageEditorProp
         />
       </div>
 
-      <div className="flex justify-end">
+      <div className="flex justify-between">
+        <button
+          onClick={() => {
+            const hasData = !!(name.trim() || description.trim());
+            if (hasData) {
+              if (!confirm('このメッセージにはデータがあります。削除しますか？')) return;
+            }
+            removeMessage(sceneId, messageId);
+            onClose();
+          }}
+          className="text-xs text-red-400 hover:text-red-300 bg-zinc-900 hover:bg-zinc-700 border border-zinc-700 px-3 py-1 rounded transition-colors"
+        >
+          Delete
+        </button>
         <button
           onClick={() => {
             handleSave();

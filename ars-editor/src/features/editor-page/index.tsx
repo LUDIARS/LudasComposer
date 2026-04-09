@@ -18,9 +18,29 @@ import { generateId } from '@/lib/utils';
 import { useIsMobile } from '@/hooks/useIsMobile';
 import * as backend from '@/lib/backend';
 import { useAutoSave } from '@/hooks/useAutoSave';
+import { safeLoadProject, getLastProjectPath } from '@/lib/project-loader';
 
 export function EditorPage() {
   useAutoSave();
+
+  // 最後に開いたプロジェクトを自動ロード
+  const autoLoadDone = useRef(false);
+  useEffect(() => {
+    if (autoLoadDone.current) return;
+    autoLoadDone.current = true;
+
+    const lastPath = getLastProjectPath();
+    if (!lastPath) return;
+
+    backend.loadProject(lastPath)
+      .then((project) => {
+        safeLoadProject(project, lastPath);
+        console.log(`[editor] Auto-loaded last project: ${lastPath}`);
+      })
+      .catch(() => {
+        // ファイルが消えている等 — 無視
+      });
+  }, []);
   const componentPickerTarget = useEditorStore((s) => s.componentPickerTarget);
   const sequenceEditorTarget = useEditorStore((s) => s.sequenceEditorTarget);
   const subScenePickerTarget = useEditorStore((s) => s.subScenePickerTarget);
@@ -41,7 +61,7 @@ export function EditorPage() {
   const duplicateActor = useProjectStore((s) => s.duplicateActor);
   const isMobile = useIsMobile();
 
-  // Track project changes to mark dirty
+  // Track project changes to mark dirty (skip initial render)
   const isFirstRender = useRef(true);
   useEffect(() => {
     if (isFirstRender.current) {
