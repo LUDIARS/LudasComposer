@@ -324,28 +324,30 @@ export function UICanvas() {
 
   const viewportRef = useRef<HTMLDivElement>(null);
   const dragRef = useRef<DragMode | null>(null);
+  const [isDraggingPan, setIsDraggingPan] = useState(false);
   const zoomRef = useRef(zoom);
   const panRef = useRef(panOffset);
-  zoomRef.current = zoom;
-  panRef.current = panOffset;
 
   // Refs for store actions (stable across renders)
   const updateRectRef = useRef(updateRect);
   const setPanRef = useRef(setPan);
-  updateRectRef.current = updateRect;
-  setPanRef.current = setPan;
 
   const sceneIdRef = useRef(sceneId);
-  sceneIdRef.current = sceneId;
-
   const canvasRef = useRef(canvas);
-  canvasRef.current = canvas;
+
+  useEffect(() => { zoomRef.current = zoom; }, [zoom]);
+  useEffect(() => { panRef.current = panOffset; }, [panOffset]);
+  useEffect(() => { updateRectRef.current = updateRect; }, [updateRect]);
+  useEffect(() => { setPanRef.current = setPan; }, [setPan]);
+  useEffect(() => { sceneIdRef.current = sceneId; }, [sceneId]);
+  useEffect(() => { canvasRef.current = canvas; }, [canvas]);
 
   // ── Fit canvas to viewport on mount ────────────
-  const [initialized, setInitialized] = useState(false);
+  const initializedRef = useRef(false);
 
   useEffect(() => {
-    if (initialized || !viewportRef.current) return;
+    if (initializedRef.current || !viewportRef.current) return;
+    initializedRef.current = true;
     const vp = viewportRef.current.getBoundingClientRect();
     const fitZoom = Math.min(
       (vp.width - 80) / canvas.width,
@@ -358,8 +360,7 @@ export function UICanvas() {
       x: (vp.width - canvas.width * z) / 2,
       y: (vp.height - canvas.height * z) / 2,
     });
-    setInitialized(true);
-  }, [initialized, canvas.width, canvas.height, setZoom, setPan]);
+  }, [canvas.width, canvas.height, setZoom, setPan]);
 
   // ── Mouse drag handlers ────────────────────────
 
@@ -417,6 +418,7 @@ export function UICanvas() {
 
     const handleMouseUp = () => {
       dragRef.current = null;
+      setIsDraggingPan(false);
       document.body.style.cursor = '';
       document.body.style.userSelect = '';
     };
@@ -510,6 +512,7 @@ export function UICanvas() {
           origPanX: panOffset.x,
           origPanY: panOffset.y,
         };
+        setIsDraggingPan(true);
         document.body.style.cursor = 'grabbing';
         document.body.style.userSelect = 'none';
       }
@@ -553,7 +556,7 @@ export function UICanvas() {
     <div
       ref={viewportRef}
       className="flex-1 overflow-hidden relative"
-      style={{ background: '#0a0a12', cursor: dragRef.current?.type === 'pan' ? 'grabbing' : 'default' }}
+      style={{ background: '#0a0a12', cursor: isDraggingPan ? 'grabbing' : 'default' }}
       onWheel={handleWheel}
       onMouseDown={handleViewportMouseDown}
     >
@@ -592,6 +595,7 @@ export function UICanvas() {
               origPanX: panOffset.x,
               origPanY: panOffset.y,
             };
+            setIsDraggingPan(true);
             document.body.style.cursor = 'grabbing';
             document.body.style.userSelect = 'none';
           }}

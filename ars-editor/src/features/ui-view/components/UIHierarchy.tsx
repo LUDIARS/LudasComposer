@@ -1,7 +1,7 @@
-import { useCallback, useState } from 'react';
+import { useState } from 'react';
 import { useUIViewStore } from '../uiViewStore';
 import { useProjectStore } from '@/stores/projectStore';
-import type { UIElement, UICanvasData, UIElementType } from '../types';
+import type { UICanvasData, UIElementType } from '../types';
 import { ELEMENT_TYPE_ICONS } from '../types';
 
 // ── Hierarchy node (recursive) ──────────────────────
@@ -207,19 +207,6 @@ export function UIHierarchy() {
   const activeSceneId = useProjectStore((s) => s.project.activeSceneId);
   const sceneId = activeSceneId ?? '';
   const canvas = useUIViewStore((s) => s.getCanvas(sceneId));
-  const selectedId = useUIViewStore((s) => s.selectedElementId);
-  const addElement = useUIViewStore((s) => s.addElement);
-
-  const handleAddToSelected = useCallback(
-    (type: UIElementType) => {
-      if (!activeSceneId) return;
-      // Add as child of selected element if it's a container type (Panel)
-      const parentId =
-        selectedId && (canvas.elements[selectedId]?.type === 'Panel' || canvas.elements[selectedId]?.type === 'Custom') ? selectedId : null;
-      addElement(activeSceneId, type, parentId);
-    },
-    [activeSceneId, selectedId, canvas.elements, addElement],
-  );
 
   if (!activeSceneId) {
     return (

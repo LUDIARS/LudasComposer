@@ -1,7 +1,7 @@
 import { useCallback } from 'react';
 import { useUIViewStore } from '../uiViewStore';
 import { useProjectStore } from '@/stores/projectStore';
-import type { UIElement, UIElementType, UIElementProps, RectTransform, Vec2 } from '../types';
+import type { UIElement, UIElementProps, RectTransform, Vec2 } from '../types';
 import { ELEMENT_TYPE_ICONS } from '../types';
 
 // ── Shared input components ─────────────────────────
