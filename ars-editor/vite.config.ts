@@ -32,6 +32,12 @@ export default defineConfig({
     port: frontendPort,
     strictPort: true,
     allowedHosts: [...extraHosts],
+    headers: {
+      'Cache-Control': 'no-store',
+    },
+    watch: {
+      ignored: ['**/ars-projects/**'],
+    },
     proxy: {
       '/api': {
         target: backendUrl,
