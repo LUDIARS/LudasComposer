@@ -366,10 +366,10 @@ mod tests {
             role: "actor".to_string(),
             actor_type: "state".to_string(),
             requirements: Requirements {
-                overview: "プレイヤーキャラクター".to_string(),
-                goals: "ユーザーの入力に応じてキャラクターを制御する".to_string(),
-                role: "主人公".to_string(),
-                behavior: "移動・攻撃・防御".to_string(),
+                overview: vec!["プレイヤーキャラクター".to_string()],
+                goals: vec!["ユーザーの入力に応じてキャラクターを制御する".to_string()],
+                role: vec!["主人公".to_string()],
+                behavior: vec!["移動・攻撃・防御".to_string()],
             },
             actor_states: vec![ActorState {
                 id: "state-1".to_string(),
@@ -377,6 +377,7 @@ mod tests {
                 processes: vec!["待機アニメーション再生".to_string()],
             }],
             flexible_content: String::new(),
+            displays: vec![],
             position: Position { x: 100.0, y: 200.0 },
             sub_scene_id: None,
         };
@@ -386,7 +387,7 @@ mod tests {
 
         assert_eq!(loaded.name, "Player");
         assert_eq!(loaded.actor_type, "state");
-        assert_eq!(loaded.requirements.overview, "プレイヤーキャラクター");
+        assert_eq!(loaded.requirements.overview, vec!["プレイヤーキャラクター"]);
         assert_eq!(loaded.actor_states.len(), 1);
     }
 
