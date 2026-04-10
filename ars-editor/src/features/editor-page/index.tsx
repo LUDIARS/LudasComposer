@@ -21,6 +21,7 @@ import { useAutoSave } from '@/hooks/useAutoSave';
 import { StatusBar } from '@/components/StatusBar';
 import { ViewTabs } from '@/components/ViewTabs';
 import { ActionListView } from '@/features/action-editor/ActionListView';
+import { UIViewLayout } from '@/features/ui-view';
 import { safeLoadProject, getLastProjectPath } from '@/lib/project-loader';
 
 export function EditorPage() {
@@ -151,11 +152,7 @@ export function EditorPage() {
           </div>
         );
       case 'ui':
-        return (
-          <div className="flex-1 flex items-center justify-center" style={{ color: 'var(--text-muted)' }}>
-            UI ビュー (準備中)
-          </div>
-        );
+        return <UIViewLayout />;
     }
   };
 
