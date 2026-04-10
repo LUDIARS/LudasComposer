@@ -22,6 +22,7 @@ import { StatusBar } from '@/components/StatusBar';
 import { ViewTabs } from '@/components/ViewTabs';
 import { ActionListView } from '@/features/action-editor/ActionListView';
 import { UIViewLayout } from '@/features/ui-view';
+import { DataViewLayout } from '@/features/data-view';
 import { safeLoadProject, getLastProjectPath } from '@/lib/project-loader';
 
 export function EditorPage() {
@@ -146,11 +147,7 @@ export function EditorPage() {
       case 'actions':
         return <ActionListView />;
       case 'data':
-        return (
-          <div className="flex-1 flex items-center justify-center" style={{ color: 'var(--text-muted)' }}>
-            Data ビュー (準備中)
-          </div>
-        );
+        return <DataViewLayout />;
       case 'ui':
         return <UIViewLayout />;
     }

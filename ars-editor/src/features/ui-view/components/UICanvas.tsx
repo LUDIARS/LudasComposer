@@ -11,6 +11,14 @@ type DragMode =
   | { type: 'resize'; elementId: string; handle: ResizeHandle; startX: number; startY: number; origRect: RectTransform }
   | { type: 'pan'; startX: number; startY: number; origPanX: number; origPanY: number };
 
+/** Pinch-to-zoom state */
+interface PinchState {
+  initialDistance: number;
+  initialZoom: number;
+  midX: number;
+  midY: number;
+}
+
 const MIN_SIZE = 20;
 
 // ── Element rendering ───────────────────────────────
@@ -190,6 +198,17 @@ const CanvasElement = memo(function CanvasElement({
         selectElement(element.id);
         onStartDrag(element.id, e);
       }}
+      onTouchStart={(e) => {
+        if (e.touches.length === 1) {
+          e.stopPropagation();
+          selectElement(element.id);
+          const touch = e.touches[0];
+          onStartDrag(element.id, {
+            clientX: touch.clientX,
+            clientY: touch.clientY,
+          } as React.MouseEvent);
+        }
+      }}
       onMouseEnter={() => setHovered(element.id)}
       onMouseLeave={() => setHovered(null)}
     >
@@ -324,6 +343,7 @@ export function UICanvas() {
 
   const viewportRef = useRef<HTMLDivElement>(null);
   const dragRef = useRef<DragMode | null>(null);
+  const pinchRef = useRef<PinchState | null>(null);
   const [isDraggingPan, setIsDraggingPan] = useState(false);
   const zoomRef = useRef(zoom);
   const panRef = useRef(panOffset);
@@ -423,11 +443,65 @@ export function UICanvas() {
       document.body.style.userSelect = '';
     };
 
+    const handleTouchMove = (e: TouchEvent) => {
+      // Pinch-to-zoom with two fingers
+      if (e.touches.length === 2) {
+        const pinch = pinchRef.current;
+        if (!pinch) return;
+        e.preventDefault();
+
+        const t0 = e.touches[0];
+        const t1 = e.touches[1];
+        const dist = Math.hypot(t1.clientX - t0.clientX, t1.clientY - t0.clientY);
+        const scale = dist / pinch.initialDistance;
+        const newZoom = Math.max(0.1, Math.min(3, pinch.initialZoom * scale));
+
+        const rect = viewportRef.current?.getBoundingClientRect();
+        if (rect) {
+          const midX = (t0.clientX + t1.clientX) / 2 - rect.left;
+          const midY = (t0.clientY + t1.clientY) / 2 - rect.top;
+          const zoomScale = newZoom / zoomRef.current;
+          setPanRef.current({
+            x: midX - (midX - panRef.current.x) * zoomScale,
+            y: midY - (midY - panRef.current.y) * zoomScale,
+          });
+        }
+
+        // Update zoom via the store action directly
+        useUIViewStore.getState().setZoom(newZoom);
+        return;
+      }
+
+      // Single-finger drag (same as mouse move)
+      if (e.touches.length === 1) {
+        const touch = e.touches[0];
+        handleMouseMove({
+          clientX: touch.clientX,
+          clientY: touch.clientY,
+        } as MouseEvent);
+      }
+    };
+
+    const handleTouchEnd = (e: TouchEvent) => {
+      if (e.touches.length < 2) {
+        pinchRef.current = null;
+      }
+      if (e.touches.length === 0) {
+        handleMouseUp();
+      }
+    };
+
     window.addEventListener('mousemove', handleMouseMove);
     window.addEventListener('mouseup', handleMouseUp);
+    window.addEventListener('touchmove', handleTouchMove, { passive: false });
+    window.addEventListener('touchend', handleTouchEnd);
+    window.addEventListener('touchcancel', handleTouchEnd);
     return () => {
       window.removeEventListener('mousemove', handleMouseMove);
       window.removeEventListener('mouseup', handleMouseUp);
+      window.removeEventListener('touchmove', handleTouchMove);
+      window.removeEventListener('touchend', handleTouchEnd);
+      window.removeEventListener('touchcancel', handleTouchEnd);
     };
   }, []);
 
@@ -520,6 +594,44 @@ export function UICanvas() {
     [selectElement, panOffset],
   );
 
+  // ── Touch start on viewport (pan / pinch) ─────
+
+  const handleViewportTouchStart = useCallback(
+    (e: React.TouchEvent) => {
+      if (e.touches.length === 2) {
+        // Start pinch-to-zoom
+        const t0 = e.touches[0];
+        const t1 = e.touches[1];
+        pinchRef.current = {
+          initialDistance: Math.hypot(t1.clientX - t0.clientX, t1.clientY - t0.clientY),
+          initialZoom: zoom,
+          midX: (t0.clientX + t1.clientX) / 2,
+          midY: (t0.clientY + t1.clientY) / 2,
+        };
+        dragRef.current = null;
+        return;
+      }
+
+      if (e.touches.length === 1) {
+        const target = e.target as HTMLElement;
+        const isBackground = target === e.currentTarget || !!target.dataset.canvasBg;
+        if (!isBackground) return;
+
+        selectElement(null);
+        const touch = e.touches[0];
+        dragRef.current = {
+          type: 'pan',
+          startX: touch.clientX,
+          startY: touch.clientY,
+          origPanX: panOffset.x,
+          origPanY: panOffset.y,
+        };
+        setIsDraggingPan(true);
+      }
+    },
+    [selectElement, panOffset, zoom],
+  );
+
   // ── Delete key ─────────────────────────────────
 
   useEffect(() => {
@@ -556,9 +668,10 @@ export function UICanvas() {
     <div
       ref={viewportRef}
       className="flex-1 overflow-hidden relative"
-      style={{ background: '#0a0a12', cursor: isDraggingPan ? 'grabbing' : 'default' }}
+      style={{ background: '#0a0a12', cursor: isDraggingPan ? 'grabbing' : 'default', touchAction: 'none' }}
       onWheel={handleWheel}
       onMouseDown={handleViewportMouseDown}
+      onTouchStart={handleViewportTouchStart}
     >
       {/* Transformed canvas layer */}
       <div
@@ -598,6 +711,21 @@ export function UICanvas() {
             setIsDraggingPan(true);
             document.body.style.cursor = 'grabbing';
             document.body.style.userSelect = 'none';
+          }}
+          onTouchStart={(e) => {
+            if (e.touches.length === 1) {
+              e.stopPropagation();
+              selectElement(null);
+              const touch = e.touches[0];
+              dragRef.current = {
+                type: 'pan',
+                startX: touch.clientX,
+                startY: touch.clientY,
+                origPanX: panOffset.x,
+                origPanY: panOffset.y,
+              };
+              setIsDraggingPan(true);
+            }
           }}
         >
           {/* Canvas size label */}
