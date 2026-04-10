@@ -1,5 +1,7 @@
+import { useState } from 'react';
 import { useUIViewStore } from '../uiViewStore';
 import { useProjectStore } from '@/stores/projectStore';
+import { useIsMobile } from '@/hooks/useIsMobile';
 import { UICanvas } from './UICanvas';
 import { UIHierarchy } from './UIHierarchy';
 import { UIInspector } from './UIInspector';
@@ -16,7 +18,7 @@ const ELEMENT_TYPES: { type: UIElementType; label: string }[] = [
   { type: 'Custom', label: 'Custom' },
 ];
 
-function UIElementToolbar() {
+function UIElementToolbar({ compact }: { compact?: boolean }) {
   const activeSceneId = useProjectStore((s) => s.project.activeSceneId);
   const addElement = useUIViewStore((s) => s.addElement);
   const selectedId = useUIViewStore((s) => s.selectedElementId);
@@ -66,18 +68,22 @@ function UIElementToolbar() {
           title={`Add ${label}`}
         >
           <span>{ELEMENT_TYPE_ICONS[type]}</span>
-          <span>{label}</span>
+          {!compact && <span>{label}</span>}
         </button>
       ))}
 
       <div className="flex-1" />
 
-      {/* Canvas size */}
-      <span className="text-xs" style={{ color: 'var(--text-muted)' }}>
-        {canvas.width} x {canvas.height}
-      </span>
+      {!compact && (
+        <>
+          {/* Canvas size */}
+          <span className="text-xs" style={{ color: 'var(--text-muted)' }}>
+            {canvas.width} x {canvas.height}
+          </span>
 
-      <div style={{ width: 1, height: 16, background: 'var(--border)', margin: '0 4px' }} />
+          <div style={{ width: 1, height: 16, background: 'var(--border)', margin: '0 4px' }} />
+        </>
+      )}
 
       {/* Zoom controls */}
       <button
@@ -126,9 +132,76 @@ function UIElementToolbar() {
   );
 }
 
+// ── Mobile UI View Layout ──────────────────────────
+
+type MobileUITab = 'canvas' | 'hierarchy' | 'inspector';
+
+function MobileUIViewLayout() {
+  const [tab, setTab] = useState<MobileUITab>('canvas');
+
+  const tabs: { key: MobileUITab; label: string }[] = [
+    { key: 'canvas', label: 'Canvas' },
+    { key: 'hierarchy', label: 'Tree' },
+    { key: 'inspector', label: 'Props' },
+  ];
+
+  return (
+    <div className="flex-1 flex flex-col overflow-hidden">
+      <UIElementToolbar compact />
+
+      {/* Tab bar */}
+      <div
+        className="flex items-center gap-0.5 px-2 shrink-0"
+        style={{
+          background: 'var(--bg-surface)',
+          borderBottom: '1px solid var(--border)',
+          height: 32,
+        }}
+      >
+        {tabs.map((t) => (
+          <button
+            key={t.key}
+            onClick={() => setTab(t.key)}
+            className="px-3 py-1 text-xs font-medium rounded-t"
+            style={{
+              color: tab === t.key ? 'var(--text)' : 'var(--text-muted)',
+              background: tab === t.key ? 'var(--bg-surface-2)' : 'transparent',
+              border: 'none',
+              borderBottom: tab === t.key ? '2px solid var(--accent)' : '2px solid transparent',
+            }}
+          >
+            {t.label}
+          </button>
+        ))}
+      </div>
+
+      {/* Content */}
+      <div className="flex-1 flex overflow-hidden">
+        {tab === 'canvas' && <UICanvas />}
+        {tab === 'hierarchy' && (
+          <div className="flex-1 overflow-hidden">
+            <UIHierarchy />
+          </div>
+        )}
+        {tab === 'inspector' && (
+          <div className="flex-1 overflow-hidden">
+            <UIInspector />
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 // ── Main layout ─────────────────────────────────────
 
 export function UIViewLayout() {
+  const isMobile = useIsMobile();
+
+  if (isMobile) {
+    return <MobileUIViewLayout />;
+  }
+
   return (
     <div className="flex-1 flex flex-col overflow-hidden">
       <UIElementToolbar />
