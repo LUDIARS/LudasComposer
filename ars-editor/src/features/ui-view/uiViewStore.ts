@@ -52,7 +52,7 @@ function updateCanvasInState(
   sceneId: string,
   updater: (canvas: UICanvasData) => UICanvasData,
 ): Partial<UIViewState> {
-  const canvas = state.canvases[sceneId] ?? createDefaultCanvas();
+  const canvas = state.canvases[sceneId] ?? EMPTY_CANVAS;
   return {
     canvases: {
       ...state.canvases,
@@ -72,6 +72,8 @@ function collectDescendants(elements: Record<string, UIElement>, elementId: stri
   return ids;
 }
 
+const EMPTY_CANVAS: UICanvasData = createDefaultCanvas();
+
 export const useUIViewStore = create<UIViewState>()((set, get) => ({
   canvases: {},
   selectedElementId: null,
@@ -80,7 +82,7 @@ export const useUIViewStore = create<UIViewState>()((set, get) => ({
   panOffset: { x: 0, y: 0 },
 
   getCanvas: (sceneId) => {
-    return get().canvases[sceneId] ?? createDefaultCanvas();
+    return get().canvases[sceneId] ?? EMPTY_CANVAS;
   },
 
   ensureCanvas: (sceneId) =>
@@ -97,7 +99,7 @@ export const useUIViewStore = create<UIViewState>()((set, get) => ({
   addElement: (sceneId, type, parentId = null) => {
     const id = generateId();
     const state = get();
-    const canvas = state.canvases[sceneId] ?? createDefaultCanvas();
+    const canvas = state.canvases[sceneId] ?? EMPTY_CANVAS;
     const defaults = ELEMENT_DEFAULTS[type];
     const count = countByType(canvas.elements, type) + 1;
 
