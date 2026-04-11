@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "dev:server": "cargo watch --workdir src-tauri -x \"run --features web-server --no-default-features --bin ars-web-server -- ../dist\"",
+    "dev:server": "cargo watch --workdir src-tauri -i \"../ars-projects/**\" -x \"run --features web-server --no-default-features --bin ars-web-server -- ../dist\"",
     "dev:full": "concurrently -n vite,axum -c cyan,green \"npm run dev\" \"npm run dev:server\"",
     "build": "tsc -b && vite build",
     "build:web-server": "cargo build --manifest-path src-tauri/Cargo.toml --features web-server --no-default-features --bin ars-web-server",
