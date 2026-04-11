@@ -1,4 +1,9 @@
 import type { Project } from '@/types/domain';
+import type {
+  CodegenOptions,
+  CodegenBridgeConfig,
+  CodegenPreviewResult,
+} from '@/types/codegen';
 
 function isTauri(): boolean {
   return typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window;
@@ -52,6 +57,22 @@ export async function listProjects(): Promise<string[]> {
     return [];
   }
   return webFetch<string[]>('/project/list');
+}
+
+// ── Code Generation Bridge ──────────────────────────
+
+export async function getCodegenOptions(): Promise<CodegenOptions> {
+  return webFetch<CodegenOptions>('/codegen/options');
+}
+
+export async function codegenPreview(
+  project: Project,
+  config: CodegenBridgeConfig,
+): Promise<CodegenPreviewResult> {
+  return webFetch<CodegenPreviewResult>('/codegen/preview', {
+    method: 'POST',
+    body: JSON.stringify({ project, config }),
+  });
 }
 
 export { isTauri };

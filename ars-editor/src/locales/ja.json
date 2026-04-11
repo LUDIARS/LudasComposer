@@ -49,6 +49,7 @@
     "projectManager": "プロジェクトマネージャ",
     "archetype": "アーキタイプ",
     "archetypeWizard": "アーキタイプウィザード",
+    "codeGeneration": "コード生成",
     "gettingStarted": "はじめにガイド",
     "lastSaved": "最終保存: {{time}}",
     "toast": {
@@ -749,5 +750,31 @@
     "loading": "読み込み中...",
     "all": "すべて",
     "none": "なし"
+  },
+  "codegen": {
+    "title": "コード生成ブリッジ",
+    "step": "ステップ {{current}} / {{total}}",
+    "back": "戻る",
+    "next": "次へ",
+    "done": "完了",
+    "loading": "読み込み中...",
+    "platformTitle": "対象プラットフォーム",
+    "platformDesc": "コード生成の対象プラットフォームを選択してください。",
+    "formatTitle": "出力フォーマット",
+    "formatDesc": "ソースコードと合わせて何を生成するかを選択してください。",
+    "outputDir": "出力ディレクトリ",
+    "dryRun": "ドライラン（プロンプトのみ生成し、Claude Codeは起動しない）",
+    "scopeTitle": "生成スコープ",
+    "scopeDesc": "生成対象のシーンとコンポーネントを選択してください。未選択の場合はすべてが対象になります。",
+    "scopeHint": "何も選択しない場合、すべてのシーンとコンポーネントが含まれます。",
+    "scenes": "シーン",
+    "noScenes": "シーンが定義されていません",
+    "components": "コンポーネント",
+    "noComponents": "コンポーネントが定義されていません",
+    "previewTitle": "生成プレビュー",
+    "language": "言語",
+    "extension": "拡張子",
+    "totalTasks": "タスク数",
+    "noTasks": "生成するタスクがありません。まずプロジェクトにシーンやコンポーネントを追加してください。"
   }
 }

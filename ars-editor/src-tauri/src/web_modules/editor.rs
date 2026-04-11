@@ -1,6 +1,7 @@
 /// Editor モジュール
 ///
-/// プロジェクト管理、認証（Cernere プロキシ）、クラウド保存、Git操作のAPIルートを提供する。
+/// プロジェクト管理、認証（Cernere プロキシ）、クラウド保存、Git操作、
+/// コード生成ブリッジのAPIルートを提供する。
 /// 認証・ユーザー・プロジェクト管理は Cernere サーバーに委譲する。
 use axum::{
     extract::{Path, Query, State},
@@ -18,6 +19,12 @@ use crate::commands::project::{
 };
 use crate::git_ops;
 use crate::models::{GitProjectInfo, GitRepo, Project};
+
+// コード生成ブリッジ
+use ars_codegen::bridge::{
+    CodegenBridge, CodegenBridgeConfig, CodegenPreviewResult,
+    OutputFormat, TargetPlatform,
+};
 
 const SESSION_COOKIE: &str = "ars_session";
 
@@ -343,6 +350,96 @@ async fn api_git_list_local_projects(
     Ok(Json(projects))
 }
 
+// ========== Code Generation Bridge APIs ==========
+
+/// 対応プラットフォーム一覧を返す
+#[derive(serde::Serialize)]
+#[serde(rename_all = "camelCase")]
+struct PlatformInfo {
+    id: TargetPlatform,
+    label: String,
+    language: String,
+    file_extension: String,
+}
+
+#[derive(serde::Serialize)]
+#[serde(rename_all = "camelCase")]
+struct OutputFormatInfo {
+    id: OutputFormat,
+    label: String,
+}
+
+#[derive(serde::Serialize)]
+#[serde(rename_all = "camelCase")]
+struct CodegenOptionsResponse {
+    platforms: Vec<PlatformInfo>,
+    output_formats: Vec<OutputFormatInfo>,
+}
+
+async fn api_codegen_options() -> Json<CodegenOptionsResponse> {
+    let platforms = vec![
+        PlatformInfo {
+            id: TargetPlatform::Unity,
+            label: TargetPlatform::Unity.label().to_string(),
+            language: TargetPlatform::Unity.language().to_string(),
+            file_extension: TargetPlatform::Unity.file_extension().to_string(),
+        },
+        PlatformInfo {
+            id: TargetPlatform::Godot,
+            label: TargetPlatform::Godot.label().to_string(),
+            language: TargetPlatform::Godot.language().to_string(),
+            file_extension: TargetPlatform::Godot.file_extension().to_string(),
+        },
+        PlatformInfo {
+            id: TargetPlatform::Unreal,
+            label: TargetPlatform::Unreal.label().to_string(),
+            language: TargetPlatform::Unreal.language().to_string(),
+            file_extension: TargetPlatform::Unreal.file_extension().to_string(),
+        },
+        PlatformInfo {
+            id: TargetPlatform::Ergo,
+            label: TargetPlatform::Ergo.label().to_string(),
+            language: TargetPlatform::Ergo.language().to_string(),
+            file_extension: TargetPlatform::Ergo.file_extension().to_string(),
+        },
+    ];
+
+    let output_formats = vec![
+        OutputFormatInfo {
+            id: OutputFormat::SourceOnly,
+            label: OutputFormat::SourceOnly.label().to_string(),
+        },
+        OutputFormatInfo {
+            id: OutputFormat::WithTests,
+            label: OutputFormat::WithTests.label().to_string(),
+        },
+        OutputFormatInfo {
+            id: OutputFormat::Full,
+            label: OutputFormat::Full.label().to_string(),
+        },
+    ];
+
+    Json(CodegenOptionsResponse {
+        platforms,
+        output_formats,
+    })
+}
+
+/// コード生成プレビュー
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct CodegenPreviewRequest {
+    project: Project,
+    config: CodegenBridgeConfig,
+}
+
+async fn api_codegen_preview(
+    Json(req): Json<CodegenPreviewRequest>,
+) -> Result<Json<CodegenPreviewResult>, (StatusCode, String)> {
+    let result = CodegenBridge::preview(&req.project, &req.config);
+    Ok(Json(result))
+}
+
 /// エディタモジュールのルーターを構築
 pub fn router(state: AppState) -> Router {
     Router::new()
@@ -367,5 +464,8 @@ pub fn router(state: AppState) -> Router {
         .route("/api/git/project/load", get(api_git_load_project))
         .route("/api/git/push", post(api_git_push))
         .route("/api/git/projects", get(api_git_list_local_projects))
+        // Code generation bridge APIs
+        .route("/api/codegen/options", get(api_codegen_options))
+        .route("/api/codegen/preview", post(api_codegen_preview))
         .with_state(state)
 }

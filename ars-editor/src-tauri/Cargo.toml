@@ -48,6 +48,7 @@ required-features = ["web-server"]
 [dependencies]
 # Ars core crates
 ars-core = { path = "../../crates/ars-core" }
+ars-codegen = { path = "../../crates/ars-codegen" }
 ars-secrets = { path = "../../crates/ars-secrets" }
 ars-project = { path = "../../crates/ars-project" }
 # ars-secrets: removed — secrets management moved to Cernere server

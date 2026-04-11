@@ -1,14 +1,10 @@
-mod project_loader;
-mod prompt_generator;
-mod session_runner;
-
 use clap::{Parser, Subcommand};
 use std::path::PathBuf;
 
+use ars_codegen::project_loader::{find_project_files, load_project};
+use ars_codegen::prompt_generator::PromptGenerator;
+use ars_codegen::session_runner::{CodegenConfig, SessionRunner};
 use ars_core::models::Project;
-use project_loader::{find_project_files, load_project};
-use prompt_generator::PromptGenerator;
-use session_runner::{CodegenConfig, SessionRunner};
 
 #[derive(Parser)]
 #[command(name = "ars-codegen", about = "Arsの設計フローからコードを生成するCLIツール")]

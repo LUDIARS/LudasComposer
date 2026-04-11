@@ -4,6 +4,10 @@ version = "0.1.0"
 edition = "2021"
 description = "Ars Code Generator - Generate game content code from Ars design flow using Claude Code"
 
+[lib]
+name = "ars_codegen"
+path = "src/lib.rs"
+
 [[bin]]
 name = "ars-codegen"
 path = "src/main.rs"

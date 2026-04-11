@@ -49,6 +49,7 @@
     "projectManager": "Project Manager",
     "archetype": "Archetype",
     "archetypeWizard": "Archetype Wizard",
+    "codeGeneration": "Code Generation",
     "gettingStarted": "Getting Started Guide",
     "lastSaved": "Last saved: {{time}}",
     "toast": {
@@ -749,5 +750,31 @@
     "loading": "Loading...",
     "all": "All",
     "none": "None"
+  },
+  "codegen": {
+    "title": "Code Generation Bridge",
+    "step": "Step {{current}} / {{total}}",
+    "back": "Back",
+    "next": "Next",
+    "done": "Done",
+    "loading": "Loading...",
+    "platformTitle": "Target Platform",
+    "platformDesc": "Select the target platform for code generation.",
+    "formatTitle": "Output Format",
+    "formatDesc": "Choose what to generate alongside the source code.",
+    "outputDir": "Output Directory",
+    "dryRun": "Dry run (generate prompts only, do not launch Claude Code)",
+    "scopeTitle": "Generation Scope",
+    "scopeDesc": "Select specific scenes and components to generate. Leave empty to generate all.",
+    "scopeHint": "If nothing is selected, all scenes and components will be included.",
+    "scenes": "Scenes",
+    "noScenes": "No scenes defined",
+    "components": "Components",
+    "noComponents": "No components defined",
+    "previewTitle": "Generation Preview",
+    "language": "Language",
+    "extension": "Extension",
+    "totalTasks": "Total Tasks",
+    "noTasks": "No tasks to generate. Add scenes or components to the project first."
   }
 }
