@@ -25,7 +25,6 @@ import { UIViewLayout } from '@/features/ui-view';
 import { DataViewLayout } from '@/features/data-view';
 import { safeLoadProject, getLastProjectPath } from '@/lib/project-loader';
 import { usePresenceTracker } from '@/hooks/usePresenceTracker';
-import { CollabPresence } from '@/features/node-editor/components/CollabPresence';
 
 export function EditorPage() {
   useAutoSave();

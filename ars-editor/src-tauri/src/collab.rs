@@ -231,15 +231,13 @@ async fn handle_socket(socket: WebSocket, state: CollabState, query: WsQuery) {
     let send_task = tokio::spawn(async move {
         while let Ok(msg) = rx.recv().await {
             // 自分のカーソル・プレゼンスメッセージは除外
-            if let Ok(parsed) = serde_json::from_str::<CollabMessage>(&msg) {
-                match &parsed {
-                    CollabMessage::Cursor { user_id: uid, .. }
-                    | CollabMessage::Presence { user_id: uid, .. } => {
-                        if *uid == user_id_for_send {
-                            continue;
-                        }
-                    }
-                    _ => {}
+            if let Ok(
+                CollabMessage::Cursor { user_id: ref uid, .. }
+                | CollabMessage::Presence { user_id: ref uid, .. },
+            ) = serde_json::from_str::<CollabMessage>(&msg)
+            {
+                if *uid == user_id_for_send {
+                    continue;
                 }
             }
             if !ws_send(&mut ws_tx, &msg).await {
