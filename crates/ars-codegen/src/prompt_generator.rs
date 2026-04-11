@@ -101,13 +101,14 @@ impl<'a> PromptGenerator<'a> {
         }
     }
 
-    fn resolve_component_deps<'b>(&self, comp: &Component, all: &[&'b Component]) -> Vec<String> {
+    fn resolve_component_deps(&self, comp: &Component, all: &[&Component]) -> Vec<String> {
         comp.dependencies.iter()
             .filter(|dep_id| all.iter().any(|c| &c.id == *dep_id))
             .map(|dep_id| format!("comp-{}", dep_id))
             .collect()
     }
 
+    #[allow(clippy::needless_lifetimes)]
     fn get_scene_component_deps<'b>(&self, _scene: &Scene, all: &[&'b Component]) -> Vec<&'b Component> {
         // In the new architecture, actors don't directly reference components.
         // Return all components as potential dependencies for now.

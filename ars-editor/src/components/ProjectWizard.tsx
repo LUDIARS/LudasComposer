@@ -240,6 +240,7 @@ export function ProjectWizard({ onClose }: ProjectWizardProps) {
       // No GitHub user — just create the project locally
       finishCreate(false);
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [projectName, user]);
 
   const finishCreate = useCallback(async (withGitHub: boolean) => {
