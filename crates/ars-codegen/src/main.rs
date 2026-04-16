@@ -1,9 +1,13 @@
 use clap::{Parser, Subcommand};
 use std::path::PathBuf;
 
+use ars_codegen::feedback::{detect_changes, ChangeKind, FeedbackInputs};
+use ars_codegen::manifest::{CodegenManifest, FileKind};
 use ars_codegen::project_loader::{find_project_files, load_project};
 use ars_codegen::prompt_generator::PromptGenerator;
-use ars_codegen::session_runner::{CodegenConfig, SessionRunner};
+use ars_codegen::session_runner::{
+    build_manifest, CodegenConfig, SessionRunner,
+};
 use ars_core::models::Project;
 
 #[derive(Parser)]
@@ -62,6 +66,27 @@ enum Commands {
         /// 対象コンポーネントID
         #[arg(short, long)]
         component: Vec<String>,
+    },
+    /// 生成済みコード/コード詳細設計の差分を Ars 側へフィードバック
+    ///
+    /// `.ars-cache/codegen-manifest.json` を基準点として、最後の同期以降に
+    /// 編集されたファイル (Added / Modified / Removed) を一覧表示する。
+    Feedback {
+        /// .ars.json プロジェクトファイル
+        #[arg(short, long)]
+        project: Option<String>,
+        /// 出力ディレクトリ (デフォルト: ./generated)
+        #[arg(short, long, default_value = "./generated")]
+        output: String,
+        /// codedesign ディレクトリ (デフォルト: {project_dir}/codedesign)
+        #[arg(long)]
+        codedesign: Option<String>,
+    },
+    /// 現在の codegen-manifest.json を表示
+    Manifest {
+        /// .ars.json プロジェクトファイル
+        #[arg(short, long)]
+        project: Option<String>,
     },
 }
 
@@ -166,6 +191,11 @@ async fn run(cli: Cli) -> Result<(), String> {
             }
 
             let runner = SessionRunner::new(config);
+            // tasks を消費する前にメタ情報をキャプチャしておく（manifest 構築用）
+            let task_meta: Vec<_> = tasks
+                .iter()
+                .map(|t| (t.id.clone(), t.layout_category, t.entity_id.clone(), t.name.clone(), t.class_name.clone()))
+                .collect();
             let results = runner.run_tasks(tasks).await;
 
             let succeeded = results.iter().filter(|r| r.success).count();
@@ -181,7 +211,129 @@ async fn run(cli: Cli) -> Result<(), String> {
                 }
             }
             println!("合計時間: {:.1}s", total_duration as f64 / 1000.0);
+
+            // Manifest 更新（成功タスクのみ集計）
+            let project_dir = pf.parent().map(PathBuf::from).unwrap_or_else(|| PathBuf::from("."));
+            let codedesign_root = project_dir.join("codedesign");
+            let cd = if codedesign_root.exists() { Some(codedesign_root.as_path()) } else { None };
+
+            // task メタを CodegenTask っぽい雛形に詰め直して build_manifest に渡す
+            let synthetic_tasks: Vec<ars_codegen::prompt_generator::CodegenTask> = task_meta
+                .into_iter()
+                .map(|(id, cat, eid, name, class_name)| ars_codegen::prompt_generator::CodegenTask {
+                    id,
+                    task_type: cat.as_str().to_string(),
+                    name,
+                    prompt: String::new(),
+                    dependencies: vec![],
+                    output_dir: String::new(),
+                    layout_category: cat,
+                    entity_id: eid,
+                    class_name,
+                })
+                .collect();
+
+            let manifest = build_manifest(
+                &synthetic_tasks,
+                &results,
+                &pf,
+                &output,
+                cd,
+                &proj.name,
+                "ars-native",
+            );
+            let manifest_path = CodegenManifest::default_path(&project_dir);
+            if let Err(e) = manifest.save_to(&manifest_path) {
+                eprintln!("manifest 保存に失敗: {e}");
+            } else {
+                println!("\nmanifest を保存しました: {}", manifest_path.display());
+            }
             Ok(())
+        }
+        Commands::Feedback { project, output, codedesign } => {
+            let pf = resolve_project_file(project.as_deref())?;
+            let project_dir = pf
+                .parent()
+                .ok_or_else(|| "project_file の親ディレクトリが取得できません".to_string())?;
+            let output_root = std::path::Path::new(&output)
+                .canonicalize()
+                .unwrap_or_else(|_| PathBuf::from(&output));
+            let cd_path = codedesign
+                .map(PathBuf::from)
+                .unwrap_or_else(|| project_dir.join("codedesign"));
+            let manifest_path = CodegenManifest::default_path(project_dir);
+
+            let report = detect_changes(&FeedbackInputs {
+                project_file: &pf,
+                output_root: &output_root,
+                codedesign_root: Some(&cd_path),
+                manifest_path: &manifest_path,
+            })?;
+
+            println!("\n=== Codegen Feedback ===");
+            println!("プロジェクト: {}", pf.display());
+            println!("出力ルート: {}", output_root.display());
+            println!("codedesign: {}", cd_path.display());
+            println!("manifest: {}", manifest_path.display());
+
+            if report.manifest_missing {
+                println!("\n[INFO] manifest が存在しません。`generate` を一度実行すると基準点が記録されます。");
+            }
+
+            if report.is_empty() && !report.manifest_missing {
+                println!("\n変更はありません。");
+                return Ok(());
+            }
+
+            let added = report.count(ChangeKind::Added);
+            let modified = report.count(ChangeKind::Modified);
+            let removed = report.count(ChangeKind::Removed);
+            let project_n = report.count_kind(FileKind::Project);
+            let cd_n = report.count_kind(FileKind::CodeDesign);
+            let code_n = report.count_kind(FileKind::Code);
+
+            println!("\n--- サマリー ---");
+            println!("プロジェクト変更: {}", if report.project_changed { "あり" } else { "なし" });
+            println!("変更数: Added={} / Modified={} / Removed={}", added, modified, removed);
+            println!("種別:   project={} / codedesign={} / code={}", project_n, cd_n, code_n);
+
+            println!("\n--- 詳細 ---");
+            for c in &report.changes {
+                let entity = c
+                    .entity_name
+                    .as_deref()
+                    .map(|n| format!(" [{}]", n))
+                    .unwrap_or_default();
+                let kind = match c.kind {
+                    FileKind::Project => "project",
+                    FileKind::CodeDesign => "codedesign",
+                    FileKind::Code => "code",
+                };
+                let change = match c.change {
+                    ChangeKind::Added => "ADD",
+                    ChangeKind::Modified => "MOD",
+                    ChangeKind::Removed => "DEL",
+                };
+                println!("  {} [{}] {}{}", change, kind, c.path, entity);
+            }
+            Ok(())
+        }
+        Commands::Manifest { project } => {
+            let pf = resolve_project_file(project.as_deref())?;
+            let project_dir = pf
+                .parent()
+                .ok_or_else(|| "project_file の親ディレクトリが取得できません".to_string())?;
+            let manifest_path = CodegenManifest::default_path(project_dir);
+            match CodegenManifest::load_from(&manifest_path)? {
+                Some(m) => {
+                    println!("{}", serde_json::to_string_pretty(&m).map_err(|e| format!("シリアライズ失敗: {e}"))?);
+                    Ok(())
+                }
+                None => {
+                    println!("manifest が存在しません: {}", manifest_path.display());
+                    Ok(())
+                }
+            }
         }
     }
 }

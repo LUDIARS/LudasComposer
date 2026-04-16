@@ -4,8 +4,12 @@
 //! 対象環境・出力フォーマットの選択を UI 側で行い、このモジュールの型を通じて
 //! PromptGenerator / SessionRunner に橋渡しする。
 
+use std::path::Path;
+
 use serde::{Deserialize, Serialize};
 
+use crate::feedback::{detect_changes, FeedbackInputs, FeedbackReport};
+use crate::manifest::CodegenManifest;
 use crate::prompt_generator::{CodegenTask, PromptGenerator};
 use ars_core::models::Project;
 
@@ -143,6 +147,9 @@ pub struct CodegenBridgeConfig {
     /// パーミッションモード (auto/default/plan)
     #[serde(skip_serializing_if = "Option::is_none")]
     pub permission_mode: Option<String>,
+    /// codedesign ルートパス（省略時は `{project_dir}/codedesign`）
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub codedesign_root: Option<String>,
 }
 
 fn default_output_dir() -> String {
@@ -266,6 +273,33 @@ impl CodegenBridge {
             claude_permission_mode: config.permission_mode.clone(),
         }
     }
+
+    /// プロジェクトディレクトリ + 出力設定から差分を検出する。
+    ///
+    /// 直近 `generate` 実行時に保存された `.ars-cache/codegen-manifest.json` を
+    /// 基準点として、現在のコード／コード詳細設計／プロジェクトファイルとの差分を返す。
+    pub fn feedback(
+        project_file: &Path,
+        config: &CodegenBridgeConfig,
+    ) -> Result<FeedbackReport, String> {
+        let project_dir = project_file
+            .parent()
+            .ok_or_else(|| "project_file の親ディレクトリが取得できません".to_string())?;
+        let output_root = std::path::PathBuf::from(&config.output_dir);
+        let codedesign_root = config
+            .codedesign_root
+            .as_ref()
+            .map(std::path::PathBuf::from)
+            .unwrap_or_else(|| project_dir.join("codedesign"));
+        let manifest_path = CodegenManifest::default_path(project_dir);
+
+        detect_changes(&FeedbackInputs {
+            project_file,
+            output_root: &output_root,
+            codedesign_root: Some(&codedesign_root),
+            manifest_path: &manifest_path,
+        })
+    }
 }
 
 #[cfg(test)]
@@ -332,6 +366,7 @@ mod tests {
             max_concurrent: 1,
             model: None,
             permission_mode: None,
+            codedesign_root: None,
         };
         let result = CodegenBridge::preview(&project, &config);
         assert_eq!(result.total_tasks, 0);
