@@ -137,8 +137,7 @@ fn split_meta_line(s: &str) -> Option<(String, String)> {
 /// 飾り付けを除去する用途。
 fn strip_inline_marks(s: &str) -> String {
     let mut out = String::with_capacity(s.len());
-    let mut chars = s.chars().peekable();
-    while let Some(ch) = chars.next() {
+    for ch in s.chars() {
         match ch {
             '*' => {
                 // **bold** / *italic* どちらも単純に外す

@@ -730,9 +730,7 @@ fn backup_project_file(project_file: &Path, project_dir: &Path) -> Result<Option
         .map_err(|e| format!("バックアップディレクトリ作成失敗: {e}"))?;
     // 安全なファイル名にタイムスタンプを埋め込む（":" を含めない）
     let stamp = crate::manifest::now_rfc3339()
-        .replace(':', "")
-        .replace('-', "")
-        .replace('Z', "");
+        .replace([':', '-', 'Z'], "");
     let backup_path = cache_dir.join(format!("feedback-backup-{stamp}.json"));
     std::fs::write(&backup_path, bytes)
         .map_err(|e| format!("バックアップ書き込み失敗: {e}"))?;
