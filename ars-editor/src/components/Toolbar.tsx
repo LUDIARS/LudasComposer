@@ -12,7 +12,7 @@ import { safeLoadProject } from '@/lib/project-loader';
 import { ProjectManager } from './ProjectManager';
 import { ProjectWizard } from './ProjectWizard';
 import { ArchetypeWizard } from '@/features/archetype-wizard';
-import { CodegenBridgeDialog } from '@/features/codegen-bridge';
+import { CodegenBridgeDialog, CodegenFeedbackDialog } from '@/features/codegen-bridge';
 import { GettingStartedGuide } from './GettingStartedGuide';
 import { ProjectListDialog } from './ProjectListDialog';
 import { LanguageSettings } from './LanguageSettings';
@@ -132,6 +132,7 @@ export function Toolbar() {
   const [showProjectList, setShowProjectList] = useState(false);
   const [showLanguageSettings, setShowLanguageSettings] = useState(false);
   const [showCodegenBridge, setShowCodegenBridge] = useState(false);
+  const [showCodeFeedback, setShowCodeFeedback] = useState(false);
   const [pushing, setPushing] = useState(false);
   const isMobile = useIsMobile();
 
@@ -208,7 +209,8 @@ export function Toolbar() {
     { label: t('toolbar.openProject'), onClick: handleLoad },
     { label: `${t('toolbar.save')}${isDirty ? ' *' : ''}`, onClick: handleSave },
     { label: t('toolbar.archetypeWizard'), onClick: () => setShowArchetypeWizard(true), color: 'var(--accent)' },
-    { label: t('toolbar.codeGeneration'), onClick: () => setShowCodegenBridge(true), color: 'var(--green)', dividerAfter: true },
+    { label: t('toolbar.codeGeneration'), onClick: () => setShowCodegenBridge(true), color: 'var(--green)' },
+    { label: t('toolbar.codeFeedback'), onClick: () => setShowCodeFeedback(true), color: 'var(--orange)', dividerAfter: true },
     { label: t('toolbar.undo'), onClick: () => { if (isGenerating) abortGeneration(); undo(); markDirty(); }, disabled: !canUndo() },
     { label: t('toolbar.redo'), onClick: () => { redo(); markDirty(); }, disabled: !canRedo(), dividerAfter: true },
     ...(activeGitRepo ? [{ label: t('toolbar.pushToGithub'), onClick: handleGitPush, disabled: pushing, color: 'var(--green)', dividerAfter: true as const }] : []),
@@ -252,6 +254,7 @@ export function Toolbar() {
       {showProjectList && <ProjectListDialog onClose={() => setShowProjectList(false)} />}
       {showLanguageSettings && <LanguageSettings onClose={() => setShowLanguageSettings(false)} />}
       {showCodegenBridge && <CodegenBridgeDialog onClose={() => setShowCodegenBridge(false)} />}
+      {showCodeFeedback && <CodegenFeedbackDialog onClose={() => setShowCodeFeedback(false)} />}
     </>
   );
 

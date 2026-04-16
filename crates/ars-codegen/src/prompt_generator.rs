@@ -1,5 +1,9 @@
 use ars_core::models::{Component, Project, Scene};
 
+use crate::code_layout::{
+    class_name_for, classify_component_category, entity_dir, LayoutCategory,
+};
+
 /// コード生成タスク
 pub struct CodegenTask {
     pub id: String,
@@ -8,6 +12,12 @@ pub struct CodegenTask {
     pub prompt: String,
     pub dependencies: Vec<String>,
     pub output_dir: String,
+    /// レイアウトカテゴリ (Scene/Actor/Module/Action/UI/Data)
+    pub layout_category: LayoutCategory,
+    /// 元エンティティ ID（manifest 紐付け用）
+    pub entity_id: String,
+    /// 生成されるクラス名（サフィックス付与済み）
+    pub class_name: String,
 }
 
 /// カテゴリの日本語マッピング
@@ -28,17 +38,6 @@ fn is_pictor_domain(domain: &str) -> bool {
     keywords.iter().any(|k| lower.contains(k))
 }
 
-fn to_kebab_case(s: &str) -> String {
-    let mut result = String::new();
-    for (i, c) in s.chars().enumerate() {
-        if c.is_uppercase() && i > 0 {
-            result.push('-');
-        }
-        result.push(c.to_ascii_lowercase());
-    }
-    result.replace(' ', "-")
-}
-
 pub struct PromptGenerator<'a> {
     project: &'a Project,
     platform: &'a str,
@@ -57,30 +56,85 @@ impl<'a> PromptGenerator<'a> {
     ) -> Vec<CodegenTask> {
         let mut tasks = Vec::new();
 
-        // 1. コンポーネント単位
+        // 1. コンポーネント単位 (UI / Module の振り分けは category で決定)
         let components = self.get_target_components(component_ids);
         for comp in &components {
+            let category = classify_component_category(&comp.category);
+            let class_name = class_name_for(category, &comp.name);
             tasks.push(CodegenTask {
                 id: format!("comp-{}", comp.id),
-                task_type: "component".into(),
+                task_type: category.as_str().to_string(),
                 name: comp.name.clone(),
                 prompt: self.build_component_prompt(comp),
                 dependencies: self.resolve_component_deps(comp, &components),
-                output_dir: format!("{}/components/{}/{}", output_dir, to_kebab_case(&comp.domain), to_kebab_case(&comp.name)),
+                output_dir: entity_dir(output_dir, category, &comp.name),
+                layout_category: category,
+                entity_id: comp.id.clone(),
+                class_name,
             });
         }
 
-        // 2. シーン単位
+        // 2. アクション単位 (Scene 横断で集約)
         let scenes = self.get_target_scenes(scene_ids);
         for scene in &scenes {
+            for action in scene.actions.values() {
+                let category = LayoutCategory::Action;
+                let class_name = class_name_for(category, &action.name);
+                tasks.push(CodegenTask {
+                    id: format!("action-{}", action.id),
+                    task_type: category.as_str().to_string(),
+                    name: action.name.clone(),
+                    prompt: self.build_action_prompt(scene, action),
+                    dependencies: vec![],
+                    output_dir: entity_dir(output_dir, category, &action.name),
+                    layout_category: category,
+                    entity_id: action.id.clone(),
+                    class_name,
+                });
+            }
+        }
+
+        // 3. アクター単位 (各シーン配下のアクターを Actor カテゴリで個別生成)
+        for scene in &scenes {
+            for actor in scene.actors.values() {
+                let category = LayoutCategory::Actor;
+                let class_name = class_name_for(category, &actor.name);
+                tasks.push(CodegenTask {
+                    id: format!("actor-{}", actor.id),
+                    task_type: category.as_str().to_string(),
+                    name: actor.name.clone(),
+                    prompt: self.build_actor_prompt(scene, actor),
+                    dependencies: vec![],
+                    output_dir: entity_dir(output_dir, category, &actor.name),
+                    layout_category: category,
+                    entity_id: actor.id.clone(),
+                    class_name,
+                });
+            }
+        }
+
+        // 4. シーン単位
+        for scene in &scenes {
             let comp_deps = self.get_scene_component_deps(scene, &components);
+            let category = LayoutCategory::Scene;
+            let class_name = class_name_for(category, &scene.name);
+            let mut deps: Vec<String> = comp_deps.iter().map(|c| format!("comp-{}", c.id)).collect();
+            for actor in scene.actors.values() {
+                deps.push(format!("actor-{}", actor.id));
+            }
+            for action in scene.actions.values() {
+                deps.push(format!("action-{}", action.id));
+            }
             tasks.push(CodegenTask {
                 id: format!("scene-{}", scene.id),
-                task_type: "scene".into(),
+                task_type: category.as_str().to_string(),
                 name: scene.name.clone(),
                 prompt: self.build_scene_prompt(scene),
-                dependencies: comp_deps.iter().map(|c| format!("comp-{}", c.id)).collect(),
-                output_dir: format!("{}/scenes/{}", output_dir, to_kebab_case(&scene.name)),
+                dependencies: deps,
+                output_dir: entity_dir(output_dir, category, &scene.name),
+                layout_category: category,
+                entity_id: scene.id.clone(),
+                class_name,
             });
         }
 
@@ -118,12 +172,20 @@ impl<'a> PromptGenerator<'a> {
     fn build_component_prompt(&self, component: &Component) -> String {
         let needs_pictor = is_pictor_domain(&component.domain);
         let (lang, ext, module_pattern) = self.platform_info();
+        let category = classify_component_category(&component.category);
+        let class_name = class_name_for(category, &component.name);
 
         let mut lines = vec![
-            format!("# コード生成指示: {} コンポーネント", component.name),
+            format!(
+                "# コード生成指示: {} ({})",
+                component.name,
+                category.dir_name()
+            ),
             String::new(),
             format!("## ターゲットプラットフォーム: {}", self.platform),
             format!("## 実装言語: {}", lang),
+            format!("## 出力カテゴリ: {}", category.dir_name()),
+            format!("## クラス名: `{}`", class_name),
             String::new(),
             format!("以下のErgoモジュール定義に基づいて、{}として実装コードを生成してください。", module_pattern),
             String::new(),
@@ -143,20 +205,142 @@ impl<'a> PromptGenerator<'a> {
         lines.push("---".into());
         lines.push(String::new());
         lines.push("## 生成要件".into());
-        lines.push(format!("1. メインモジュールファイル: `{}{}`", to_kebab_case(&component.name), ext));
-        lines.push("2. 各タスクの実装".into());
-        lines.push("3. エラーハンドリング".into());
+        lines.push(format!(
+            "1. メインモジュールファイル: `{}{}` (クラス名 `{}`)",
+            class_name, ext, class_name
+        ));
+        lines.push(format!(
+            "2. このファイルは出力ルート配下の `{}/{}/` に配置すること",
+            category.dir_name(),
+            class_name
+        ));
+        lines.push("3. 各タスクの実装".into());
+        lines.push("4. エラーハンドリング".into());
 
         lines.join("\n")
     }
 
+    fn build_actor_prompt(&self, scene: &Scene, actor: &ars_core::models::Actor) -> String {
+        let (lang, ext, _pattern) = self.platform_info();
+        let category = LayoutCategory::Actor;
+        let class_name = class_name_for(category, &actor.name);
+
+        let mut lines = vec![
+            format!("# コード生成指示: {} (Actor)", actor.name),
+            String::new(),
+            format!("## ターゲットプラットフォーム: {}", self.platform),
+            format!("## 実装言語: {}", lang),
+            format!("## 所属シーン: {}", scene.name),
+            format!("## ドメインロール: {}", actor.role),
+            format!("## アクタータイプ: {}", actor.actor_type),
+            format!("## クラス名: `{}`", class_name),
+            String::new(),
+        ];
+
+        if !actor.requirements.overview.is_empty() {
+            lines.push("## 概要".into());
+            for item in &actor.requirements.overview {
+                lines.push(format!("- {}", item));
+            }
+            lines.push(String::new());
+        }
+        if !actor.requirements.goals.is_empty() {
+            lines.push("## 達成目標".into());
+            for item in &actor.requirements.goals {
+                lines.push(format!("- {}", item));
+            }
+            lines.push(String::new());
+        }
+        if !actor.requirements.role.is_empty() {
+            lines.push("## 役割".into());
+            for item in &actor.requirements.role {
+                lines.push(format!("- {}", item));
+            }
+            lines.push(String::new());
+        }
+        if !actor.requirements.behavior.is_empty() {
+            lines.push("## 挙動".into());
+            for item in &actor.requirements.behavior {
+                lines.push(format!("- {}", item));
+            }
+            lines.push(String::new());
+        }
+
+        lines.push("## 生成要件".into());
+        lines.push(format!(
+            "1. アクタークラス: `{}{}` (クラス名 `{}`、Actor サフィックス必須)",
+            class_name, ext, class_name
+        ));
+        lines.push(format!(
+            "2. 出力配置: `Actor/{}/`",
+            class_name
+        ));
+        lines.push("3. ドメインロール / 要件定義をクラスのヘッダコメントに反映".into());
+        lines.join("\n")
+    }
+
+    fn build_action_prompt(&self, scene: &Scene, action: &ars_core::models::Action) -> String {
+        let (lang, ext, _pattern) = self.platform_info();
+        // Action はサフィックスを付与しない
+        let class_name = class_name_for(LayoutCategory::Action, &action.name);
+
+        let mut lines = vec![
+            format!("# コード生成指示: {} (Action)", action.name),
+            String::new(),
+            format!("## ターゲットプラットフォーム: {}", self.platform),
+            format!("## 実装言語: {}", lang),
+            format!("## 所属シーン: {}", scene.name),
+            format!(
+                "## アクション種別: {}",
+                serde_json::to_string(&action.action_type).unwrap_or("\"interface\"".into())
+            ),
+            format!("## クラス名: `{}` (サフィックス無し)", class_name),
+            String::new(),
+        ];
+
+        if !action.description.is_empty() {
+            lines.push("## 説明".into());
+            lines.push(action.description.clone());
+            lines.push(String::new());
+        }
+        if !action.behaviors.is_empty() {
+            lines.push("## 振る舞い".into());
+            for b in &action.behaviors {
+                lines.push(format!("- {}", b));
+            }
+            lines.push(String::new());
+        }
+        if !action.concretes.is_empty() {
+            lines.push("## 具体実装".into());
+            for c in &action.concretes {
+                lines.push(format!("- {}: {}", c.name, c.description));
+            }
+            lines.push(String::new());
+        }
+
+        lines.push("## 生成要件".into());
+        lines.push(format!(
+            "1. アクション本体: `{}{}` (クラス名 `{}` — サフィックスを付与しない)",
+            class_name, ext, class_name
+        ));
+        lines.push(format!("2. 出力配置: `Action/{}/`", class_name));
+        lines.join("\n")
+    }
+
     fn build_scene_prompt(&self, scene: &Scene) -> String {
-        let (lang, _ext, _pattern) = self.platform_info();
+        let (lang, ext, _pattern) = self.platform_info();
+        let category = LayoutCategory::Scene;
+        let class_name = class_name_for(category, &scene.name);
         let mut lines = vec![
             format!("# コード生成指示: {} シーン", scene.name),
             String::new(),
             format!("## ターゲットプラットフォーム: {}", self.platform),
             format!("## 実装言語: {}", lang),
+            format!("## クラス名: `{}` (Scene サフィックス必須)", class_name),
+            format!(
+                "## 出力配置: `Scene/{}/{}{}`",
+                class_name, class_name, ext
+            ),
             String::new(),
             "以下のシーン構造に基づいて、アクター生成・接続配線のコードを生成してください。".into(),
             String::new(),

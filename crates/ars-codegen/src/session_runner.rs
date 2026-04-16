@@ -1,6 +1,10 @@
-use std::path::Path;
+use std::path::{Path, PathBuf};
 use tokio::process::Command;
 
+use crate::crc32::crc32_hex;
+use crate::manifest::{
+    record_for, system_time_to_rfc3339, CodegenManifest, FileKind, ManifestEntry,
+};
 use crate::prompt_generator::CodegenTask;
 
 pub struct CodegenConfig {
@@ -236,6 +240,118 @@ fn scan_files(dir: &Path, results: &mut Vec<String>) {
             scan_files(&path, results);
         } else {
             results.push(path.to_string_lossy().to_string());
+        }
+    }
+}
+
+// ── Manifest 構築 ─────────────────────────────────────────
+
+/// `run_tasks` の結果から Manifest を構築する。
+///
+/// - `tasks`              : 実行したタスク一覧（`layout_category` / `entity_id` / `class_name` を保持）
+/// - `results`            : `run_tasks` の戻り値（成功・出力ファイル一覧）
+/// - `project_file`       : プロジェクトファイル絶対パス
+/// - `output_root`        : 生成出力ルート絶対パス
+/// - `codedesign_root`    : codedesign ルート絶対パス（任意）
+/// - `project_name`       : プロジェクト名
+/// - `platform`           : 対象プラットフォーム文字列
+///
+/// 成功した各タスクの出力ファイルを `code` 種別として記録し、
+/// codedesign ルート配下に同じ class_name を持つ MD があれば `codedesign` 種別で
+/// 同エントリにまとめる。
+pub fn build_manifest(
+    tasks: &[CodegenTask],
+    results: &[CodegenResult],
+    project_file: &Path,
+    output_root: &Path,
+    codedesign_root: Option<&Path>,
+    project_name: &str,
+    platform: &str,
+) -> CodegenManifest {
+    let project_dir: PathBuf = project_file
+        .parent()
+        .map(|p| p.to_path_buf())
+        .unwrap_or_else(|| PathBuf::from("."));
+
+    let mut manifest = CodegenManifest::new(project_name, platform);
+    manifest.project_file = crate::manifest::relative_path(project_file, &project_dir);
+    manifest.output_root = crate::manifest::relative_path(output_root, &project_dir);
+    manifest.codedesign_root = codedesign_root
+        .map(|p| crate::manifest::relative_path(p, &project_dir));
+    if let Ok(bytes) = std::fs::read(project_file) {
+        manifest.project_crc32 = crc32_hex(&bytes);
+    }
+
+    for task in tasks {
+        let result = results.iter().find(|r| r.task_id == task.id);
+        let success = result.map(|r| r.success).unwrap_or(false);
+        if !success {
+            continue;
+        }
+        let mut files = Vec::new();
+        if let Some(r) = result {
+            for file_path in &r.output_files {
+                let abs = Path::new(file_path);
+                if let Some(rec) = record_for(abs, &project_dir, FileKind::Code) {
+                    files.push(rec);
+                }
+            }
+        }
+        // codedesign 側に対応する MD があればまとめる
+        if let Some(cd) = codedesign_root {
+            for cd_path in find_codedesign_for(cd, task) {
+                if let Some(rec) = record_for(&cd_path, &project_dir, FileKind::CodeDesign) {
+                    files.push(rec);
+                }
+            }
+        }
+        manifest.entries.push(ManifestEntry {
+            category: task.layout_category,
+            entity_id: task.entity_id.clone(),
+            entity_name: task.name.clone(),
+            class_name: task.class_name.clone(),
+            parent_id: None,
+            files,
+        });
+    }
+    manifest.last_synced_at = system_time_to_rfc3339(std::time::SystemTime::now());
+    manifest
+}
+
+/// codedesign ルート配下から、タスクと一致する MD ファイルを探す。
+///
+/// 命名は `codedesign-generation-rules.md` に従い kebab-case を採用しているため、
+/// `class_name` および raw `name` の両方で検索する。
+fn find_codedesign_for(codedesign_root: &Path, task: &CodegenTask) -> Vec<PathBuf> {
+    use crate::code_layout::to_kebab_case;
+    let candidates = [
+        to_kebab_case(&task.class_name),
+        to_kebab_case(&task.name),
+    ];
+    let mut hits = Vec::new();
+    visit_md_files(codedesign_root, &mut |path| {
+        let stem = path
+            .file_stem()
+            .map(|s| s.to_string_lossy().to_lowercase())
+            .unwrap_or_default();
+        if candidates.iter().any(|c| c == &stem) {
+            hits.push(path.to_path_buf());
+        }
+    });
+    hits
+}
+
+fn visit_md_files<F: FnMut(&Path)>(dir: &Path, visitor: &mut F) {
+    let entries = match std::fs::read_dir(dir) {
+        Ok(e) => e,
+        Err(_) => return,
+    };
+    for entry in entries.flatten() {
+        let path = entry.path();
+        if path.is_dir() {
+            visit_md_files(&path, visitor);
+        } else if path.extension().map(|e| e == "md").unwrap_or(false) {
+            visitor(&path);
         }
     }
 }

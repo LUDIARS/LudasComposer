@@ -25,6 +25,7 @@ use ars_codegen::bridge::{
     CodegenBridge, CodegenBridgeConfig, CodegenPreviewResult,
     OutputFormat, TargetPlatform,
 };
+use ars_codegen::feedback::{ApplyResult, FeedbackApplyOptions, FeedbackReport};
 
 const SESSION_COOKIE: &str = "ars_session";
 
@@ -440,6 +441,84 @@ async fn api_codegen_preview(
     Ok(Json(result))
 }
 
+// ========== Code Feedback APIs ==========
+
+/// フィードバック差分検出リクエスト
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct CodegenFeedbackRequest {
+    /// プロジェクトファイルパス
+    project_path: String,
+    config: CodegenBridgeConfig,
+}
+
+/// フィードバック差分検出
+async fn api_codegen_feedback(
+    Json(req): Json<CodegenFeedbackRequest>,
+) -> Result<Json<FeedbackReport>, (StatusCode, String)> {
+    let project_path = std::path::PathBuf::from(&req.project_path);
+    if !project_path.exists() {
+        return Err((
+            StatusCode::NOT_FOUND,
+            format!("プロジェクトファイルが見つかりません: {}", req.project_path),
+        ));
+    }
+    let report = CodegenBridge::feedback(&project_path, &req.config)
+        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e))?;
+    Ok(Json(report))
+}
+
+/// フィードバック適用リクエスト
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct CodegenApplyRequest {
+    /// プロジェクトファイルパス
+    project_path: String,
+    project: Project,
+    config: CodegenBridgeConfig,
+    /// stale マーカーを追記するか（デフォルト true）
+    #[serde(default = "default_true")]
+    mark_code_stale: bool,
+    /// バックアップを作成するか（デフォルト true）
+    #[serde(default = "default_true")]
+    backup_project: bool,
+}
+
+fn default_true() -> bool {
+    true
+}
+
+/// フィードバック適用レスポンス
+#[derive(serde::Serialize)]
+#[serde(rename_all = "camelCase")]
+struct CodegenApplyResponse {
+    result: ApplyResult,
+    /// 反映後の Project（UI のステートを差し替えるため）
+    project: Project,
+}
+
+/// フィードバック差分を適用し、更新後の Project を返す
+async fn api_codegen_apply(
+    Json(req): Json<CodegenApplyRequest>,
+) -> Result<Json<CodegenApplyResponse>, (StatusCode, String)> {
+    let project_path = std::path::PathBuf::from(&req.project_path);
+    if !project_path.exists() {
+        return Err((
+            StatusCode::NOT_FOUND,
+            format!("プロジェクトファイルが見つかりません: {}", req.project_path),
+        ));
+    }
+    let mut project = req.project;
+    let opts = FeedbackApplyOptions {
+        apply_codedesign_to_project: true,
+        mark_code_stale: req.mark_code_stale,
+        backup_project: req.backup_project,
+    };
+    let result = CodegenBridge::apply(&project_path, &mut project, &req.config, &opts)
+        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e))?;
+    Ok(Json(CodegenApplyResponse { result, project }))
+}
+
 /// エディタモジュールのルーターを構築
 pub fn router(state: AppState) -> Router {
     Router::new()
@@ -467,5 +546,8 @@ pub fn router(state: AppState) -> Router {
         // Code generation bridge APIs
         .route("/api/codegen/options", get(api_codegen_options))
         .route("/api/codegen/preview", post(api_codegen_preview))
+        // Code feedback APIs
+        .route("/api/codegen/feedback", post(api_codegen_feedback))
+        .route("/api/codegen/apply", post(api_codegen_apply))
         .with_state(state)
 }

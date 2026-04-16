@@ -8,6 +8,14 @@ pub fn load_project(path: &Path) -> Result<Project, String> {
         .map_err(|e| format!("プロジェクトファイルのパースに失敗: {}", e))
 }
 
+/// Project を pretty JSON でファイルに保存する。
+pub fn save_project(path: &Path, project: &Project) -> Result<(), String> {
+    let text = serde_json::to_string_pretty(project)
+        .map_err(|e| format!("プロジェクトのシリアライズに失敗: {e}"))?;
+    std::fs::write(path, text)
+        .map_err(|e| format!("プロジェクトファイル書き込みに失敗: {}: {e}", path.display()))
+}
+
 pub fn find_project_files(dir: &Path, max_depth: usize) -> Vec<PathBuf> {
     let mut files = Vec::new();
     scan_dir(dir, &mut files, max_depth);

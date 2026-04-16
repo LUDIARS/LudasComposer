@@ -4,9 +4,17 @@
 //! 対象環境・出力フォーマットの選択を UI 側で行い、このモジュールの型を通じて
 //! PromptGenerator / SessionRunner に橋渡しする。
 
+use std::path::Path;
+
 use serde::{Deserialize, Serialize};
 
+use crate::feedback::{
+    apply_feedback, detect_changes, refresh_manifest, ApplyResult, FeedbackApplyOptions,
+    FeedbackInputs, FeedbackReport,
+};
+use crate::manifest::CodegenManifest;
 use crate::prompt_generator::{CodegenTask, PromptGenerator};
+use crate::project_loader::save_project;
 use ars_core::models::Project;
 
 // ── 対象プラットフォーム ────────────────────────────────
@@ -143,6 +151,9 @@ pub struct CodegenBridgeConfig {
     /// パーミッションモード (auto/default/plan)
     #[serde(skip_serializing_if = "Option::is_none")]
     pub permission_mode: Option<String>,
+    /// codedesign ルートパス（省略時は `{project_dir}/codedesign`）
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub codedesign_root: Option<String>,
 }
 
 fn default_output_dir() -> String {
@@ -266,6 +277,80 @@ impl CodegenBridge {
             claude_permission_mode: config.permission_mode.clone(),
         }
     }
+
+    /// プロジェクトディレクトリ + 出力設定から差分を検出する。
+    ///
+    /// 直近 `generate` 実行時に保存された `.ars-cache/codegen-manifest.json` を
+    /// 基準点として、現在のコード／コード詳細設計／プロジェクトファイルとの差分を返す。
+    pub fn feedback(
+        project_file: &Path,
+        config: &CodegenBridgeConfig,
+    ) -> Result<FeedbackReport, String> {
+        let project_dir = project_file
+            .parent()
+            .ok_or_else(|| "project_file の親ディレクトリが取得できません".to_string())?;
+        let output_root = std::path::PathBuf::from(&config.output_dir);
+        let codedesign_root = config
+            .codedesign_root
+            .as_ref()
+            .map(std::path::PathBuf::from)
+            .unwrap_or_else(|| project_dir.join("codedesign"));
+        let manifest_path = CodegenManifest::default_path(project_dir);
+
+        detect_changes(&FeedbackInputs {
+            project_file,
+            output_root: &output_root,
+            codedesign_root: Some(&codedesign_root),
+            manifest_path: &manifest_path,
+        })
+    }
+
+    /// `feedback` で得た差分を Project / codedesign に反映し、manifest を更新する。
+    ///
+    /// - codedesign の編集 → Project の対応エンティティ（Actor/Action/Component）に上書き
+    /// - code の変更    → 対応する codedesign MD に stale マーカーを追記
+    /// - 反映後の Project は `project_file` に pretty JSON で書き戻す
+    /// - manifest を最新スナップショットに更新する
+    pub fn apply(
+        project_file: &Path,
+        project: &mut Project,
+        config: &CodegenBridgeConfig,
+        opts: &FeedbackApplyOptions,
+    ) -> Result<ApplyResult, String> {
+        let project_dir = project_file
+            .parent()
+            .ok_or_else(|| "project_file の親ディレクトリが取得できません".to_string())?;
+        let output_root = std::path::PathBuf::from(&config.output_dir);
+        let codedesign_root = config
+            .codedesign_root
+            .as_ref()
+            .map(std::path::PathBuf::from)
+            .unwrap_or_else(|| project_dir.join("codedesign"));
+        let manifest_path = CodegenManifest::default_path(project_dir);
+
+        let inputs = FeedbackInputs {
+            project_file,
+            output_root: &output_root,
+            codedesign_root: Some(&codedesign_root),
+            manifest_path: &manifest_path,
+        };
+
+        let report = detect_changes(&inputs)?;
+        let result = apply_feedback(project, &report, &inputs, opts)?;
+
+        // Project → ファイル書き戻し（変更があった場合のみ）
+        if !result.applied.is_empty() {
+            save_project(project_file, project)?;
+        }
+
+        // manifest を最新化（既存があればそれを基に refresh、無ければスキップ）
+        if let Some(prev) = CodegenManifest::load_from(&manifest_path)? {
+            let next = refresh_manifest(&prev, &inputs)?;
+            next.save_to(&manifest_path)?;
+        }
+
+        Ok(result)
+    }
 }
 
 #[cfg(test)]
@@ -332,6 +417,7 @@ mod tests {
             max_concurrent: 1,
             model: None,
             permission_mode: None,
+            codedesign_root: None,
         };
         let result = CodegenBridge::preview(&project, &config);
         assert_eq!(result.total_tasks, 0);

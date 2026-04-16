@@ -3,6 +3,8 @@ import type {
   CodegenOptions,
   CodegenBridgeConfig,
   CodegenPreviewResult,
+  FeedbackReport,
+  CodegenApplyResponse,
 } from '@/types/codegen';
 
 function isTauri(): boolean {
@@ -72,6 +74,36 @@ export async function codegenPreview(
   return webFetch<CodegenPreviewResult>('/codegen/preview', {
     method: 'POST',
     body: JSON.stringify({ project, config }),
+  });
+}
+
+// ── Code Feedback ──────────────────────────────────
+
+export async function codegenFeedback(
+  projectPath: string,
+  config: CodegenBridgeConfig,
+): Promise<FeedbackReport> {
+  return webFetch<FeedbackReport>('/codegen/feedback', {
+    method: 'POST',
+    body: JSON.stringify({ projectPath, config }),
+  });
+}
+
+export async function codegenApply(
+  projectPath: string,
+  project: Project,
+  config: CodegenBridgeConfig,
+  options?: { markCodeStale?: boolean; backupProject?: boolean },
+): Promise<CodegenApplyResponse> {
+  return webFetch<CodegenApplyResponse>('/codegen/apply', {
+    method: 'POST',
+    body: JSON.stringify({
+      projectPath,
+      project,
+      config,
+      markCodeStale: options?.markCodeStale ?? true,
+      backupProject: options?.backupProject ?? true,
+    }),
   });
 }
 
