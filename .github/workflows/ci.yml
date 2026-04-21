@@ -82,3 +82,8 @@ jobs:
       - name: Clippy
         working-directory: ars-editor/src-tauri
         run: cargo clippy --features web-server --no-default-features --bin ars-web-server -- -D warnings
+      - name: Asset importer determinism check
+        run: |
+          rm -rf crates/ars-asset-importer/test-fixtures/data
+          cargo run -p ars-asset-importer --bin ars-import -- crates/ars-asset-importer/test-fixtures crates/ars-asset-importer/test-fixtures/source
+          git diff --exit-code crates/ars-asset-importer/test-fixtures/data

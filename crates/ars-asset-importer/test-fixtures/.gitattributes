@@ -1,0 +1,8 @@
+# Binary fixtures must not undergo CRLF translation
+# (P7 決定性 CI が byte-for-byte の git diff を見るため)
+*.glb binary
+*.gltf binary
+*.bin binary
+# importer 出力の text ファイルも LF 固定
+# (Linux CI と Windows local で同一バイト列にする)
+*.toml text eol=lf

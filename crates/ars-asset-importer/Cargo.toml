@@ -22,5 +22,9 @@ chull = "0.2"
 name = "ars-import"
 path = "src/bin/ars-import.rs"
 
+[[bin]]
+name = "gen-fixture"
+path = "src/bin/gen-fixture.rs"
+
 [dev-dependencies]
 tempfile = "3"

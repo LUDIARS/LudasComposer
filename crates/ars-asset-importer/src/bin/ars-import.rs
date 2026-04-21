@@ -17,7 +17,7 @@
 use std::path::{Path, PathBuf};
 use std::process::ExitCode;
 
-use ars_asset_importer::process;
+use ars_asset_importer::process_with_content_id;
 
 fn main() -> ExitCode {
     let args: Vec<String> = std::env::args().collect();
@@ -54,7 +54,7 @@ fn main() -> ExitCode {
     let mut hit = 0u32;
     let mut fail = 0u32;
     for src in &sources {
-        match process(src, &out_root, None) {
+        match process_with_content_id(src, &out_root) {
             Ok(o) => {
                 if o.cache_hit {
                     hit += 1;

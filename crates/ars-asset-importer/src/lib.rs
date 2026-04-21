@@ -40,5 +40,5 @@ pub mod simplify;
 pub mod thumbnail;
 
 pub use error::{AssetImporterError, Result};
-pub use pipeline::{process, ProcessOutcome};
+pub use pipeline::{process, process_with_content_id, ProcessOutcome};
 pub use schema::{AssetId, AssetMeta, Bounds, OrientedBox};

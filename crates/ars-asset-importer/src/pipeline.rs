@@ -16,6 +16,10 @@ use crate::loaders::{self, MeshData};
 use crate::schema::{AssetId, AssetMeta, Bounds, CacheLayout};
 use crate::{hull, hull_writer, obb, proxy_writer, simplify, AssetImporterError, Result};
 
+/// content-addressed AssetId 生成時に hash から取り出す文字数。
+/// 16 hex chars = 64 bit。同一プロジェクト内で衝突は実用上無視できる。
+const CONTENT_ID_LEN: usize = 16;
+
 /// `process` の結果。キャッシュヒットかどうかを呼び出し側に伝える。
 #[derive(Debug, Clone)]
 pub struct ProcessOutcome {
@@ -112,6 +116,20 @@ pub fn process(src: &Path, out_root: &Path, id: Option<AssetId>) -> Result<Proce
         cache_hit: false,
         meta,
     })
+}
+
+/// `process` の content-addressed 版。
+///
+/// `id` を指定する代わりに、source ファイルの BLAKE3 hash 先頭 16 hex chars
+/// (= 64 bit) を AssetId として使う。同一バイトの src は常に同一 `data/<id>/`
+/// に出力されるため、CI の `git diff --exit-code` による決定性検証に使える。
+///
+/// 別 src でも稀にハッシュ前方衝突する可能性は理論的にあるが、64 bit 空間で
+/// 実用上は無視できる。
+pub fn process_with_content_id(src: &Path, out_root: &Path) -> Result<ProcessOutcome> {
+    let hash = hash_file(src)?;
+    let id = AssetId::from_string(&hash[..CONTENT_ID_LEN]);
+    process(src, out_root, Some(id))
 }
 
 fn mesh_display_name(mesh: &MeshData) -> String {
