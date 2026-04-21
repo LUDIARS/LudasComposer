@@ -22,9 +22,15 @@
 //!
 //! - meshopt による mesh simplification
 //! - `proxy.glb` (positions + indices のみの最小 GLB) 書き出し
+//!
+//! ## P3 (`#92` の Phase 3)
+//!
+//! - chull (pure Rust QuickHull 系) で 3D 凸包を生成
+//! - 独自バイナリ `hull.bin` (HULL magic + 頂点 + 三角形) で書き出し
 
 pub mod error;
 pub mod hull;
+pub mod hull_writer;
 pub mod loaders;
 pub mod obb;
 pub mod pipeline;
