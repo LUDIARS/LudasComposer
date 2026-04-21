@@ -107,4 +107,54 @@ export async function codegenApply(
   });
 }
 
+// ── Asset Importer (Tier 1) ─────────────────────────
+
+export interface AssetMeta {
+  version: number;
+  id: string;
+  name: string;
+  source_ext: string;
+  source_hash: string;
+  aabb: { min: [number, number, number]; max: [number, number, number] };
+  obb: {
+    center: [number, number, number];
+    axes: [[number, number, number], [number, number, number], [number, number, number]];
+    half_extents: [number, number, number];
+  };
+  pivot: [number, number, number];
+  triangle_count: number;
+  vertex_count: number;
+  proxy_triangle_count?: number;
+  hull_vertex_count?: number;
+  hull_triangle_count?: number;
+}
+
+export interface ImportedAsset {
+  id: string;
+  dir: string;
+  cacheHit: boolean;
+  sourceName: string;
+  meta: AssetMeta;
+}
+
+export async function importAssets(
+  projectDir: string,
+  paths: string[],
+): Promise<ImportedAsset[]> {
+  if (isTauri()) {
+    return tauriInvoke<ImportedAsset[]>('import_assets', { projectDir, paths });
+  }
+  // Web: not implemented — needs multipart upload (P6)
+  throw new Error('importAssets is desktop-only in this build');
+}
+
+export async function listImportedAssets(projectDir: string): Promise<ImportedAsset[]> {
+  if (isTauri()) {
+    return tauriInvoke<ImportedAsset[]>('list_imported_assets', { projectDir });
+  }
+  return webFetch<ImportedAsset[]>(
+    `/assets/list?projectDir=${encodeURIComponent(projectDir)}`,
+  );
+}
+
 export { isTauri };

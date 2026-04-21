@@ -17,7 +17,7 @@ tauri-build = { version = "2.5.6", optional = true }
 
 [features]
 default = ["tauri-app"]
-tauri-app = ["dep:tauri", "dep:tauri-plugin-log", "dep:tauri-build"]
+tauri-app = ["dep:tauri", "dep:tauri-plugin-log", "dep:tauri-build", "dep:ars-asset-importer"]
 web-server = [
     "dep:axum",
     "dep:tokio",
@@ -51,12 +51,14 @@ ars-core = { path = "../../crates/ars-core" }
 ars-codegen = { path = "../../crates/ars-codegen" }
 ars-secrets = { path = "../../crates/ars-secrets" }
 ars-project = { path = "../../crates/ars-project" }
+ars-asset-importer = { path = "../../crates/ars-asset-importer", optional = true }
 # ars-secrets: removed — secrets management moved to Cernere server
 # Common
 serde_json = "1.0"
 serde = { version = "1.0", features = ["derive"] }
 log = "0.4"
 async-trait = "0.1"
+toml = "0.8"
 tauri = { version = "2.10.3", optional = true }
 tauri-plugin-log = { version = "2", optional = true }
 dirs-next = "2.0"
@@ -78,3 +80,6 @@ dirs = { version = "6", optional = true }
 futures = { version = "0.3", optional = true }
 dashmap = { version = "6", optional = true }
 # Redis: removed — session management moved to Cernere server
+
+[dev-dependencies]
+tempfile = "3"
