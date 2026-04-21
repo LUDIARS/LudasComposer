@@ -75,6 +75,9 @@ pub fn compute(points: &[Vec3]) -> Option<OrientedBox> {
 ///
 /// 戻り値: (固有ベクトル行列の行 = 各固有ベクトル, 固有値)
 /// 固有値の降順にソート。
+// Jacobi eigenvalue solver: 3x3 行列の固定 0..3 インデックスがアルゴリズム上自然なので
+// needless_range_loop を抑止する。
+#[allow(clippy::needless_range_loop)]
 fn jacobi_eigen(mut a: [[f32; 3]; 3]) -> ([[f32; 3]; 3], [f32; 3]) {
     // V = 単位行列から始め、回転を右から掛けて固有ベクトルを蓄積
     let mut v = [

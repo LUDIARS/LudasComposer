@@ -45,6 +45,8 @@ pub async fn serve(addr: std::net::SocketAddr, static_dir: Option<String>) -> Re
 
     let editor_router = web_modules::editor::router(state.clone());
     let module_router = web_modules::module_manager::router(state);
+    #[cfg(feature = "assets")]
+    let asset_router = web_modules::asset::router();
 
     // コラボレーションWebSocketルート
     let collab_router = Router::new()
@@ -57,8 +59,10 @@ pub async fn serve(addr: std::net::SocketAddr, static_dir: Option<String>) -> Re
     let app = editor_router
         .merge(module_router)
         .merge(collab_router)
-        .merge(health_router)
-        .layer(cors);
+        .merge(health_router);
+    #[cfg(feature = "assets")]
+    let app = app.merge(asset_router);
+    let app = app.layer(cors);
 
     let app = if let Some(ref dir) = static_dir {
         let index_path = format!("{}/index.html", dir);
