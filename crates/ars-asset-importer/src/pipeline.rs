@@ -14,7 +14,7 @@ use std::path::{Path, PathBuf};
 
 use crate::loaders::{self, MeshData};
 use crate::schema::{AssetId, AssetMeta, Bounds, CacheLayout};
-use crate::{obb, proxy_writer, simplify, AssetImporterError, Result};
+use crate::{hull, hull_writer, obb, proxy_writer, simplify, AssetImporterError, Result};
 
 /// `process` の結果。キャッシュヒットかどうかを呼び出し側に伝える。
 #[derive(Debug, Clone)]
@@ -77,6 +77,16 @@ pub fn process(src: &Path, out_root: &Path, id: Option<AssetId>) -> Result<Proce
     proxy_writer::write_glb(&proxy_mesh, &layout.proxy_path())?;
     let proxy_triangle_count = Some(proxy_mesh.triangle_count());
 
+    // hull.bin (P3): 3D 凸包を独自バイナリで書き出し
+    // 共面/退化メッシュは凸包不可なので Option として扱う
+    let (hull_vertex_count, hull_triangle_count) = match hull::compute(&mesh.positions) {
+        Some(h) => {
+            hull_writer::write(&h, &layout.hull_path())?;
+            (Some(h.vertex_count()), Some(h.triangle_count()))
+        }
+        None => (None, None),
+    };
+
     let meta = AssetMeta {
         version: AssetMeta::CURRENT_VERSION,
         id: id.clone(),
@@ -89,6 +99,8 @@ pub fn process(src: &Path, out_root: &Path, id: Option<AssetId>) -> Result<Proce
         triangle_count: mesh.triangle_count(),
         vertex_count: mesh.vertex_count(),
         proxy_triangle_count,
+        hull_vertex_count,
+        hull_triangle_count,
     };
 
     // meta.toml

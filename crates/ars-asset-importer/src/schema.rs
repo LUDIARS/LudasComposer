@@ -118,6 +118,14 @@ pub struct AssetMeta {
     /// で `None` として読み込まれる。
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub proxy_triangle_count: Option<u32>,
+    /// `hull.bin` の頂点数 (P3 以降で書き込まれる)。
+    ///
+    /// 共面/退化メッシュ等で凸包生成に失敗した場合は `None`。
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub hull_vertex_count: Option<u32>,
+    /// `hull.bin` の三角形数 (P3 以降で書き込まれる)。
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub hull_triangle_count: Option<u32>,
 }
 
 impl AssetMeta {

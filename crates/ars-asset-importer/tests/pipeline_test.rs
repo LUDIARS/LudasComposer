@@ -106,6 +106,56 @@ fn proxy_glb_is_deterministic_across_runs() {
 }
 
 #[test]
+fn tetrahedron_hull_is_written_and_recorded() {
+    let tmp = TempDir::new().unwrap();
+    let src = tmp.path().join("tet.glb");
+    write_tetra_glb(&src);
+    let out_root = tmp.path().join("data");
+
+    let outcome = process(&src, &out_root, Some(AssetId::from_string("tet"))).unwrap();
+
+    let hull_path = outcome.dir.join("hull.bin");
+    assert!(hull_path.exists(), "hull.bin should be written");
+
+    let bytes = fs::read(&hull_path).unwrap();
+    assert_eq!(&bytes[0..4], b"HULL", "hull.bin must have HULL magic");
+
+    // 四面体の凸包: 4 頂点 / 4 三角形
+    assert_eq!(outcome.meta.hull_vertex_count, Some(4));
+    assert_eq!(outcome.meta.hull_triangle_count, Some(4));
+}
+
+#[test]
+fn hull_bin_is_deterministic_across_runs() {
+    let tmp = TempDir::new().unwrap();
+    let src = tmp.path().join("det_tet.glb");
+    write_tetra_glb(&src);
+    let out_root = tmp.path().join("data");
+
+    let a = process(&src, &out_root, Some(AssetId::from_string("a"))).unwrap();
+    let b = process(&src, &out_root, Some(AssetId::from_string("b"))).unwrap();
+
+    let bytes_a = fs::read(a.dir.join("hull.bin")).unwrap();
+    let bytes_b = fs::read(b.dir.join("hull.bin")).unwrap();
+    assert_eq!(bytes_a, bytes_b, "hull.bin must be byte-deterministic");
+}
+
+#[test]
+fn flat_triangle_has_no_hull() {
+    // 3 頂点の単一三角形 → hull は退化、None。エラーにはならない
+    let tmp = TempDir::new().unwrap();
+    let src = tmp.path().join("flat.glb");
+    write_minimal_glb(&src, &[[0.0, 0.0, 0.0], [1.0, 0.0, 0.0], [0.0, 1.0, 0.0]]);
+    let out_root = tmp.path().join("data");
+
+    let outcome = process(&src, &out_root, Some(AssetId::from_string("flat"))).unwrap();
+
+    assert!(outcome.meta.hull_vertex_count.is_none());
+    assert!(outcome.meta.hull_triangle_count.is_none());
+    assert!(!outcome.dir.join("hull.bin").exists());
+}
+
+#[test]
 fn changed_source_invalidates_cache() {
     let tmp = TempDir::new().unwrap();
     let src = tmp.path().join("mutable.glb");
@@ -124,6 +174,79 @@ fn changed_source_invalidates_cache() {
     assert!(!second.cache_hit, "mutated source must invalidate cache");
     assert_ne!(second.meta.source_hash, first.meta.source_hash);
     assert!((second.meta.aabb.max[0] - 5.0).abs() < 1e-5);
+}
+
+/// 四面体 (4 頂点 / 4 三角形) の最小 GLB を書き出す。hull テスト用。
+fn write_tetra_glb(path: &Path) {
+    let verts: [[f32; 3]; 4] = [
+        [0.0, 0.0, 0.0],
+        [1.0, 0.0, 0.0],
+        [0.0, 1.0, 0.0],
+        [0.0, 0.0, 1.0],
+    ];
+    let tris: [u16; 12] = [0, 1, 2, 0, 1, 3, 0, 2, 3, 1, 2, 3];
+    write_glb_arbitrary(path, &verts, &tris);
+}
+
+fn write_glb_arbitrary(path: &Path, verts: &[[f32; 3]], tris: &[u16]) {
+    let pos_bytes_len = verts.len() * 12;
+    let idx_bytes_len = tris.len() * 2;
+
+    let mut bin = Vec::with_capacity(pos_bytes_len + idx_bytes_len + 4);
+    for v in verts {
+        for &c in v {
+            bin.extend_from_slice(&c.to_le_bytes());
+        }
+    }
+    let idx_offset = bin.len();
+    for &i in tris {
+        bin.extend_from_slice(&i.to_le_bytes());
+    }
+    while bin.len() % 4 != 0 {
+        bin.push(0);
+    }
+
+    let (mut min, mut max) = ([f32::INFINITY; 3], [f32::NEG_INFINITY; 3]);
+    for v in verts {
+        for i in 0..3 {
+            if v[i] < min[i] {
+                min[i] = v[i];
+            }
+            if v[i] > max[i] {
+                max[i] = v[i];
+            }
+        }
+    }
+
+    let json = format!(
+        r#"{{"asset":{{"version":"2.0"}},"buffers":[{{"byteLength":{bin_len}}}],"bufferViews":[{{"buffer":0,"byteOffset":0,"byteLength":{pl},"target":34962}},{{"buffer":0,"byteOffset":{io},"byteLength":{il},"target":34963}}],"accessors":[{{"bufferView":0,"componentType":5126,"count":{vc},"type":"VEC3","min":[{n0},{n1},{n2}],"max":[{x0},{x1},{x2}]}},{{"bufferView":1,"componentType":5123,"count":{ic},"type":"SCALAR"}}],"meshes":[{{"primitives":[{{"attributes":{{"POSITION":0}},"indices":1,"mode":4}}]}}],"nodes":[{{"mesh":0}}],"scenes":[{{"nodes":[0]}}],"scene":0}}"#,
+        bin_len = bin.len(),
+        pl = pos_bytes_len,
+        io = idx_offset,
+        il = idx_bytes_len,
+        vc = verts.len(),
+        ic = tris.len(),
+        n0 = min[0], n1 = min[1], n2 = min[2],
+        x0 = max[0], x1 = max[1], x2 = max[2],
+    );
+    let mut json_bytes = json.into_bytes();
+    while json_bytes.len() % 4 != 0 {
+        json_bytes.push(0x20);
+    }
+
+    let total_len = 12 + 8 + json_bytes.len() + 8 + bin.len();
+    let mut out = Vec::with_capacity(total_len);
+    out.extend_from_slice(&0x46546C67u32.to_le_bytes());
+    out.extend_from_slice(&2u32.to_le_bytes());
+    out.extend_from_slice(&(total_len as u32).to_le_bytes());
+    out.extend_from_slice(&(json_bytes.len() as u32).to_le_bytes());
+    out.extend_from_slice(&0x4E4F534Au32.to_le_bytes());
+    out.extend_from_slice(&json_bytes);
+    out.extend_from_slice(&(bin.len() as u32).to_le_bytes());
+    out.extend_from_slice(&0x004E4942u32.to_le_bytes());
+    out.extend_from_slice(&bin);
+
+    fs::write(path, out).unwrap();
 }
 
 // ---------------------------------------------------------------------------
