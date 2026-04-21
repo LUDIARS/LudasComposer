@@ -61,6 +61,8 @@ pub fn run() {
             commands::save_project,
             commands::load_project,
             commands::get_default_project_path,
+            commands::import_assets,
+            commands::list_imported_assets,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
