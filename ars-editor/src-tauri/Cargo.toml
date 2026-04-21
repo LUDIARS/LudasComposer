@@ -17,7 +17,7 @@ tauri-build = { version = "2.5.6", optional = true }
 
 [features]
 default = ["tauri-app"]
-tauri-app = ["dep:tauri", "dep:tauri-plugin-log", "dep:tauri-build", "dep:ars-asset-importer"]
+tauri-app = ["dep:tauri", "dep:tauri-plugin-log", "dep:tauri-build", "assets"]
 web-server = [
     "dep:axum",
     "dep:tokio",
@@ -33,7 +33,11 @@ web-server = [
     "dep:dirs",
     "dep:futures",
     "dep:dashmap",
+    "dep:tempfile",
+    "assets",
 ]
+# Asset importer integration (Tier 1 generation pipeline)
+assets = ["dep:ars-asset-importer"]
 
 [[bin]]
 name = "app"
@@ -62,7 +66,8 @@ toml = "0.8"
 tauri = { version = "2.10.3", optional = true }
 tauri-plugin-log = { version = "2", optional = true }
 dirs-next = "2.0"
-axum = { version = "0.7", features = ["ws"], optional = true }
+axum = { version = "0.7", features = ["ws", "multipart"], optional = true }
+tempfile = { version = "3", optional = true }
 tokio = { version = "1", features = ["full"], optional = true }
 tower-http = { version = "0.5", features = ["cors", "fs"], optional = true }
 # HTTP client & Auth (Cernere proxy)

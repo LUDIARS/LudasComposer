@@ -37,7 +37,7 @@ pub fn process(src: &Path, out_root: &Path, id: Option<AssetId>) -> Result<Proce
         .unwrap_or("bin")
         .to_ascii_lowercase();
 
-    let id = id.unwrap_or_else(AssetId::new);
+    let id = id.unwrap_or_default();
     let layout = CacheLayout::new(out_root, &id);
     let dir = layout.dir();
 
