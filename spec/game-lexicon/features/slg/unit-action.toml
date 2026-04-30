@@ -1,0 +1,21 @@
+id = "unit-action"
+name_ja = "ユニット行動"
+name_en = "Unit Action"
+summary = "ターン内に各ユニットが移動 / 攻撃 / スキル / 待機を選ぶ"
+tags = ["combat", "turn-based"]
+genres = ["slg"]
+depends_on = ["hex-grid", "stat-system"]
+conflicts_with = []
+
+[[parameter]]
+id = "actions_per_turn"
+type = "int"
+default = 2
+range = [1, 16]
+description_ja = "1 ターンあたりの行動回数"
+
+[[parameter]]
+id = "facing_matters"
+type = "bool"
+default = true
+description_ja = "向き / 側面攻撃を計算する"

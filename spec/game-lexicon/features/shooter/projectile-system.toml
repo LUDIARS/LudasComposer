@@ -1,0 +1,29 @@
+id = "projectile-system"
+name_ja = "発射体システム"
+name_en = "Projectile System"
+summary = "弾 / 投擲物のスポーン・移動・寿命・命中処理"
+tags = ["combat", "physics"]
+genres = ["shooter"]
+depends_on = ["hitbox-system"]
+conflicts_with = []
+
+[[parameter]]
+id = "max_alive"
+type = "int"
+default = 256
+range = [1, 100000]
+description_ja = "同時生存上限 (プール)"
+
+[[parameter]]
+id = "default_speed"
+type = "float"
+default = 30.0
+range = [0.1, 10000.0]
+description_ja = "既定速度 (m/s)"
+
+[[parameter]]
+id = "default_lifetime_sec"
+type = "float"
+default = 3.0
+range = [0.1, 60.0]
+description_ja = "既定寿命 (秒)"

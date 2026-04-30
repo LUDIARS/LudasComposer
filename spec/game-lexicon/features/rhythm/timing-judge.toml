@@ -1,0 +1,29 @@
+id = "timing-judge"
+name_ja = "タイミング判定"
+name_en = "Timing Judge"
+summary = "ノートの正解時刻と入力時刻の差分から PERFECT / GREAT / GOOD / MISS を返す"
+tags = ["audio", "input"]
+genres = ["rhythm"]
+depends_on = ["note-chart"]
+conflicts_with = []
+
+[[parameter]]
+id = "perfect_ms"
+type = "int"
+default = 25
+range = [1, 200]
+description_ja = "PERFECT 判定窓 (±ms)"
+
+[[parameter]]
+id = "great_ms"
+type = "int"
+default = 60
+range = [1, 500]
+description_ja = "GREAT 判定窓 (±ms)"
+
+[[parameter]]
+id = "good_ms"
+type = "int"
+default = 120
+range = [1, 1000]
+description_ja = "GOOD 判定窓 (±ms)"

@@ -1,0 +1,22 @@
+id = "inventory"
+name_ja = "インベントリ"
+name_en = "Inventory"
+summary = "アイテム所持と使用 / 装備の基本"
+tags = ["items", "ui"]
+genres = ["story-jrpg", "open-world", "shooter", "slg"]
+depends_on = []
+conflicts_with = []
+
+[[parameter]]
+id = "max_slots"
+type = "int"
+default = 32
+range = [1, 9999]
+description_ja = "持てるスロット数 (0 = 重量制)"
+
+[[parameter]]
+id = "stack_limit"
+type = "int"
+default = 99
+range = [1, 99999]
+description_ja = "1 スロットあたりの重ね数上限"

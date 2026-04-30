@@ -1,0 +1,22 @@
+id = "lane-system"
+name_ja = "レーン制"
+name_en = "Lane System"
+summary = "横方向は固定数のレーンに離散化し、 入力でレーン間を移動する"
+tags = ["movement", "input"]
+genres = ["runner"]
+depends_on = ["auto-run"]
+conflicts_with = []
+
+[[parameter]]
+id = "lane_count"
+type = "int"
+default = 3
+range = [1, 9]
+description_ja = "レーン数"
+
+[[parameter]]
+id = "lane_change_ms"
+type = "int"
+default = 150
+range = [0, 1000]
+description_ja = "レーン移動の補間時間 (ms)"

@@ -1,0 +1,82 @@
+# 戦闘まわりの用語
+
+[[term]]
+id = "hitbox"
+name_ja = "ヒットボックス"
+name_en = "Hitbox"
+aliases = ["当たり判定 (攻撃)", "アタックボックス"]
+definition = "攻撃が命中したかどうかを判定する形状。 表示モデルとは別の簡易形状を持つことが多い"
+tags = ["combat", "physics"]
+related_terms = ["hurtbox", "iframe"]
+
+[[term]]
+id = "hurtbox"
+name_ja = "ハートボックス"
+name_en = "Hurtbox"
+aliases = ["被弾判定", "やられ判定"]
+definition = "敵 / 自キャラがダメージを受ける範囲"
+tags = ["combat", "physics"]
+related_terms = ["hitbox", "iframe"]
+
+[[term]]
+id = "iframe"
+name_ja = "無敵時間"
+name_en = "Invincibility Frames"
+aliases = ["i-frame", "iフレ"]
+definition = "ダメージを受け付けないフレーム / 時間。 回避や被弾後復帰直後によく付く"
+tags = ["combat"]
+related_terms = ["hurtbox"]
+
+[[term]]
+id = "hitstop"
+name_ja = "ヒットストップ"
+name_en = "Hitstop"
+aliases = ["打撃停止", "フリーズ演出"]
+definition = "命中の瞬間にキャラの動きを一時停止し、 打撃感を強調する演出"
+tags = ["combat", "feel"]
+related_terms = ["screen-shake"]
+
+[[term]]
+id = "frame-data"
+name_ja = "フレームデータ"
+name_en = "Frame Data"
+aliases = ["フレ表"]
+definition = "技ごとに startup / active / recovery を持たせる数値表。 主に格ゲー文化"
+tags = ["combat", "fighting"]
+related_terms = ["startup", "recovery"]
+
+[[term]]
+id = "startup"
+name_ja = "発生フレーム"
+name_en = "Startup"
+aliases = ["発生"]
+definition = "技を出し始めてから攻撃判定が出るまでのフレーム数"
+tags = ["fighting"]
+related_terms = ["recovery", "active"]
+
+[[term]]
+id = "active"
+name_ja = "持続フレーム"
+name_en = "Active Frames"
+aliases = ["持続"]
+definition = "技の攻撃判定が出ている期間のフレーム数"
+tags = ["fighting"]
+related_terms = ["startup", "recovery"]
+
+[[term]]
+id = "recovery"
+name_ja = "硬直 (技後)"
+name_en = "Recovery"
+aliases = ["後隙"]
+definition = "技の攻撃判定が消えた後、 次の行動に移れるまでのフレーム数"
+tags = ["fighting"]
+related_terms = ["startup", "active"]
+
+[[term]]
+id = "screen-shake"
+name_ja = "画面振動"
+name_en = "Screen Shake"
+aliases = ["カメラシェイク"]
+definition = "命中 / 爆発時にカメラを揺らす演出"
+tags = ["feel", "camera"]
+related_terms = ["hitstop"]

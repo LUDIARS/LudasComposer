@@ -1,0 +1,22 @@
+id = "auto-run"
+name_ja = "自動前進"
+name_en = "Auto Run"
+summary = "自機が常に一定速度で前進し、 入力は左右 / ジャンプ等に限定される"
+tags = ["movement", "core-loop"]
+genres = ["runner"]
+depends_on = []
+conflicts_with = []
+
+[[parameter]]
+id = "base_speed"
+type = "float"
+default = 8.0
+range = [0.1, 1000.0]
+description_ja = "初期速度 (m/s)"
+
+[[parameter]]
+id = "speed_per_sec"
+type = "float"
+default = 0.05
+range = [0.0, 10.0]
+description_ja = "毎秒の自動加速 (m/s/s)"

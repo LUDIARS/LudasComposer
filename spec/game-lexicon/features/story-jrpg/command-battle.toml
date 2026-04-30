@@ -1,0 +1,22 @@
+id = "command-battle"
+name_ja = "コマンドバトル"
+name_en = "Command Battle"
+summary = "ターン制 / ATB 制でコマンドを選んで戦う戦闘システム"
+tags = ["combat", "turn-based"]
+genres = ["story-jrpg"]
+depends_on = ["health-system", "stat-system"]
+conflicts_with = []
+
+[[parameter]]
+id = "turn_mode"
+type = "enum"
+default = "atb"
+values = ["turn", "atb", "ctb"]
+description_ja = "ターン制/ATB/CTB のいずれか"
+
+[[parameter]]
+id = "party_size"
+type = "int"
+default = 4
+range = [1, 8]
+description_ja = "パーティ最大人数"

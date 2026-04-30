@@ -1,0 +1,20 @@
+id = "fast-travel"
+name_ja = "ファストトラベル"
+name_en = "Fast Travel"
+summary = "発見済み地点へ即時に移動できる仕組み"
+tags = ["movement", "ui"]
+genres = ["open-world"]
+depends_on = []
+conflicts_with = []
+
+[[parameter]]
+id = "require_discovered"
+type = "bool"
+default = true
+description_ja = "未発見地点には飛べない"
+
+[[parameter]]
+id = "cost_resource"
+type = "string"
+default = ""
+description_ja = "消費するリソース ID (空で無料)"

@@ -1,0 +1,21 @@
+id = "command-input"
+name_ja = "コマンド入力"
+name_en = "Command Input"
+summary = "→↓↘+P のような方向 + ボタン列で技を出す入力解釈"
+tags = ["input", "combat"]
+genres = ["fighting"]
+depends_on = ["input-buffer"]
+conflicts_with = []
+
+[[parameter]]
+id = "max_motion_window_ms"
+type = "int"
+default = 400
+range = [50, 2000]
+description_ja = "コマンド成立とみなす最長時間 (ms)"
+
+[[parameter]]
+id = "shortcut_inputs"
+type = "bool"
+default = true
+description_ja = "短縮入力 (例: 623P → 23P) を許可"

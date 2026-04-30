@@ -1,0 +1,15 @@
+id = "shooter-basic"
+name_ja = "シューティング (基本)"
+name_en = "Shooter (basic)"
+genre = "shooter"
+summary = "TPS / FPS / STG の最小構成"
+features = [
+  "input-buffer",
+  "hitbox-system",
+  "health-system",
+  "projectile-system",
+  "weapon-system",
+  "recoil",
+  "score-system",
+  "camera-follow",
+]

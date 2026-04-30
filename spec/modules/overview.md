@@ -63,6 +63,7 @@ App版（Tauri Desktop）とWeb版（Axum Server）の**両方で同一ビジネ
 | ars-module-registry | `module-registry` | Ergoモジュール定義の発見・解析・キャッシュ | 設計のみ |
 | ars-resource-depot | `resource-depot` | アセット管理 | 設計のみ |
 | ars-data-organizer | `data-organizer` | Blackboard変数、ゲーム設定値 | 設計のみ |
+| **ars-game-lexicon** | `game-lexicon` | ゲーム辞書 (Genre / Feature / Preset / Term)、 仕様駆動の seed データ + ローダ | **v0.1 (フレーム + 9 ジャンル seed)** |
 | ars-auth | `auth` | 認証、セッション管理 | 設計のみ |
 | ars-collab | `collab` | WebSocket同期、プレゼンス、ロック | 設計のみ |
 | ars-secrets | `secrets` | シークレット管理（Keychain + TOML） | 設計のみ |

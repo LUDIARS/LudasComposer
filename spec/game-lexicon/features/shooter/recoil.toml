@@ -1,0 +1,22 @@
+id = "recoil"
+name_ja = "リコイル (反動)"
+name_en = "Recoil"
+summary = "発射ごとに照準が跳ねる反動の表現"
+tags = ["combat", "feel"]
+genres = ["shooter"]
+depends_on = ["weapon-system"]
+conflicts_with = []
+
+[[parameter]]
+id = "vertical_kick"
+type = "float"
+default = 1.0
+range = [0.0, 30.0]
+description_ja = "1 発あたりの上振れ (度)"
+
+[[parameter]]
+id = "recovery_per_sec"
+type = "float"
+default = 4.0
+range = [0.0, 100.0]
+description_ja = "毎秒の自動戻り量 (度/秒)"

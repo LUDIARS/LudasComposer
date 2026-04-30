@@ -1,0 +1,10 @@
+id = "open-world"
+name_ja = "オープンワールド"
+name_en = "Open World"
+summary = "広大なシームレスマップを自由に探索するアクション/RPG"
+tags = ["exploration", "streaming", "sandbox"]
+default_preset = "open-world-basic"
+description = """
+シームレス読込み、 動的天候 / 時間帯、 派生クエスト、 移動手段 (騎乗 / 乗り物) が中心。
+プレイヤーがどこから来てもゲームが破綻しない "自走する世界" を組む必要がある。
+"""

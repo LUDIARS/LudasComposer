@@ -1,0 +1,10 @@
+id = "rhythm"
+name_ja = "音ゲー (リズムゲーム)"
+name_en = "Rhythm"
+summary = "音楽に合わせてノーツを叩くゲーム"
+tags = ["audio", "timing"]
+default_preset = "rhythm-basic"
+description = """
+楽曲 + ノーツ譜面 + 入力タイミング判定 + コンボ / スコアリングが核。
+ローレイテンシ入力と音声同期が技術的な鍵。
+"""

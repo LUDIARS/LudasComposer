@@ -1,0 +1,13 @@
+id = "rhythm-basic"
+name_ja = "音ゲー (基本)"
+name_en = "Rhythm (basic)"
+genre = "rhythm"
+summary = "音ゲーの最小構成"
+features = [
+  "input-buffer",
+  "note-chart",
+  "audio-sync",
+  "timing-judge",
+  "combo-counter",
+  "score-system",
+]

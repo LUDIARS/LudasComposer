@@ -1,0 +1,15 @@
+id = "input-buffer"
+name_ja = "入力バッファ"
+name_en = "Input Buffer"
+summary = "ボタン入力を一定時間保持して次アクションに引き継ぐ仕組み"
+tags = ["input"]
+genres = ["action", "shooter", "rhythm", "moba", "fighting"]
+depends_on = []
+conflicts_with = []
+
+[[parameter]]
+id = "window_ms"
+type = "int"
+default = 200
+range = [16, 1000]
+description_ja = "入力受け付け時間 (ms)"

@@ -1,0 +1,29 @@
+id = "weapon-system"
+name_ja = "武器システム"
+name_en = "Weapon System"
+summary = "武器の発射 / リロード / 切り替え / クールダウン"
+tags = ["combat", "items"]
+genres = ["shooter"]
+depends_on = ["projectile-system", "input-buffer"]
+conflicts_with = []
+
+[[parameter]]
+id = "rpm"
+type = "int"
+default = 600
+range = [1, 6000]
+description_ja = "発射レート (Rounds Per Minute)"
+
+[[parameter]]
+id = "magazine_size"
+type = "int"
+default = 30
+range = [1, 9999]
+description_ja = "マガジン弾数"
+
+[[parameter]]
+id = "reload_ms"
+type = "int"
+default = 1500
+range = [0, 30000]
+description_ja = "リロード時間 (ms)"

@@ -1,0 +1,22 @@
+id = "pickup-system"
+name_ja = "収集アイテム"
+name_en = "Pickup System"
+summary = "コインなどの収集物の配置 / 触れて取得する仕組み"
+tags = ["items", "score"]
+genres = ["runner", "open-world"]
+depends_on = ["score-system"]
+conflicts_with = []
+
+[[parameter]]
+id = "magnet_radius_m"
+type = "float"
+default = 0.0
+range = [0.0, 50.0]
+description_ja = "磁石効果の半径 (0 で無効)"
+
+[[parameter]]
+id = "value_default"
+type = "int"
+default = 1
+range = [0, 99999]
+description_ja = "1 個あたりの既定スコア"

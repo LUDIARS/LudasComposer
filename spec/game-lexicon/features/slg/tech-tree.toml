@@ -1,0 +1,22 @@
+id = "tech-tree"
+name_ja = "テック / 研究ツリー"
+name_en = "Tech Tree"
+summary = "研究を進めて新ユニット / アクションを解禁する依存ツリー"
+tags = ["progression"]
+genres = ["slg"]
+depends_on = ["resource-economy"]
+conflicts_with = []
+
+[[parameter]]
+id = "max_tier"
+type = "int"
+default = 5
+range = [1, 99]
+description_ja = "段階数"
+
+[[parameter]]
+id = "concurrent_research"
+type = "int"
+default = 1
+range = [1, 99]
+description_ja = "同時に研究できる数"

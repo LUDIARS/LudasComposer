@@ -1,0 +1,11 @@
+id = "fighting"
+name_ja = "格闘ゲーム"
+name_en = "Fighting"
+summary = "1v1 を基本とする格闘ゲーム。 フレームデータと入力技術が中核"
+tags = ["competitive", "frame-precise", "1v1"]
+default_preset = "fighting-basic"
+description = """
+コマンド入力 → モーションキャンセル → ヒット / ガード / 投げの三すくみ + コンボ
++ ゲージ管理 + ラウンド制が典型。
+ロールバックネットコードと正確なフレーム判定が技術要件。
+"""

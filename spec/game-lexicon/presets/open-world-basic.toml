@@ -1,0 +1,18 @@
+id = "open-world-basic"
+name_ja = "オープンワールド (基本)"
+name_en = "Open World (basic)"
+genre = "open-world"
+summary = "OW タイトルの最小構成"
+features = [
+  "health-system",
+  "stat-system",
+  "world-streaming",
+  "day-night-cycle",
+  "fast-travel",
+  "mount-system",
+  "quest-system",
+  "dialogue-system",
+  "inventory",
+  "save-load",
+  "camera-follow",
+]

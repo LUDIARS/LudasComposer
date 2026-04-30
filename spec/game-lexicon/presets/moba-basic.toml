@@ -1,0 +1,17 @@
+id = "moba-basic"
+name_ja = "MOBA (基本)"
+name_en = "MOBA (basic)"
+genre = "moba"
+summary = "5v5 MOBA の最小構成"
+features = [
+  "input-buffer",
+  "hitbox-system",
+  "health-system",
+  "stat-system",
+  "leveling",
+  "hero-skill",
+  "minion-wave",
+  "tower-objective",
+  "rollback-netcode",
+  "camera-follow",
+]

@@ -1,0 +1,27 @@
+id = "dialogue-system"
+name_ja = "会話/ダイアログ"
+name_en = "Dialogue System"
+summary = "キャラクター間の会話・選択肢・分岐を扱うシステム"
+tags = ["narrative", "ui"]
+genres = ["story-jrpg", "open-world"]
+depends_on = []
+conflicts_with = []
+
+[[parameter]]
+id = "branch_support"
+type = "bool"
+default = true
+description_ja = "選択肢分岐を扱う"
+
+[[parameter]]
+id = "voice_cue"
+type = "bool"
+default = true
+description_ja = "ボイス再生キューを扱う"
+
+[[parameter]]
+id = "auto_speed_cps"
+type = "int"
+default = 30
+range = [10, 200]
+description_ja = "自動表示速度 (文字/秒)"

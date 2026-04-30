@@ -1,0 +1,11 @@
+id = "story-jrpg"
+name_ja = "ストーリー型JRPG"
+name_en = "Story-driven JRPG"
+summary = "シナリオ進行とコマンドバトルを軸とした日本式ロールプレイングゲーム"
+tags = ["narrative", "turn-based", "progression"]
+default_preset = "story-jrpg-basic"
+description = """
+イベント (会話・CG・選択肢) → 探索 → エンカウント → コマンドバトル → レベルアップ
+の循環で進む。
+パーティ編成・装備・スキルツリー・状態異常など RPG の典型要素を抱える。
+"""

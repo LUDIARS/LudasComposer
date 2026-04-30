@@ -8,6 +8,7 @@ members = [
     "crates/ars-mcp-server",
     "crates/ars-data-organizer",
     "crates/ars-asset-importer",
+    "crates/ars-game-lexicon",
     "ars-editor/src-tauri",
 ]
 

@@ -1,0 +1,10 @@
+id = "shooter"
+name_ja = "シューティング"
+name_en = "Shooter"
+summary = "弾を撃ち合うゲーム全般 (STG / TPS / FPS / 弾幕)"
+tags = ["combat", "ranged"]
+default_preset = "shooter-basic"
+description = """
+発射体 (projectile) のライフサイクル管理、 リロード / 弾数、 命中判定、 リコイル、
+スコアリングが核。 弾幕系 (bullet hell) はパターン生成が独立した責務になる。
+"""

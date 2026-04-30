@@ -1,0 +1,22 @@
+id = "save-load"
+name_ja = "セーブ/ロード"
+name_en = "Save/Load"
+summary = "プレイヤー進行度の永続化と復元"
+tags = ["persistence"]
+genres = ["story-jrpg", "open-world", "slg"]
+depends_on = []
+conflicts_with = []
+
+[[parameter]]
+id = "slot_count"
+type = "int"
+default = 8
+range = [1, 999]
+description_ja = "セーブスロット数"
+
+[[parameter]]
+id = "autosave_interval_sec"
+type = "int"
+default = 0
+range = [0, 3600]
+description_ja = "オートセーブ間隔 (秒、 0 で無効)"

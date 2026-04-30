@@ -1,0 +1,14 @@
+id = "action-basic"
+name_ja = "アクション (基本)"
+name_en = "Action (basic)"
+genre = "action"
+summary = "3D / 2D アクションの最小構成"
+features = [
+  "input-buffer",
+  "hitbox-system",
+  "health-system",
+  "combo-system",
+  "dodge-roll",
+  "camera-follow",
+  "hitstop",
+]

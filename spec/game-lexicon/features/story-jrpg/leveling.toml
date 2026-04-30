@@ -1,0 +1,22 @@
+id = "leveling"
+name_ja = "レベル / 経験値"
+name_en = "Leveling / XP"
+summary = "敵撃破などで経験値を貯めてレベルアップする仕組み"
+tags = ["progression"]
+genres = ["story-jrpg", "open-world", "moba"]
+depends_on = ["stat-system"]
+conflicts_with = []
+
+[[parameter]]
+id = "max_level"
+type = "int"
+default = 99
+range = [1, 9999]
+description_ja = "最大レベル"
+
+[[parameter]]
+id = "curve"
+type = "enum"
+default = "polynomial"
+values = ["linear", "polynomial", "exponential", "table"]
+description_ja = "経験値必要量カーブ"

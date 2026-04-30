@@ -1,0 +1,14 @@
+id = "stat-system"
+name_ja = "ステータス管理"
+name_en = "Stat System"
+summary = "HP / MP / 攻撃 / 防御 / 速さ 等の数値ステータス管理"
+tags = ["stats", "progression"]
+genres = ["story-jrpg", "open-world", "moba", "slg"]
+depends_on = ["health-system"]
+conflicts_with = []
+
+[[parameter]]
+id = "stats"
+type = "string"
+default = "hp,mp,atk,def,spd,luck"
+description_ja = "管理するステータス名 (CSV)"

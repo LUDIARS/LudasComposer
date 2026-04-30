@@ -1,0 +1,21 @@
+id = "combo-counter"
+name_ja = "コンボカウンタ"
+name_en = "Combo Counter"
+summary = "連続成功数を表示し、 MISS でリセット"
+tags = ["score", "ui"]
+genres = ["rhythm"]
+depends_on = ["timing-judge"]
+conflicts_with = []
+
+[[parameter]]
+id = "break_judge"
+type = "enum"
+default = "miss"
+values = ["miss", "good_or_below", "great_or_below"]
+description_ja = "コンボを切る最低判定"
+
+[[parameter]]
+id = "full_combo_event"
+type = "bool"
+default = true
+description_ja = "MISS 0 で full-combo イベントを発火"

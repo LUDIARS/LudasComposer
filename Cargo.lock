@@ -232,6 +232,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "ars-game-lexicon"
+version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "serde",
+ "serde_json",
+ "thiserror 2.0.18",
+ "tokio",
+ "toml 0.8.2",
+]
+
+[[package]]
 name = "ars-mcp-server"
 version = "0.1.0"
 dependencies = [

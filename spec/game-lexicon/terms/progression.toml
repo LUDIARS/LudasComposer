@@ -1,0 +1,46 @@
+# 成長 / 進行まわりの用語
+
+[[term]]
+id = "xp"
+name_ja = "経験値"
+name_en = "XP"
+aliases = ["EXP", "経験"]
+definition = "敵撃破などで得られる、 レベルアップに必要なポイント"
+tags = ["progression"]
+related_terms = ["level"]
+
+[[term]]
+id = "level"
+name_ja = "レベル"
+name_en = "Level"
+aliases = ["LV", "Lv"]
+definition = "キャラの強さを表す段階。 XP がしきい値を超えると上がる"
+tags = ["progression"]
+related_terms = ["xp"]
+
+[[term]]
+id = "skill-tree"
+name_ja = "スキルツリー"
+name_en = "Skill Tree"
+aliases = ["タレントツリー"]
+definition = "前提スキルから派生する、 解禁ツリー状の強化要素"
+tags = ["progression"]
+related_terms = ["tech-tree"]
+
+[[term]]
+id = "tech-tree"
+name_ja = "テックツリー"
+name_en = "Tech Tree"
+aliases = ["研究ツリー"]
+definition = "SLG で資源を払って解禁していく技術 / ユニットの依存ツリー"
+tags = ["progression", "slg"]
+related_terms = ["skill-tree"]
+
+[[term]]
+id = "loot-table"
+name_ja = "ドロップテーブル"
+name_en = "Loot Table"
+aliases = ["ドロップ表"]
+definition = "敵 / 宝箱から出るアイテムの確率表"
+tags = ["progression", "items"]
+related_terms = []

@@ -1,0 +1,22 @@
+id = "rollback-netcode"
+name_ja = "ロールバックネットコード"
+name_en = "Rollback Netcode"
+summary = "対戦中の入力遅延を予測 / 巻き戻し再シミュレーションで隠蔽するネットワーク方式"
+tags = ["network", "competitive"]
+genres = ["moba", "fighting"]
+depends_on = []
+conflicts_with = []
+
+[[parameter]]
+id = "max_rollback_frames"
+type = "int"
+default = 7
+range = [1, 60]
+description_ja = "最大巻き戻しフレーム数"
+
+[[parameter]]
+id = "input_delay_frames"
+type = "int"
+default = 2
+range = [0, 30]
+description_ja = "入力遅延フレーム数"

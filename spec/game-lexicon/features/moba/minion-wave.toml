@@ -1,0 +1,22 @@
+id = "minion-wave"
+name_ja = "ミニオンウェーブ"
+name_en = "Minion Wave"
+summary = "一定間隔でレーンに送り出されるミニオンの群れ"
+tags = ["pve", "wave"]
+genres = ["moba"]
+depends_on = []
+conflicts_with = []
+
+[[parameter]]
+id = "wave_interval_sec"
+type = "float"
+default = 30.0
+range = [1.0, 600.0]
+description_ja = "ウェーブ間隔 (秒)"
+
+[[parameter]]
+id = "minions_per_wave"
+type = "int"
+default = 6
+range = [1, 99]
+description_ja = "1 ウェーブあたりのミニオン数"
