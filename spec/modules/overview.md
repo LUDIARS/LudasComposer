@@ -68,6 +68,7 @@ App版（Tauri Desktop）とWeb版（Axum Server）の**両方で同一ビジネ
 > 関連ドキュメント:
 > - [`spec/game-lexicon/`](../game-lexicon/) — Feature 単体の辞書 (TOML)
 > - [`spec/game-template/`](../game-template/) — 17 ジャンル分の実装ガイド (アクション / プラットフォーマー / バンサバライク / SLG / 4X / パズル / ローグライク / デッキビルド / MOBA / メトロイドヴァニア / ハクスラ / 格ゲー / 音ゲー / JRPG / OW / STG / FPS)
+> - [`spec/game-feature-coverage.md`](../game-feature-coverage.md) — game-template × game-lexicon × Ergo の対応表 + Ergo 化ロードマップ
 | ars-auth | `auth` | 認証、セッション管理 | 設計のみ |
 | ars-collab | `collab` | WebSocket同期、プレゼンス、ロック | 設計のみ |
 | ars-secrets | `secrets` | シークレット管理（Keychain + TOML） | 設計のみ |
