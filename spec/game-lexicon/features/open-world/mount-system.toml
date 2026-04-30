@@ -1,0 +1,21 @@
+id = "mount-system"
+name_ja = "騎乗 / 乗り物"
+name_en = "Mount / Vehicle"
+summary = "プレイヤーが馬・乗り物に乗って移動する仕組み"
+tags = ["movement"]
+genres = ["open-world"]
+depends_on = []
+conflicts_with = []
+
+[[parameter]]
+id = "mount_speed_factor"
+type = "float"
+default = 2.0
+range = [0.5, 10.0]
+description_ja = "徒歩比の速度倍率"
+
+[[parameter]]
+id = "stamina_drain"
+type = "bool"
+default = true
+description_ja = "スタミナ消費して長距離は休ませる必要がある"

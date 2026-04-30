@@ -1,0 +1,21 @@
+id = "tower-objective"
+name_ja = "タワー / オブジェクト"
+name_en = "Tower / Objective"
+summary = "破壊することで盤面が前進する固定建造物 / マップ目標"
+tags = ["objective", "map"]
+genres = ["moba"]
+depends_on = ["health-system"]
+conflicts_with = []
+
+[[parameter]]
+id = "tower_per_lane"
+type = "int"
+default = 3
+range = [0, 10]
+description_ja = "1 レーンあたりのタワー数"
+
+[[parameter]]
+id = "ranged_attack"
+type = "bool"
+default = true
+description_ja = "タワーが射撃で反撃する"

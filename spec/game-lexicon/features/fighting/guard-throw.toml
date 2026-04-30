@@ -1,0 +1,21 @@
+id = "guard-throw"
+name_ja = "ガード / 投げ"
+name_en = "Guard / Throw"
+summary = "通常攻撃 / 投げ / ガードの三すくみと投げ抜けの解決"
+tags = ["combat", "interaction"]
+genres = ["fighting"]
+depends_on = ["frame-data"]
+conflicts_with = []
+
+[[parameter]]
+id = "throw_break_window_ms"
+type = "int"
+default = 100
+range = [16, 1000]
+description_ja = "投げ抜けの受付時間 (ms)"
+
+[[parameter]]
+id = "guard_chip_damage"
+type = "bool"
+default = true
+description_ja = "ガード時に削りダメージを与える"

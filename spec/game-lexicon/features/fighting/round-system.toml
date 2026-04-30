@@ -1,0 +1,22 @@
+id = "round-system"
+name_ja = "ラウンド制"
+name_en = "Round System"
+summary = "1 試合を複数ラウンドに分け、 先取で勝者を決める"
+tags = ["match-flow"]
+genres = ["fighting"]
+depends_on = ["health-system"]
+conflicts_with = []
+
+[[parameter]]
+id = "rounds_to_win"
+type = "int"
+default = 2
+range = [1, 9]
+description_ja = "勝利に必要な先取数"
+
+[[parameter]]
+id = "time_limit_sec"
+type = "int"
+default = 99
+range = [1, 999]
+description_ja = "ラウンド時間 (秒)"

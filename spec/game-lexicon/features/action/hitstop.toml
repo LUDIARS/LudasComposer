@@ -1,0 +1,21 @@
+id = "hitstop"
+name_ja = "ヒットストップ"
+name_en = "Hitstop"
+summary = "命中の瞬間に時間を止め、 打撃感を強調する演出"
+tags = ["combat", "feel"]
+genres = ["action", "fighting"]
+depends_on = ["hitbox-system"]
+conflicts_with = []
+
+[[parameter]]
+id = "duration_ms"
+type = "int"
+default = 80
+range = [0, 500]
+description_ja = "停止時間 (ms)"
+
+[[parameter]]
+id = "scale_with_damage"
+type = "bool"
+default = true
+description_ja = "ダメージに応じて長さを変える"

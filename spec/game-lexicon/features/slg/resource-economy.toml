@@ -1,0 +1,21 @@
+id = "resource-economy"
+name_ja = "資源 / 経済"
+name_en = "Resource Economy"
+summary = "金 / 食料 / 兵力 等の資源を生産 / 消費 / 蓄積する仕組み"
+tags = ["economy"]
+genres = ["slg"]
+depends_on = []
+conflicts_with = []
+
+[[parameter]]
+id = "resources"
+type = "string"
+default = "gold,food,manpower"
+description_ja = "管理資源名 (CSV)"
+
+[[parameter]]
+id = "tick_seconds"
+type = "int"
+default = 1
+range = [0, 3600]
+description_ja = "資源更新間隔 (秒、 0 でターン同期)"

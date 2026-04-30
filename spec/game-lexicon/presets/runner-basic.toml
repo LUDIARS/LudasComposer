@@ -1,0 +1,13 @@
+id = "runner-basic"
+name_ja = "ランゲーム (基本)"
+name_en = "Endless Runner (basic)"
+genre = "runner"
+summary = "片手プレイのエンドレスランナー最小構成"
+features = [
+  "auto-run",
+  "lane-system",
+  "procedural-track",
+  "pickup-system",
+  "score-system",
+  "health-system",
+]

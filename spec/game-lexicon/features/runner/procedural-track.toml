@@ -1,0 +1,22 @@
+id = "procedural-track"
+name_ja = "プロシージャル生成ステージ"
+name_en = "Procedural Track"
+summary = "前方のステージをチャンク単位で生成 / 後方は破棄する仕組み"
+tags = ["world", "streaming"]
+genres = ["runner"]
+depends_on = ["auto-run"]
+conflicts_with = []
+
+[[parameter]]
+id = "chunk_length_m"
+type = "float"
+default = 30.0
+range = [1.0, 1000.0]
+description_ja = "1 チャンク長 (m)"
+
+[[parameter]]
+id = "spawn_ahead"
+type = "int"
+default = 5
+range = [1, 50]
+description_ja = "プレイヤー前方に何チャンク先まで用意するか"

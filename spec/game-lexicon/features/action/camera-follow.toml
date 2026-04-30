@@ -1,0 +1,21 @@
+id = "camera-follow"
+name_ja = "追従カメラ"
+name_en = "Camera Follow"
+summary = "プレイヤーを追従するカメラ。 ヒット時の小揺れもここで扱う"
+tags = ["camera"]
+genres = ["action", "shooter", "open-world"]
+depends_on = []
+conflicts_with = []
+
+[[parameter]]
+id = "smoothing"
+type = "float"
+default = 0.15
+range = [0.0, 1.0]
+description_ja = "追従の遅延係数 (0=即時、 1=動かない)"
+
+[[parameter]]
+id = "shake_on_hit"
+type = "bool"
+default = true
+description_ja = "ヒット時にカメラを揺らす"

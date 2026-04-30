@@ -1,0 +1,15 @@
+id = "story-jrpg-basic"
+name_ja = "ストーリー型JRPG (基本)"
+name_en = "Story-driven JRPG (basic)"
+genre = "story-jrpg"
+summary = "JRPG の最小構成"
+features = [
+  "health-system",
+  "stat-system",
+  "leveling",
+  "command-battle",
+  "dialogue-system",
+  "quest-system",
+  "inventory",
+  "save-load",
+]

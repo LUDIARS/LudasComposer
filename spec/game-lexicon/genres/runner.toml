@@ -1,0 +1,10 @@
+id = "runner"
+name_ja = "ランゲーム"
+name_en = "Endless Runner"
+summary = "自動前進する自機を、 障害物回避と収集で操作する片手プレイ向けゲーム"
+tags = ["mobile", "endless", "score"]
+default_preset = "runner-basic"
+description = """
+自機は常に進行、 プレイヤー入力は左右レーン変更 / ジャンプ / スライドのみ。
+プロシージャル生成で無限スクロールするステージ + コインなどの収集 + ハイスコア管理。
+"""

@@ -1,0 +1,15 @@
+[package]
+name = "ars-game-lexicon"
+version = "0.1.0"
+edition = "2021"
+description = "Ars game lexicon: spec-driven game terms / features / genres / presets"
+
+[dependencies]
+serde = { workspace = true }
+serde_json = { workspace = true }
+async-trait = { workspace = true }
+thiserror = { workspace = true }
+toml = "0.8"
+
+[dev-dependencies]
+tokio = { workspace = true }

@@ -1,0 +1,29 @@
+id = "dodge-roll"
+name_ja = "回避 (ローリング)"
+name_en = "Dodge Roll"
+summary = "短時間の i-frame を伴う緊急回避動作"
+tags = ["combat", "movement"]
+genres = ["action"]
+depends_on = ["input-buffer"]
+conflicts_with = []
+
+[[parameter]]
+id = "iframe_ms"
+type = "int"
+default = 400
+range = [50, 2000]
+description_ja = "無敵時間 (ms)"
+
+[[parameter]]
+id = "cooldown_ms"
+type = "int"
+default = 600
+range = [0, 5000]
+description_ja = "次回避まで待つ時間 (ms)"
+
+[[parameter]]
+id = "stamina_cost"
+type = "int"
+default = 25
+range = [0, 1000]
+description_ja = "スタミナ消費量"

@@ -1,0 +1,21 @@
+id = "audio-sync"
+name_ja = "音声同期"
+name_en = "Audio Sync"
+summary = "オーディオデバイスとゲームクロックの同期 / オフセット補正"
+tags = ["audio", "feel"]
+genres = ["rhythm"]
+depends_on = []
+conflicts_with = []
+
+[[parameter]]
+id = "user_offset_ms"
+type = "int"
+default = 0
+range = [-500, 500]
+description_ja = "ユーザー調整オフセット (ms)"
+
+[[parameter]]
+id = "auto_calibration"
+type = "bool"
+default = true
+description_ja = "起動時に自動キャリブレーションする"

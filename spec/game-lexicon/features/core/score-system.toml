@@ -1,0 +1,20 @@
+id = "score-system"
+name_ja = "スコアシステム"
+name_en = "Score System"
+summary = "ゲーム内行為に応じてポイントを加算 / 表示する仕組み"
+tags = ["progression", "ui"]
+genres = ["shooter", "runner", "rhythm", "fighting"]
+depends_on = []
+conflicts_with = []
+
+[[parameter]]
+id = "high_score_persist"
+type = "bool"
+default = true
+description_ja = "ハイスコアをローカル保存する"
+
+[[parameter]]
+id = "combo_multiplier"
+type = "bool"
+default = true
+description_ja = "コンボ倍率を掛けるか"

@@ -1,0 +1,17 @@
+id = "fighting-basic"
+name_ja = "格闘 (基本)"
+name_en = "Fighting (basic)"
+genre = "fighting"
+summary = "1v1 格闘ゲームの最小構成"
+features = [
+  "input-buffer",
+  "command-input",
+  "hitbox-system",
+  "health-system",
+  "frame-data",
+  "combo-system",
+  "guard-throw",
+  "round-system",
+  "hitstop",
+  "rollback-netcode",
+]

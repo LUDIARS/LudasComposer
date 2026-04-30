@@ -1,0 +1,28 @@
+id = "health-system"
+name_ja = "体力システム"
+name_en = "Health System"
+summary = "HP の減少 / 回復 / 死亡判定を扱う基礎機能"
+tags = ["combat", "stats"]
+genres = ["action", "story-jrpg", "open-world", "shooter", "moba", "fighting"]
+depends_on = []
+conflicts_with = []
+
+[[parameter]]
+id = "max_hp"
+type = "int"
+default = 100
+range = [1, 99999]
+description_ja = "最大 HP の既定値"
+
+[[parameter]]
+id = "regen_per_second"
+type = "float"
+default = 0.0
+range = [0.0, 100.0]
+description_ja = "毎秒自動回復量 (0 で無効)"
+
+[[parameter]]
+id = "death_event"
+type = "bool"
+default = true
+description_ja = "HP=0 で death イベントを発火するか"

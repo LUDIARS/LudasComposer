@@ -1,0 +1,22 @@
+id = "note-chart"
+name_ja = "ノート譜面"
+name_en = "Note Chart"
+summary = "楽曲の時間軸上にノーツを並べたデータ"
+tags = ["audio", "data"]
+genres = ["rhythm"]
+depends_on = []
+conflicts_with = []
+
+[[parameter]]
+id = "format"
+type = "enum"
+default = "json"
+values = ["json", "toml", "osu", "bms"]
+description_ja = "譜面ファイル形式"
+
+[[parameter]]
+id = "lane_count"
+type = "int"
+default = 4
+range = [1, 16]
+description_ja = "判定レーン数"

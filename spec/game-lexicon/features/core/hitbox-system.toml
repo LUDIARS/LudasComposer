@@ -1,0 +1,21 @@
+id = "hitbox-system"
+name_ja = "ヒットボックスシステム"
+name_en = "Hitbox System"
+summary = "攻撃判定 (hitbox) と被弾判定 (hurtbox) の交差検査"
+tags = ["combat", "physics"]
+genres = ["action", "shooter", "moba", "fighting"]
+depends_on = []
+conflicts_with = []
+
+[[parameter]]
+id = "broadphase"
+type = "enum"
+default = "aabb"
+values = ["aabb", "sphere", "obb"]
+description_ja = "粗判定形状"
+
+[[parameter]]
+id = "damage_event"
+type = "bool"
+default = true
+description_ja = "交差時 damage イベントを発火する"

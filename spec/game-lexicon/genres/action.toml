@@ -1,0 +1,10 @@
+id = "action"
+name_ja = "アクション"
+name_en = "Action"
+summary = "リアルタイム戦闘・移動操作を中心としたアクションゲーム"
+tags = ["realtime", "combat"]
+default_preset = "action-basic"
+description = """
+プレイヤー入力 → 攻撃判定 → ヒット応答 のサイクルが核。
+カメラ・当たり判定・i-frame・ヒットストップなど "気持ち良さ" を作るための要素が多い。
+"""

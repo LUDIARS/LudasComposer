@@ -1,0 +1,21 @@
+id = "frame-data"
+name_ja = "フレームデータ"
+name_en = "Frame Data"
+summary = "技ごとに startup / active / recovery / hit-stun / block-stun を持たせる"
+tags = ["combat", "frame"]
+genres = ["fighting"]
+depends_on = ["hitbox-system"]
+conflicts_with = []
+
+[[parameter]]
+id = "fps_lock"
+type = "int"
+default = 60
+range = [30, 240]
+description_ja = "ロックする内部フレームレート"
+
+[[parameter]]
+id = "expose_to_ui"
+type = "bool"
+default = false
+description_ja = "デバッグ UI にフレームを表示する"

@@ -1,0 +1,46 @@
+# システム / 技術用語
+
+[[term]]
+id = "tick-rate"
+name_ja = "ティックレート"
+name_en = "Tick Rate"
+aliases = []
+definition = "1 秒あたりのゲームロジック更新回数。 ネットワーク同期では送受信レートでもある"
+tags = ["network", "performance"]
+related_terms = []
+
+[[term]]
+id = "rollback"
+name_ja = "ロールバック"
+name_en = "Rollback"
+aliases = ["巻き戻し"]
+definition = "対戦中に予測した相手入力が違っていた時、 過去の状態に戻して再シミュレーションする"
+tags = ["network", "competitive"]
+related_terms = ["input-delay"]
+
+[[term]]
+id = "input-delay"
+name_ja = "入力遅延"
+name_en = "Input Delay"
+aliases = []
+definition = "入力から画面反映までの遅延。 ネットコードや表示のチェーン全体で発生する"
+tags = ["network", "feel"]
+related_terms = ["rollback"]
+
+[[term]]
+id = "streaming"
+name_ja = "ストリーミングロード"
+name_en = "Streaming"
+aliases = ["動的ロード"]
+definition = "プレイ中に世界の一部を動的にロード / アンロードする手法。 OW で必須"
+tags = ["world", "performance"]
+related_terms = []
+
+[[term]]
+id = "deterministic"
+name_ja = "確定的"
+name_en = "Deterministic"
+aliases = ["決定的"]
+definition = "同じ入力なら同じ結果になる性質。 ロールバックや replay の前提"
+tags = ["network", "competitive"]
+related_terms = ["rollback"]

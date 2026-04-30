@@ -1,0 +1,22 @@
+id = "hero-skill"
+name_ja = "ヒーロースキル"
+name_en = "Hero Skill"
+summary = "ヒーロー (キャラ) ごとに固有の Q/W/E/R 等のスキルセット"
+tags = ["combat", "ability"]
+genres = ["moba", "action"]
+depends_on = ["input-buffer", "stat-system"]
+conflicts_with = []
+
+[[parameter]]
+id = "slot_count"
+type = "int"
+default = 4
+range = [1, 16]
+description_ja = "1 ヒーローのスキルスロット数"
+
+[[parameter]]
+id = "ultimate_unlock_level"
+type = "int"
+default = 6
+range = [1, 99]
+description_ja = "アルティメット解禁レベル"

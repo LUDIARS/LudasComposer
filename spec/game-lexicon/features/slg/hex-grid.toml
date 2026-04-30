@@ -1,0 +1,29 @@
+id = "hex-grid"
+name_ja = "ヘックス / グリッドマップ"
+name_en = "Hex/Grid Map"
+summary = "ターン制 SLG の盤面となるグリッド (六角 / 四角)"
+tags = ["world", "math"]
+genres = ["slg"]
+depends_on = []
+conflicts_with = []
+
+[[parameter]]
+id = "grid_kind"
+type = "enum"
+default = "hex"
+values = ["hex", "square"]
+description_ja = "セル形状"
+
+[[parameter]]
+id = "width"
+type = "int"
+default = 24
+range = [1, 1024]
+description_ja = "横セル数"
+
+[[parameter]]
+id = "height"
+type = "int"
+default = 16
+range = [1, 1024]
+description_ja = "縦セル数"

@@ -1,0 +1,13 @@
+id = "slg-basic"
+name_ja = "SLG (基本)"
+name_en = "Strategy/Sim (basic)"
+genre = "slg"
+summary = "ターン制 SLG の最小構成"
+features = [
+  "hex-grid",
+  "stat-system",
+  "unit-action",
+  "resource-economy",
+  "tech-tree",
+  "save-load",
+]

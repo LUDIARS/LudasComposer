@@ -1,0 +1,11 @@
+id = "moba"
+name_ja = "MOBA"
+name_en = "MOBA"
+summary = "5v5 等の対人マルチアリーナバトル。 マップ占拠とキャラ性能が両軸"
+tags = ["multiplayer", "competitive", "team"]
+default_preset = "moba-basic"
+description = """
+ヒーロー (キャラ) ごとのスキルセット + ミニオンウェーブ + タワー / オブジェクト
++ 対人ネットワーキング (ロールバック / クライアント予測) が核。
+試合前の BAN/PICK + 試合中の経済 / アイテム購入もある。
+"""

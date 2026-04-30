@@ -1,0 +1,21 @@
+id = "day-night-cycle"
+name_ja = "昼夜サイクル"
+name_en = "Day/Night Cycle"
+summary = "ゲーム内時刻と太陽 / 月の位置 / ライティングを連動させる"
+tags = ["world", "lighting"]
+genres = ["open-world"]
+depends_on = []
+conflicts_with = []
+
+[[parameter]]
+id = "day_length_minutes"
+type = "int"
+default = 24
+range = [1, 1440]
+description_ja = "1 日 (=24h) の実時間長 (分)"
+
+[[parameter]]
+id = "season_support"
+type = "bool"
+default = false
+description_ja = "季節サイクルもサポートする"

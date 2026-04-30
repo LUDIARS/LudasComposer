@@ -1,0 +1,10 @@
+id = "slg"
+name_ja = "シミュレーション/ストラテジー"
+name_en = "Strategy/Simulation"
+summary = "ターン or リアルタイム制で経済・軍事・建築などを管理するゲーム"
+tags = ["strategy", "simulation", "macro"]
+default_preset = "slg-basic"
+description = """
+ヘックス / グリッドマップ + ユニット行動 + 資源収集 + テック / 研究ツリー が典型構成。
+リアルタイム制 (RTS) はゲームスピード制御も入る。
+"""

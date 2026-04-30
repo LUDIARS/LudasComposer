@@ -1,0 +1,21 @@
+id = "quest-system"
+name_ja = "クエストシステム"
+name_en = "Quest System"
+summary = "受注 / 進行 / 達成 / 報酬の流れを管理"
+tags = ["progression", "narrative"]
+genres = ["story-jrpg", "open-world"]
+depends_on = []
+conflicts_with = []
+
+[[parameter]]
+id = "max_active"
+type = "int"
+default = 5
+range = [1, 999]
+description_ja = "同時受注可能数"
+
+[[parameter]]
+id = "track_in_minimap"
+type = "bool"
+default = true
+description_ja = "ミニマップ上に目的地を表示"

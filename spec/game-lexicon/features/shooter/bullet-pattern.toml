@@ -1,0 +1,21 @@
+id = "bullet-pattern"
+name_ja = "弾幕パターン"
+name_en = "Bullet Pattern"
+summary = "扇 / 円 / 螺旋 等の発射パターンを宣言的に記述する"
+tags = ["combat", "danmaku"]
+genres = ["shooter"]
+depends_on = ["projectile-system"]
+conflicts_with = []
+
+[[parameter]]
+id = "preset_shapes"
+type = "string"
+default = "spread,ring,spiral,homing"
+description_ja = "用意するパターン名 (CSV)"
+
+[[parameter]]
+id = "max_emitters"
+type = "int"
+default = 16
+range = [1, 256]
+description_ja = "同時 emitter 数"

@@ -1,0 +1,22 @@
+id = "world-streaming"
+name_ja = "ワールドストリーミング"
+name_en = "World Streaming"
+summary = "プレイヤー位置に応じて地形 / アセットを動的にロード / アンロード"
+tags = ["streaming", "performance"]
+genres = ["open-world"]
+depends_on = []
+conflicts_with = []
+
+[[parameter]]
+id = "tile_size_m"
+type = "int"
+default = 256
+range = [16, 4096]
+description_ja = "1 タイルの一辺サイズ (メートル)"
+
+[[parameter]]
+id = "load_radius"
+type = "int"
+default = 3
+range = [1, 16]
+description_ja = "ロード半径 (タイル数)"
