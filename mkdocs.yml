@@ -1,0 +1,68 @@
+site_name: Ars Game Spec Demo
+site_description: Ars のゲーム辞書 + ジャンル別実装ガイド + 機能カバレッジ表
+site_url: https://ludiars.github.io/Ars/
+repo_url: https://github.com/LUDIARS/Ars
+repo_name: LUDIARS/Ars
+edit_uri: edit/main/
+
+# spec/ ツリーを丸ごと公開する。 mkdocs はデフォルト docs_dir = "docs" だが、
+# ここでは spec/ を docs として扱う。
+docs_dir: spec
+
+theme:
+  name: material
+  language: ja
+  palette:
+    - scheme: default
+      primary: deep purple
+      accent: indigo
+      toggle:
+        icon: material/weather-night
+        name: ダーク
+    - scheme: slate
+      primary: deep purple
+      accent: indigo
+      toggle:
+        icon: material/weather-sunny
+        name: ライト
+  features:
+    - navigation.sections
+    - navigation.expand
+    - navigation.top
+    - navigation.tracking
+    - search.suggest
+    - search.highlight
+    - content.code.copy
+    - toc.follow
+
+markdown_extensions:
+  - admonition
+  - attr_list
+  - def_list
+  - footnotes
+  - tables
+  - toc:
+      permalink: true
+  - pymdownx.details
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.tasklist:
+      custom_checkbox: true
+
+plugins:
+  - search:
+      lang:
+        - ja
+        - en
+
+# spec/ 以下を素直に表示するため nav は明示しない (mkdocs 自動生成 + INDEX.md
+# が各ディレクトリの入口になる)。 必要なら後で nav を手動定義する。
