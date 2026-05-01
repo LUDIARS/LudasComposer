@@ -1,0 +1,22 @@
+id = "jump-physics"
+name_ja = "ジャンプ物理"
+name_en = "Jump Physics"
+summary = "可変ジャンプ高 / コヨーテタイム / ジャンプバッファを含むジャンプ挙動"
+tags = ["physics", "feel"]
+genres = ["platformer", "metroidvania"]
+depends_on = ["player-controller-2d"]
+conflicts_with = []
+
+[[parameter]]
+id = "coyote_ms"
+type = "int"
+default = 80
+range = [0, 500]
+description_ja = "足場を離れてもジャンプを許す猶予 (ms)"
+
+[[parameter]]
+id = "buffer_ms"
+type = "int"
+default = 100
+range = [0, 500]
+description_ja = "着地前に押した入力を覚えておく猶予 (ms)"

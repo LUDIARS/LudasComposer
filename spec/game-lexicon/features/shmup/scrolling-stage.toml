@@ -1,0 +1,8 @@
+id = "scrolling-stage"
+name_ja = "スクロールステージ"
+name_en = "Scrolling Stage"
+summary = "縦 / 横スクロールするステージ + 敵配置タイムライン"
+tags = ["level-design", "shmup"]
+genres = ["shmup"]
+depends_on = ["level-loader"]
+conflicts_with = []

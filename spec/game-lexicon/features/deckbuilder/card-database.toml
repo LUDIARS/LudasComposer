@@ -1,0 +1,8 @@
+id = "card-database"
+name_ja = "カードデータベース"
+name_en = "Card Database"
+summary = "全カード定義 (id / コスト / 効果 / 説明) を集約したマスターデータ"
+tags = ["data", "card"]
+genres = ["deckbuilder"]
+depends_on = []
+conflicts_with = []

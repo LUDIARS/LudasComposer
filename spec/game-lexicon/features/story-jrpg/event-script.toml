@@ -1,0 +1,8 @@
+id = "event-script"
+name_ja = "イベントスクリプト"
+name_en = "Event Script"
+summary = "会話 / 移動 / フラグ管理を独自 DSL で記述するシナリオエンジン"
+tags = ["narrative", "scripting"]
+genres = ["story-jrpg"]
+depends_on = ["dialogue-system"]
+conflicts_with = []

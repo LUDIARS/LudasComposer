@@ -1,0 +1,8 @@
+id = "event-system"
+name_ja = "イベントシステム"
+name_en = "Event System"
+summary = "ターン経過 / 条件達成で発生するランダム / スクリプトイベント"
+tags = ["narrative", "scripting"]
+genres = ["slg", "story-jrpg", "open-world"]
+depends_on = []
+conflicts_with = []

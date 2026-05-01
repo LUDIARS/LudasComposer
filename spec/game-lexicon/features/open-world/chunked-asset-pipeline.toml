@@ -1,0 +1,8 @@
+id = "chunked-asset-pipeline"
+name_ja = "チャンク化アセットパイプライン"
+name_en = "Chunked Asset Pipeline"
+summary = "ワールドを矩形チャンクで管理 + 距離別 LOD で動的ロード / アンロード"
+tags = ["streaming", "memory"]
+genres = ["open-world"]
+depends_on = ["world-streaming"]
+conflicts_with = []

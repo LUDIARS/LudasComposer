@@ -1,0 +1,8 @@
+id = "reputation"
+name_ja = "評判"
+name_en = "Reputation"
+summary = "派閥ごとの友好度 / 敵対度。 行動結果が NPC 反応 + クエストアクセスを変える"
+tags = ["progression", "narrative"]
+genres = ["open-world"]
+depends_on = []
+conflicts_with = []

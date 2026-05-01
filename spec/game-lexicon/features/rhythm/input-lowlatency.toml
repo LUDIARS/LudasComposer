@@ -1,0 +1,8 @@
+id = "input-lowlatency"
+name_ja = "低レイテンシ入力"
+name_en = "Low-Latency Input"
+summary = "入力 → 判定までの遅延を 1 フレーム以下に最小化する経路"
+tags = ["input", "low-latency"]
+genres = ["rhythm", "fighting"]
+depends_on = []
+conflicts_with = []

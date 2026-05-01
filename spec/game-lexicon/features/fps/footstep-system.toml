@@ -1,0 +1,8 @@
+id = "footstep-system"
+name_ja = "足音システム"
+name_en = "Footstep System"
+summary = "歩 / 走 / クラウチでボリューム + 表面材質ごとの音を再生"
+tags = ["audio", "tactics"]
+genres = ["fps"]
+depends_on = []
+conflicts_with = []

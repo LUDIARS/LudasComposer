@@ -1,0 +1,8 @@
+id = "interconnected-rooms"
+name_ja = "相互接続ルーム"
+name_en = "Interconnected Rooms"
+summary = "全ルームが一続きの座標空間で接続される、 メトロイドヴァニア定型のマップ構造"
+tags = ["level-design", "exploration"]
+genres = ["metroidvania"]
+depends_on = ["level-loader"]
+conflicts_with = []

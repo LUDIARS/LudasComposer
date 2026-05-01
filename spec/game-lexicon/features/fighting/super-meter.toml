@@ -1,0 +1,15 @@
+id = "super-meter"
+name_ja = "ゲージ (必殺技)"
+name_en = "Super Meter"
+summary = "攻撃 / 被撃で溜まる必殺技用ゲージ。 ストックや段階を持つ"
+tags = ["combat", "resource"]
+genres = ["fighting"]
+depends_on = []
+conflicts_with = []
+
+[[parameter]]
+id = "max_stocks"
+type = "int"
+default = 3
+range = [1, 9]
+description_ja = "最大ストック数"

@@ -1,0 +1,8 @@
+id = "life-extend"
+name_ja = "残機追加 (エクステンド)"
+name_en = "Life Extend"
+summary = "スコア / アイテム取得で残機 + 1。 高スコアプレイのリターン構造"
+tags = ["progression", "scoring"]
+genres = ["shmup"]
+depends_on = ["score-system"]
+conflicts_with = []

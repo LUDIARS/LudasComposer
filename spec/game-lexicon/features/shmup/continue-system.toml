@@ -1,0 +1,8 @@
+id = "continue-system"
+name_ja = "コンティニュー"
+name_en = "Continue System"
+summary = "ゲームオーバー時にコイン / 課金で再開する。 スコア記録は通常無効"
+tags = ["progression", "monetization"]
+genres = ["shmup"]
+depends_on = []
+conflicts_with = []

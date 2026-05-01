@@ -1,0 +1,8 @@
+id = "boss-fight"
+name_ja = "ボス戦"
+name_en = "Boss Fight"
+summary = "段階別 (フェーズ) HP / 弾幕パターン切替を持つ大型敵戦"
+tags = ["combat", "shmup"]
+genres = ["shmup"]
+depends_on = ["enemy-pattern", "health-system"]
+conflicts_with = []

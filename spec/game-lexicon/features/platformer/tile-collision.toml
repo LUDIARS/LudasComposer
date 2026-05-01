@@ -1,0 +1,8 @@
+id = "tile-collision"
+name_ja = "タイル衝突"
+name_en = "Tile Collision"
+summary = "タイルマップの solid / one-way / slope 等の衝突解決"
+tags = ["physics", "tilemap"]
+genres = ["platformer", "metroidvania"]
+depends_on = []
+conflicts_with = []

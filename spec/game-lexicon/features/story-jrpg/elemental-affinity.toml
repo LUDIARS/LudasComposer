@@ -1,0 +1,8 @@
+id = "elemental-affinity"
+name_ja = "属性相性"
+name_en = "Elemental Affinity"
+summary = "炎 / 氷 / 雷 / 風等、 攻撃属性 vs 耐性属性のダメージ補正テーブル"
+tags = ["combat", "stats"]
+genres = ["story-jrpg"]
+depends_on = []
+conflicts_with = []

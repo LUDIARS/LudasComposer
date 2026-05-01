@@ -1,0 +1,19 @@
+id = "vampire-survivors-like-basic"
+name_ja = "ヴァンサバライク (基本)"
+name_en = "Vampire Survivors-Like (basic)"
+genre = "vampire-survivors-like"
+summary = "Wave サバイバル + ビルド構築の最小構成"
+features = [
+  "entity-pool",
+  "spatial-hash",
+  "wave-spawner",
+  "weapon-auto-fire",
+  "weapon-evolution",
+  "xp-pickup",
+  "leveling",
+  "damage-numbers",
+  "health-system",
+  "score-system",
+  "meta-progression",
+  "save-load",
+]

@@ -1,0 +1,8 @@
+id = "audio-engine"
+name_ja = "オーディオエンジン"
+name_en = "Audio Engine"
+summary = "サンプル単位精度の再生位置取得 + 多重再生 + 低レイテンシ出力"
+tags = ["audio", "low-latency"]
+genres = ["rhythm"]
+depends_on = []
+conflicts_with = []

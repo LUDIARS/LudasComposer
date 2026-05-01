@@ -1,0 +1,8 @@
+id = "unit-types"
+name_ja = "ユニット種別"
+name_en = "Unit Types"
+summary = "歩兵 / 騎兵 / 弓兵 / 飛兵 等の相性表 + 移動コスト"
+tags = ["combat", "tactics"]
+genres = ["slg"]
+depends_on = ["class-system"]
+conflicts_with = []

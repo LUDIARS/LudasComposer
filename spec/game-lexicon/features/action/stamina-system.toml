@@ -1,0 +1,22 @@
+id = "stamina-system"
+name_ja = "スタミナシステム"
+name_en = "Stamina System"
+summary = "回避 / 攻撃 / 走行で消費し、 一定時間で回復するアクションコスト資源"
+tags = ["combat", "stats"]
+genres = ["action", "open-world", "metroidvania"]
+depends_on = []
+conflicts_with = []
+
+[[parameter]]
+id = "max_stamina"
+type = "int"
+default = 100
+range = [10, 9999]
+description_ja = "最大スタミナ"
+
+[[parameter]]
+id = "regen_per_second"
+type = "float"
+default = 25.0
+range = [0.0, 1000.0]
+description_ja = "毎秒自動回復"

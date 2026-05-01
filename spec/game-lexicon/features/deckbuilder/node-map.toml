@@ -1,0 +1,8 @@
+id = "node-map"
+name_ja = "ノードマップ"
+name_en = "Node Map"
+summary = "ステージを分岐ノードで表現し、 戦闘 / ショップ / 休憩等を選択させる"
+tags = ["level-design", "navigation"]
+genres = ["deckbuilder", "roguelike"]
+depends_on = []
+conflicts_with = []

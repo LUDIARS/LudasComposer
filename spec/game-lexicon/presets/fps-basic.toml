@@ -1,0 +1,23 @@
+id = "fps-basic"
+name_ja = "FPS (基本)"
+name_en = "First-Person Shooter (basic)"
+genre = "fps"
+summary = "対戦 FPS 最小構成"
+features = [
+  "fps-controller",
+  "mouse-aim",
+  "hitscan",
+  "map-loading",
+  "sound-occlusion",
+  "footstep-system",
+  "killcam-replay",
+  "scoreboard",
+  "ranking",
+  "matchmaking",
+  "client-prediction",
+  "server-authoritative",
+  "lag-compensation",
+  "anti-cheat",
+  "loadout",
+  "health-system",
+]

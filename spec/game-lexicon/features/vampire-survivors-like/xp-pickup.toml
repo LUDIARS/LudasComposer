@@ -1,0 +1,15 @@
+id = "xp-pickup"
+name_ja = "XP 拾得"
+name_en = "XP Pickup"
+summary = "敵撃破でドロップする経験値ジェムを引き寄せて吸収 → レベルアップ"
+tags = ["progression", "magnet"]
+genres = ["vampire-survivors-like"]
+depends_on = []
+conflicts_with = []
+
+[[parameter]]
+id = "magnet_radius"
+type = "float"
+default = 1.5
+range = [0.0, 100.0]
+description_ja = "自動吸引が始まる距離"

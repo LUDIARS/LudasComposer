@@ -1,0 +1,8 @@
+id = "grid-actor"
+name_ja = "グリッドアクター"
+name_en = "Grid Actor"
+summary = "1 マスに 1 体存在する基底アクター。 移動は隣接マスへの 1 ステップ"
+tags = ["entity", "tilemap"]
+genres = ["roguelike"]
+depends_on = []
+conflicts_with = []

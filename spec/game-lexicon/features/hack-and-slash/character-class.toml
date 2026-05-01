@@ -1,0 +1,8 @@
+id = "character-class"
+name_ja = "キャラクタークラス"
+name_en = "Character Class"
+summary = "Barbarian / Sorceress 等、 ステ成長 + スキル可用性が異なるクラス"
+tags = ["progression"]
+genres = ["hack-and-slash", "story-jrpg"]
+depends_on = ["class-system"]
+conflicts_with = []

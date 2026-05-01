@@ -1,0 +1,8 @@
+id = "weapon-evolution"
+name_ja = "武器進化"
+name_en = "Weapon Evolution"
+summary = "武器をレベル MAX + 特定パッシブ所持で上位化させるテーブル"
+tags = ["progression", "build"]
+genres = ["vampire-survivors-like"]
+depends_on = ["weapon-auto-fire"]
+conflicts_with = []

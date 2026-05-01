@@ -1,0 +1,8 @@
+id = "class-system"
+name_ja = "クラス / 兵種システム"
+name_en = "Class System"
+summary = "兵種ごとに能力 / 武器制限 / 移動コストを変える"
+tags = ["progression", "stats"]
+genres = ["slg", "story-jrpg"]
+depends_on = ["stat-system"]
+conflicts_with = []

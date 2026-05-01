@@ -1,0 +1,15 @@
+id = "parallax-bg"
+name_ja = "パララックス背景"
+name_en = "Parallax Background"
+summary = "複数層の背景を異なる速度でスクロールさせて奥行きを演出する"
+tags = ["rendering", "feel"]
+genres = ["platformer", "metroidvania", "shmup"]
+depends_on = []
+conflicts_with = []
+
+[[parameter]]
+id = "layer_count"
+type = "int"
+default = 3
+range = [1, 16]
+description_ja = "背景レイヤー数"

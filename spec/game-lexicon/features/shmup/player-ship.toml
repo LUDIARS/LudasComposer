@@ -1,0 +1,8 @@
+id = "player-ship"
+name_ja = "自機"
+name_en = "Player Ship"
+summary = "プレイヤー操作機体。 移動 / 通常射撃 / 当たり判定の中心点 (cherry hitbox)"
+tags = ["player", "shmup"]
+genres = ["shmup"]
+depends_on = []
+conflicts_with = []

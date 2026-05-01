@@ -1,0 +1,8 @@
+id = "weapon-auto-fire"
+name_ja = "武器オート発射"
+name_en = "Weapon Auto-Fire"
+summary = "プレイヤー入力なしに武器がクールダウン毎にオート発動する"
+tags = ["combat"]
+genres = ["vampire-survivors-like"]
+depends_on = []
+conflicts_with = []

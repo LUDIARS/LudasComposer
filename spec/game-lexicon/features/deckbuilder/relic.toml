@@ -1,0 +1,8 @@
+id = "relic"
+name_ja = "レリック"
+name_en = "Relic"
+summary = "ラン中常時発動するパッシブ効果アイテム"
+tags = ["roguelite", "card"]
+genres = ["deckbuilder"]
+depends_on = []
+conflicts_with = []

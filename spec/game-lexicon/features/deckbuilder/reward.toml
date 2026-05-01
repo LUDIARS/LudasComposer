@@ -1,0 +1,8 @@
+id = "reward"
+name_ja = "報酬選択"
+name_en = "Reward"
+summary = "戦闘後に 3 枚から 1 枚カード選択 + ゴールド + レリック等の報酬画面"
+tags = ["progression", "card"]
+genres = ["deckbuilder"]
+depends_on = []
+conflicts_with = []

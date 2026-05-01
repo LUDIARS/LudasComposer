@@ -1,0 +1,22 @@
+id = "player-controller-2d"
+name_ja = "2D プレイヤーコントローラ"
+name_en = "2D Player Controller"
+summary = "横移動・ジャンプ・着地など 2D プラットフォーマーの自機操作"
+tags = ["physics", "input"]
+genres = ["platformer", "metroidvania"]
+depends_on = []
+conflicts_with = []
+
+[[parameter]]
+id = "move_speed"
+type = "float"
+default = 6.0
+range = [0.5, 50.0]
+description_ja = "走行速度 (units/s)"
+
+[[parameter]]
+id = "jump_height"
+type = "float"
+default = 3.0
+range = [0.5, 30.0]
+description_ja = "ジャンプ最大高 (units)"

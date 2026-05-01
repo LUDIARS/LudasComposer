@@ -1,0 +1,8 @@
+id = "stomp-detect"
+name_ja = "踏みつけ判定"
+name_en = "Stomp Detection"
+summary = "敵を上から踏むと撃破、 それ以外で被弾になるマリオ流の判定"
+tags = ["combat"]
+genres = ["platformer"]
+depends_on = ["hitbox-system"]
+conflicts_with = []

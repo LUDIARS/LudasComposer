@@ -1,0 +1,8 @@
+id = "note-renderer"
+name_ja = "ノート描画"
+name_en = "Note Renderer"
+summary = "譜面情報を画面上の流れる / 出現する音符オブジェクトに変換 + 描画"
+tags = ["rendering", "rhythm"]
+genres = ["rhythm"]
+depends_on = ["note-chart"]
+conflicts_with = []

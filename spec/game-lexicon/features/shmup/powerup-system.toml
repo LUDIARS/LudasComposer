@@ -1,0 +1,8 @@
+id = "powerup-system"
+name_ja = "パワーアップ"
+name_en = "Power-up System"
+summary = "拾得アイテムで攻撃強化 / 武器変更 / オプション増加"
+tags = ["progression"]
+genres = ["shmup"]
+depends_on = []
+conflicts_with = []

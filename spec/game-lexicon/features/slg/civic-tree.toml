@@ -1,0 +1,8 @@
+id = "civic-tree"
+name_ja = "市民 / 文化ツリー"
+name_en = "Civic Tree"
+summary = "tech-tree と並列で、 政治 / 文化を解放する別ツリー (Civilization VI 系)"
+tags = ["progression", "4x"]
+genres = ["slg"]
+depends_on = ["tech-tree"]
+conflicts_with = []

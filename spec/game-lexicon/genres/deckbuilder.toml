@@ -1,0 +1,11 @@
+id = "deckbuilder"
+name_ja = "デッキ構築型ローグライク"
+name_en = "Deckbuilder Roguelike"
+summary = "ラン中にカードを追加 / 削除して山札を強化するターン制ローグライク"
+tags = ["roguelite", "card", "turn-based"]
+default_preset = "deckbuilder-basic"
+description = """
+Slay the Spire 系。 各ターン エネルギーを消費してカードをプレイ、
+敵の Intent を読んでブロック / 攻撃を選ぶ。 ノードマップでルートを選び、
+ショップ・キャンプファイア・レリックでビルド構築する。
+"""

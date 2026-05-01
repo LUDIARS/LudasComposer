@@ -1,0 +1,8 @@
+id = "crafting"
+name_ja = "クラフト"
+name_en = "Crafting"
+summary = "素材を組み合わせてアイテムを作成する仕組み"
+tags = ["progression", "inventory"]
+genres = ["story-jrpg", "hack-and-slash", "open-world", "metroidvania", "vampire-survivors-like"]
+depends_on = ["inventory"]
+conflicts_with = []

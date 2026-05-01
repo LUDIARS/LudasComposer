@@ -1,0 +1,8 @@
+id = "gate-trigger"
+name_ja = "ゲート / トリガー"
+name_en = "Gate Trigger"
+summary = "特定能力やキー所持で開く扉 / 隔壁。 マップの分岐制御に用いる"
+tags = ["exploration", "level-design"]
+genres = ["metroidvania"]
+depends_on = ["ability-system"]
+conflicts_with = []

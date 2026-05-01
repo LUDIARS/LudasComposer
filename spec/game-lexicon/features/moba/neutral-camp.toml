@@ -1,0 +1,8 @@
+id = "neutral-camp"
+name_ja = "中立キャンプ"
+name_en = "Neutral Camp"
+summary = "ジャングル等に配置された無所属モブ。 撃破でバフ / ゴールド / 経験値"
+tags = ["map", "economy"]
+genres = ["moba"]
+depends_on = []
+conflicts_with = []

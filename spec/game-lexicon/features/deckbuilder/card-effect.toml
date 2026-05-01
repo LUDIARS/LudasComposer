@@ -1,0 +1,8 @@
+id = "card-effect"
+name_ja = "カード効果"
+name_en = "Card Effect"
+summary = "カードの効果を宣言的に記述するエフェクトコンビネータ"
+tags = ["card", "scripting"]
+genres = ["deckbuilder"]
+depends_on = ["card-pile"]
+conflicts_with = []

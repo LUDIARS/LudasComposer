@@ -1,0 +1,8 @@
+id = "ai-schedule"
+name_ja = "AI スケジュール"
+name_en = "AI Schedule"
+summary = "NPC が時間帯ごとに移動 / 仕事 / 就寝するスケジュール (Skyrim 系)"
+tags = ["ai", "simulation"]
+genres = ["open-world"]
+depends_on = ["day-night-cycle"]
+conflicts_with = []

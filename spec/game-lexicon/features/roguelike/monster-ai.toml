@@ -1,0 +1,8 @@
+id = "monster-ai"
+name_ja = "モンスター AI"
+name_en = "Monster AI"
+summary = "視界 / FOV を共有する敵側 AI。 接近 / 待機 / 逃走を選択"
+tags = ["ai"]
+genres = ["roguelike"]
+depends_on = ["grid-actor", "fov"]
+conflicts_with = []

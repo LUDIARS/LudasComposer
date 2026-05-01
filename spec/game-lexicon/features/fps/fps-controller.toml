@@ -1,0 +1,8 @@
+id = "fps-controller"
+name_ja = "FPS コントローラ"
+name_en = "FPS Controller"
+summary = "WASD 移動 + ジャンプ + クラウチ + スプリント を持つ一人称キャラコン"
+tags = ["movement", "input"]
+genres = ["fps"]
+depends_on = []
+conflicts_with = []

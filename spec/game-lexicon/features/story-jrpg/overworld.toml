@@ -1,0 +1,8 @@
+id = "overworld"
+name_ja = "ワールドマップ"
+name_en = "Overworld"
+summary = "町 / ダンジョン間を移動するワールド画面 + 乗り物 / 隠し通路"
+tags = ["navigation", "narrative"]
+genres = ["story-jrpg"]
+depends_on = []
+conflicts_with = []

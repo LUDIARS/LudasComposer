@@ -1,0 +1,22 @@
+id = "grid-puzzle"
+name_ja = "グリッドパズル"
+name_en = "Grid Puzzle"
+summary = "格子状盤面でピース操作を行うパズルの基底"
+tags = ["puzzle", "grid"]
+genres = ["puzzle"]
+depends_on = []
+conflicts_with = []
+
+[[parameter]]
+id = "width"
+type = "int"
+default = 8
+range = [2, 64]
+description_ja = "盤面幅"
+
+[[parameter]]
+id = "height"
+type = "int"
+default = 8
+range = [2, 64]
+description_ja = "盤面高"

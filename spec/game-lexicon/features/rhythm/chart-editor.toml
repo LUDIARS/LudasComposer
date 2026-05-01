@@ -1,0 +1,8 @@
+id = "chart-editor"
+name_ja = "譜面エディタ"
+name_en = "Chart Editor"
+summary = "ノート配置 / BPM 設定 / プレビュー再生を内蔵した自前エディタ"
+tags = ["editor", "tooling"]
+genres = ["rhythm"]
+depends_on = ["chart-loader", "audio-engine"]
+conflicts_with = []

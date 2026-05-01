@@ -1,0 +1,15 @@
+id = "bomb-system"
+name_ja = "ボムシステム"
+name_en = "Bomb System"
+summary = "全画面攻撃 + 一定時間無敵化する緊急回避ストック"
+tags = ["combat", "defense"]
+genres = ["shmup"]
+depends_on = []
+conflicts_with = []
+
+[[parameter]]
+id = "starting_bombs"
+type = "int"
+default = 3
+range = [0, 9]
+description_ja = "初期ボム所持数"

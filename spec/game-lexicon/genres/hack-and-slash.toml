@@ -1,0 +1,10 @@
+id = "hack-and-slash"
+name_ja = "ハクスラ"
+name_en = "Hack and Slash (Diablo-like)"
+summary = "見下ろし視点でザコを薙ぎ、 装備を厳選するルートトレジャー型 ARPG"
+tags = ["arpg", "loot", "isometric"]
+default_preset = "hack-and-slash-basic"
+description = """
+Diablo 系。 大量のザコ・ボスから装備をドロップし、 レアリティと mod を吟味して
+ビルドを組む。 スキルツリー・パーティ協力・シーズン・難易度ティアが定型。
+"""

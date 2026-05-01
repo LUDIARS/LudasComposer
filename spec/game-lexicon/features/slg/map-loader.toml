@@ -1,0 +1,8 @@
+id = "map-loader"
+name_ja = "マップローダー"
+name_en = "Map Loader"
+summary = "マップ ID 指定で地形 / 配置 / 勝敗条件を読み込む"
+tags = ["scene", "level-design"]
+genres = ["slg"]
+depends_on = []
+conflicts_with = []

@@ -1,0 +1,8 @@
+id = "chat-ping"
+name_ja = "チャット / ping"
+name_en = "Chat / Ping"
+summary = "テキストチャット + マップ位置への ping ショートカット"
+tags = ["communication"]
+genres = ["moba", "fps"]
+depends_on = []
+conflicts_with = []

@@ -1,0 +1,8 @@
+id = "move-counter"
+name_ja = "手数カウンタ"
+name_en = "Move Counter"
+summary = "残り手数を表示し、 0 になるとゲームオーバー (or 評価減点) 判定"
+tags = ["puzzle", "ui"]
+genres = ["puzzle"]
+depends_on = []
+conflicts_with = []

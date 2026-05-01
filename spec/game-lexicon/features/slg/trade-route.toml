@@ -1,0 +1,8 @@
+id = "trade-route"
+name_ja = "交易路"
+name_en = "Trade Route"
+summary = "都市間 / 文明間で資源を移動させ、 双方向に収入を産むルート"
+tags = ["economy", "4x"]
+genres = ["slg"]
+depends_on = ["city", "resource-economy"]
+conflicts_with = []

@@ -1,0 +1,8 @@
+id = "booster-piece"
+name_ja = "特殊ピース"
+name_en = "Booster Piece"
+summary = "4 連 → ライン消去、 5 連 → 全消去等の特殊効果ピース"
+tags = ["puzzle", "match-3"]
+genres = ["puzzle"]
+depends_on = ["match-detect"]
+conflicts_with = []

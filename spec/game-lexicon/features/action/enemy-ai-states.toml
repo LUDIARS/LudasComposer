@@ -1,0 +1,8 @@
+id = "enemy-ai-states"
+name_ja = "敵 AI ステート"
+name_en = "Enemy AI States"
+summary = "Idle / Chase / Attack / Flee 等の有限状態機械で敵行動を制御する"
+tags = ["ai", "fsm"]
+genres = ["action", "story-jrpg", "open-world", "hack-and-slash", "metroidvania"]
+depends_on = []
+conflicts_with = []

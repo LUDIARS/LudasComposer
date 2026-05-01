@@ -1,0 +1,8 @@
+id = "victory-condition"
+name_ja = "勝利条件"
+name_en = "Victory Condition"
+summary = "勝利を成立させる条件を宣言的に定義 (制圧 / 経済 / 文化 / 科学等)"
+tags = ["control-flow", "4x"]
+genres = ["slg"]
+depends_on = []
+conflicts_with = []

@@ -1,0 +1,15 @@
+id = "entity-pool"
+name_ja = "エンティティプール"
+name_en = "Entity Pool"
+summary = "敵 / 弾の頻繁な生成・破棄をプールで再利用し GC を抑える"
+tags = ["performance", "memory"]
+genres = ["vampire-survivors-like", "shmup"]
+depends_on = []
+conflicts_with = []
+
+[[parameter]]
+id = "initial_capacity"
+type = "int"
+default = 1024
+range = [16, 100000]
+description_ja = "起動時に確保するインスタンス数"

@@ -1,0 +1,8 @@
+id = "ground-loot"
+name_ja = "地上ドロップ"
+name_en = "Ground Loot"
+summary = "敵撃破でドロップしたアイテムをマップに表示し、 拾得 / フィルタする"
+tags = ["loot", "ui"]
+genres = ["hack-and-slash"]
+depends_on = ["loot-table", "item-pickup"]
+conflicts_with = []

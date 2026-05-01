@@ -1,0 +1,15 @@
+id = "currency"
+name_ja = "通貨"
+name_en = "Currency"
+summary = "ゴールド / ジェム等の数値資源を保持し、 入手 / 消費を管理する"
+tags = ["economy"]
+genres = ["puzzle", "hack-and-slash", "story-jrpg", "slg", "deckbuilder", "open-world", "fps"]
+depends_on = []
+conflicts_with = []
+
+[[parameter]]
+id = "wallet_max"
+type = "int"
+default = 999999999
+range = [1, 99999999999]
+description_ja = "最大保有量"

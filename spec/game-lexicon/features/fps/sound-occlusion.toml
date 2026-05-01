@@ -1,0 +1,8 @@
+id = "sound-occlusion"
+name_ja = "サウンドオクルージョン"
+name_en = "Sound Occlusion"
+summary = "壁越しに聞こえる音をローパス + 減衰させ、 位置把握を競技性化"
+tags = ["audio", "tactics"]
+genres = ["fps"]
+depends_on = []
+conflicts_with = []

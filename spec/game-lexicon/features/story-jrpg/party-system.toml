@@ -1,0 +1,15 @@
+id = "party-system"
+name_ja = "パーティシステム"
+name_en = "Party System"
+summary = "複数キャラを編成し、 並び替え / 控え / リーダー設定する"
+tags = ["progression", "ui"]
+genres = ["story-jrpg"]
+depends_on = []
+conflicts_with = []
+
+[[parameter]]
+id = "front_size"
+type = "int"
+default = 4
+range = [1, 8]
+description_ja = "戦闘前衛枠数"

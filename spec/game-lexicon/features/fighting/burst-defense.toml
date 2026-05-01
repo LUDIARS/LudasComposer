@@ -1,0 +1,8 @@
+id = "burst-defense"
+name_ja = "バースト防御"
+name_en = "Burst Defense"
+summary = "コンボを強制的に中断する緊急回避。 ゲージや専用ストックを消費"
+tags = ["combat", "defense"]
+genres = ["fighting"]
+depends_on = ["super-meter"]
+conflicts_with = []

@@ -1,0 +1,8 @@
+id = "poi-system"
+name_ja = "POI システム"
+name_en = "POI (Point of Interest) System"
+summary = "視認可能 + マップ表示される興味地点。 接近で発見 / 報酬 / クエスト発火"
+tags = ["exploration", "ui"]
+genres = ["open-world"]
+depends_on = []
+conflicts_with = []

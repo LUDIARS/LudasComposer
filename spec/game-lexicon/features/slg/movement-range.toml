@@ -1,0 +1,8 @@
+id = "movement-range"
+name_ja = "移動範囲表示"
+name_en = "Movement Range"
+summary = "ユニットの行動範囲をマス着色で可視化する"
+tags = ["ui", "tactics"]
+genres = ["slg"]
+depends_on = ["hex-grid"]
+conflicts_with = []

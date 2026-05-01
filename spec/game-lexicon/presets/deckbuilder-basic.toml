@@ -1,0 +1,28 @@
+id = "deckbuilder-basic"
+name_ja = "デッキ構築型ローグライク (基本)"
+name_en = "Deckbuilder Roguelike (basic)"
+genre = "deckbuilder"
+summary = "Slay the Spire 系最小構成"
+features = [
+  "card-pile",
+  "draw-shuffle",
+  "energy",
+  "card-effect",
+  "targeting",
+  "turn-cycle",
+  "enemy-intent",
+  "block-armor",
+  "status-power",
+  "relic",
+  "node-map",
+  "reward",
+  "shop",
+  "campfire",
+  "card-database",
+  "run-record",
+  "health-system",
+  "currency",
+  "seeded-rng",
+  "meta-progression",
+  "save-load",
+]

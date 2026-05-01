@@ -1,0 +1,8 @@
+id = "graze-system"
+name_ja = "グレイズシステム"
+name_en = "Graze System"
+summary = "敵弾をギリギリ回避すると追加スコア / ゲージが溜まる東方系メカ"
+tags = ["scoring", "shmup"]
+genres = ["shmup"]
+depends_on = ["score-system"]
+conflicts_with = []

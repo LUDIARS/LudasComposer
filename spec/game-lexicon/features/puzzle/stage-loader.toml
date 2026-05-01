@@ -1,0 +1,8 @@
+id = "stage-loader"
+name_ja = "ステージローダー"
+name_en = "Stage Loader"
+summary = "ステージ ID で初期盤面 / 目標 / 手数を読み込む"
+tags = ["puzzle", "scene"]
+genres = ["puzzle"]
+depends_on = []
+conflicts_with = []

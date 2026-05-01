@@ -1,0 +1,8 @@
+id = "block-armor"
+name_ja = "ブロック / アーマー"
+name_en = "Block / Armor"
+summary = "次のダメージを軽減する一時的バリア。 ターン開始で消去 (or 持続)"
+tags = ["card", "combat"]
+genres = ["deckbuilder"]
+depends_on = ["health-system"]
+conflicts_with = []

@@ -1,0 +1,8 @@
+id = "matchmaking"
+name_ja = "マッチメイキング"
+name_en = "Matchmaking"
+summary = "MMR / ランクで対戦相手を組み合わせる"
+tags = ["multiplayer", "ranking"]
+genres = ["moba", "fps", "fighting"]
+depends_on = []
+conflicts_with = []

@@ -1,0 +1,15 @@
+id = "match-detect"
+name_ja = "マッチ検出"
+name_en = "Match Detection"
+summary = "同色 / 同種ピースの 3 連以上を検出してマッチ成立とする"
+tags = ["puzzle", "match-3"]
+genres = ["puzzle"]
+depends_on = ["grid-puzzle"]
+conflicts_with = []
+
+[[parameter]]
+id = "min_match"
+type = "int"
+default = 3
+range = [2, 8]
+description_ja = "成立に必要な最小連数"

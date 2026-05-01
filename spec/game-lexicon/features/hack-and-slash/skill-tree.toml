@@ -1,0 +1,8 @@
+id = "skill-tree"
+name_ja = "スキルツリー"
+name_en = "Skill Tree"
+summary = "ノード解放型でアクティブ / パッシブを習得する成長 UI"
+tags = ["progression", "ui"]
+genres = ["hack-and-slash", "story-jrpg"]
+depends_on = ["leveling"]
+conflicts_with = []

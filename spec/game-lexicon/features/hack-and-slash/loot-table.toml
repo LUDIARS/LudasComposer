@@ -1,0 +1,8 @@
+id = "loot-table"
+name_ja = "ルートテーブル"
+name_en = "Loot Table"
+summary = "敵 / 宝箱から落ちるアイテム種別の重み付き抽選"
+tags = ["loot", "rng"]
+genres = ["hack-and-slash", "roguelike"]
+depends_on = ["seeded-rng"]
+conflicts_with = []

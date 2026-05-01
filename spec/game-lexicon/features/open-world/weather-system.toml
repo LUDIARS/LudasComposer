@@ -1,0 +1,8 @@
+id = "weather-system"
+name_ja = "天候システム"
+name_en = "Weather System"
+summary = "晴れ / 雨 / 雷 / 雪 などのバイオーム別天候 + ゲームプレイへの影響"
+tags = ["simulation", "atmosphere"]
+genres = ["open-world"]
+depends_on = []
+conflicts_with = []

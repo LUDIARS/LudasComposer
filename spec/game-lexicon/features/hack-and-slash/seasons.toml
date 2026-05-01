@@ -1,0 +1,8 @@
+id = "seasons"
+name_ja = "シーズン制"
+name_en = "Seasons"
+summary = "数か月単位でリセットされるラダー / シーズン限定アイテム / バトルパス"
+tags = ["live-ops", "endgame"]
+genres = ["hack-and-slash"]
+depends_on = []
+conflicts_with = []

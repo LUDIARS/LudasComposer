@@ -1,0 +1,8 @@
+id = "training-mode"
+name_ja = "トレーニングモード"
+name_en = "Training Mode"
+summary = "ダミー動作 / フレーム表示 / コンボ録画再生 等の練習機能群"
+tags = ["debug", "training"]
+genres = ["fighting"]
+depends_on = ["frame-data"]
+conflicts_with = []

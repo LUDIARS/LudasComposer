@@ -1,0 +1,19 @@
+id = "metroidvania-basic"
+name_ja = "メトロイドヴァニア (基本)"
+name_en = "Metroidvania (basic)"
+genre = "metroidvania"
+summary = "能力解放型 2D 探索アクションの最小構成"
+features = [
+  "player-controller-2d",
+  "jump-physics",
+  "tile-collision",
+  "ability-system",
+  "gate-trigger",
+  "interconnected-rooms",
+  "minimap-system",
+  "save-room",
+  "save-load",
+  "item-pickup",
+  "inventory",
+  "health-system",
+]

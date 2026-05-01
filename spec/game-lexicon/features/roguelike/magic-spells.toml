@@ -1,0 +1,8 @@
+id = "magic-spells"
+name_ja = "魔法呪文"
+name_en = "Magic Spells"
+summary = "MP / 巻物 / 杖等を消費する遠距離 / 範囲効果"
+tags = ["combat", "magic"]
+genres = ["roguelike", "story-jrpg"]
+depends_on = ["stat-system"]
+conflicts_with = []

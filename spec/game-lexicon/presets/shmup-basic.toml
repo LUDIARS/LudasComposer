@@ -1,0 +1,20 @@
+id = "shmup-basic"
+name_ja = "シューティング (基本)"
+name_en = "Shoot 'em Up (basic)"
+genre = "shmup"
+summary = "縦 / 横スクロール弾幕シューティング最小構成"
+features = [
+  "player-ship",
+  "bullet-pool",
+  "entity-pool",
+  "spatial-hash",
+  "enemy-pattern",
+  "scrolling-stage",
+  "powerup-system",
+  "bomb-system",
+  "life-extend",
+  "boss-fight",
+  "score-system",
+  "health-system",
+  "level-loader",
+]

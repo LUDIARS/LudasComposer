@@ -1,0 +1,8 @@
+id = "item-shop"
+name_ja = "アイテムショップ"
+name_en = "Item Shop"
+summary = "拠点で購入できるアイテム + ビルド guide 表示"
+tags = ["economy"]
+genres = ["moba"]
+depends_on = ["currency", "item-database"]
+conflicts_with = []

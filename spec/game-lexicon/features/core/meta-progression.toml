@@ -1,0 +1,8 @@
+id = "meta-progression"
+name_ja = "メタ進行"
+name_en = "Meta Progression"
+summary = "ラン (1 プレイ) を超えて永続する強化 / 解放要素"
+tags = ["roguelite", "progression"]
+genres = ["vampire-survivors-like", "deckbuilder", "puzzle", "roguelike"]
+depends_on = ["save-load"]
+conflicts_with = []

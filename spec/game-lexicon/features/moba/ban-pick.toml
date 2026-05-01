@@ -1,0 +1,8 @@
+id = "ban-pick"
+name_ja = "ban / pick フェーズ"
+name_en = "Ban / Pick Phase"
+summary = "試合開始前にチームが交互にチャンピオンを禁止 / 選択する"
+tags = ["multiplayer", "draft"]
+genres = ["moba"]
+depends_on = []
+conflicts_with = []

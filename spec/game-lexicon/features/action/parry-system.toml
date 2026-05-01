@@ -1,0 +1,15 @@
+id = "parry-system"
+name_ja = "パリィシステム"
+name_en = "Parry System"
+summary = "敵攻撃の発生に合わせて入力する受け流し。 成功で硬直 / 反撃猶予を作る"
+tags = ["combat", "timing"]
+genres = ["action", "fighting"]
+depends_on = ["hitbox-system"]
+conflicts_with = []
+
+[[parameter]]
+id = "window_ms"
+type = "int"
+default = 120
+range = [30, 500]
+description_ja = "成立猶予 (ms)"

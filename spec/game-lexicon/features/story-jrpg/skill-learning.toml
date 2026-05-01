@@ -1,0 +1,8 @@
+id = "skill-learning"
+name_ja = "スキル習得"
+name_en = "Skill Learning"
+summary = "レベル / イベント / アイテムでアクティブ / パッシブを習得する"
+tags = ["progression"]
+genres = ["story-jrpg"]
+depends_on = ["leveling"]
+conflicts_with = []

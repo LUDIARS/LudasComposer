@@ -1,0 +1,8 @@
+id = "wave-spawner"
+name_ja = "ウェーブスポナー"
+name_en = "Wave Spawner"
+summary = "時間 / 生存時間に応じて種別 / 数を増やしながら敵を生成する"
+tags = ["spawn", "difficulty"]
+genres = ["vampire-survivors-like", "shmup"]
+depends_on = ["entity-pool"]
+conflicts_with = []

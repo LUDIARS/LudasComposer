@@ -1,0 +1,8 @@
+id = "chat-voice"
+name_ja = "ボイスチャット"
+name_en = "Voice Chat"
+summary = "Push-to-talk / オープンマイク + チームのみ / 全体配信切替"
+tags = ["communication"]
+genres = ["fps", "moba"]
+depends_on = []
+conflicts_with = []

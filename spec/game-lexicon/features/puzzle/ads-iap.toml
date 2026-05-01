@@ -1,0 +1,8 @@
+id = "ads-iap"
+name_ja = "広告 / 課金"
+name_en = "Ads & IAP"
+summary = "リワード広告 / インタースティシャル / アプリ内課金の統合"
+tags = ["monetization"]
+genres = ["puzzle"]
+depends_on = []
+conflicts_with = []

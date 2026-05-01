@@ -1,0 +1,22 @@
+id = "posture-stagger"
+name_ja = "体幹 / スタッガーゲージ"
+name_en = "Posture / Stagger Meter"
+summary = "HP とは独立した「崩しゲージ」。 蓄積で大ダウンを取る (SEKIRO 系)"
+tags = ["combat", "stagger"]
+genres = ["action"]
+depends_on = ["health-system"]
+conflicts_with = []
+
+[[parameter]]
+id = "max_posture"
+type = "int"
+default = 100
+range = [10, 9999]
+description_ja = "最大体幹値"
+
+[[parameter]]
+id = "regen_per_second"
+type = "float"
+default = 10.0
+range = [0.0, 1000.0]
+description_ja = "毎秒自動回復"

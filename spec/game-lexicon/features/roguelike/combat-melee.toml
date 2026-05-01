@@ -1,0 +1,8 @@
+id = "combat-melee"
+name_ja = "近接戦闘 (ターン制)"
+name_en = "Melee Combat (Turn-based)"
+summary = "隣接マスへ攻撃コマンドで命中 / ダメージ計算を行う"
+tags = ["combat", "turn-based"]
+genres = ["roguelike"]
+depends_on = ["grid-actor", "stat-system"]
+conflicts_with = []

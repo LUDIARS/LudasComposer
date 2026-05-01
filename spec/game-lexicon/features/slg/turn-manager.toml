@@ -1,0 +1,8 @@
+id = "turn-manager"
+name_ja = "ターンマネージャ"
+name_en = "Turn Manager"
+summary = "プレイヤー / 敵 / 中立 のターン順序とフェーズを進行する"
+tags = ["turn", "control-flow"]
+genres = ["slg", "roguelike", "deckbuilder"]
+depends_on = []
+conflicts_with = []

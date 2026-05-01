@@ -1,0 +1,8 @@
+id = "analytics"
+name_ja = "アナリティクス"
+name_en = "Analytics"
+summary = "ステージクリア率 / 離脱地点 / 課金 LTV を計測しチューニングに使う"
+tags = ["telemetry", "monetization"]
+genres = ["puzzle", "fps", "moba"]
+depends_on = []
+conflicts_with = []

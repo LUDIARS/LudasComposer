@@ -1,0 +1,8 @@
+id = "song-database"
+name_ja = "楽曲データベース"
+name_en = "Song Database"
+summary = "全楽曲のメタ情報 (タイトル / BPM / 譜面ファイル参照 / アンロック条件)"
+tags = ["data"]
+genres = ["rhythm"]
+depends_on = []
+conflicts_with = []

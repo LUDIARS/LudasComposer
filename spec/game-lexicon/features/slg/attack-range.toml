@@ -1,0 +1,8 @@
+id = "attack-range"
+name_ja = "攻撃範囲表示"
+name_en = "Attack Range"
+summary = "選択ユニット / 武器の攻撃可能マスを可視化する"
+tags = ["ui", "tactics"]
+genres = ["slg"]
+depends_on = ["hex-grid"]
+conflicts_with = []

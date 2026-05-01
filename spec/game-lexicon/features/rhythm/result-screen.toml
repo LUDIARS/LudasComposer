@@ -1,0 +1,8 @@
+id = "result-screen"
+name_ja = "リザルト画面"
+name_en = "Result Screen"
+summary = "プレイ後の判定数 / スコア / コンボ / グレード表示 + 称号付与"
+tags = ["ui", "progression"]
+genres = ["rhythm"]
+depends_on = ["score-system", "combo-counter"]
+conflicts_with = []

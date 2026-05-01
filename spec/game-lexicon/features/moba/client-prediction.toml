@@ -1,0 +1,8 @@
+id = "client-prediction"
+name_ja = "クライアント予測"
+name_en = "Client Prediction"
+summary = "ネットワーク遅延を隠すため、 入力結果をクライアントが先行シミュレート"
+tags = ["netcode"]
+genres = ["moba", "fps"]
+depends_on = []
+conflicts_with = []

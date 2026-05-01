@@ -1,0 +1,8 @@
+id = "difficulty-tiers"
+name_ja = "難易度ティア"
+name_en = "Difficulty Tiers"
+summary = "Normal / Hell / Inferno 等、 攻略後解放される高難度モード"
+tags = ["progression", "endgame"]
+genres = ["hack-and-slash"]
+depends_on = []
+conflicts_with = []

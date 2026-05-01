@@ -1,0 +1,15 @@
+id = "seeded-rng"
+name_ja = "シード固定 RNG"
+name_en = "Seeded RNG"
+summary = "シードからすべての乱数を再現可能に生成する。 リプレイ / 検証の前提"
+tags = ["determinism", "debug"]
+genres = ["roguelike", "deckbuilder", "shmup", "fighting"]
+depends_on = []
+conflicts_with = []
+
+[[parameter]]
+id = "default_seed"
+type = "int"
+default = 0
+range = [0, 99999999]
+description_ja = "デフォルト seed (0 = 起動時刻ベース)"

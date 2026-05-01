@@ -1,0 +1,8 @@
+id = "corner-detect"
+name_ja = "壁際検出"
+name_en = "Corner Detection"
+summary = "ステージ端で壁バウンス / 追撃補正を有効化するための判定"
+tags = ["combat", "stage"]
+genres = ["fighting"]
+depends_on = []
+conflicts_with = []

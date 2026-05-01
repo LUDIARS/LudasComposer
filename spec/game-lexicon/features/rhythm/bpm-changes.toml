@@ -1,0 +1,8 @@
+id = "bpm-changes"
+name_ja = "BPM 変化"
+name_en = "BPM Changes"
+summary = "曲中の BPM 切替や stop / scroll-speed 変化の譜面イベント処理"
+tags = ["rhythm", "data"]
+genres = ["rhythm"]
+depends_on = ["note-chart", "audio-sync"]
+conflicts_with = []

@@ -1,0 +1,8 @@
+id = "status-power"
+name_ja = "状態 / パワー"
+name_en = "Status / Power"
+summary = "Strength / Weak / Poison など、 アクターに付与できる継続効果"
+tags = ["card", "buff"]
+genres = ["deckbuilder"]
+depends_on = []
+conflicts_with = []

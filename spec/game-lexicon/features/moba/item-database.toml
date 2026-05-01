@@ -1,0 +1,8 @@
+id = "item-database"
+name_ja = "アイテムデータベース"
+name_en = "Item Database"
+summary = "全アイテム定義 (構成素材 / 効果 / 価格) を集約したマスターデータ"
+tags = ["data"]
+genres = ["moba", "hack-and-slash"]
+depends_on = []
+conflicts_with = []

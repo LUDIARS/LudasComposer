@@ -1,0 +1,8 @@
+id = "loadout"
+name_ja = "ロードアウト"
+name_en = "Loadout"
+summary = "戦闘前に武器 / 装備 / Perk を組み合わせて保存する装備プリセット"
+tags = ["progression", "fps", "moba"]
+genres = ["fps", "moba"]
+depends_on = ["inventory"]
+conflicts_with = []

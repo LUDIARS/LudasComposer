@@ -1,0 +1,8 @@
+id = "ranking"
+name_ja = "ランキング"
+name_en = "Ranking"
+summary = "シーズン制 ELO / Glicko ベースのランクシステム + ティア / メダル表示"
+tags = ["progression", "competitive"]
+genres = ["fps", "moba", "fighting"]
+depends_on = []
+conflicts_with = []

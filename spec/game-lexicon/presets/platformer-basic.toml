@@ -1,0 +1,17 @@
+id = "platformer-basic"
+name_ja = "プラットフォーマー (基本)"
+name_en = "Platformer (basic)"
+genre = "platformer"
+summary = "横スクロール 2D プラットフォーマー最小構成"
+features = [
+  "player-controller-2d",
+  "jump-physics",
+  "tile-collision",
+  "stomp-detect",
+  "respawn-system",
+  "camera-2d-follow",
+  "parallax-bg",
+  "level-loader",
+  "health-system",
+  "score-system",
+]

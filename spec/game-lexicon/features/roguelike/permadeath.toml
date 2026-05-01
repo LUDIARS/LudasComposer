@@ -1,0 +1,8 @@
+id = "permadeath"
+name_ja = "パーマデス"
+name_en = "Permadeath"
+summary = "死亡でセーブを消去 / ロック。 1 回限りのランを徹底する厳格ローグ要素"
+tags = ["progression", "save"]
+genres = ["roguelike"]
+depends_on = ["save-load"]
+conflicts_with = []

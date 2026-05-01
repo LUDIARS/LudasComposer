@@ -1,0 +1,8 @@
+id = "item-pickup"
+name_ja = "アイテム拾得"
+name_en = "Item Pickup"
+summary = "ワールド配置アイテムへの接触で拾得、 インベントリ追加 + 取得イベント"
+tags = ["inventory"]
+genres = ["metroidvania", "platformer", "open-world", "vampire-survivors-like", "hack-and-slash"]
+depends_on = ["inventory"]
+conflicts_with = []

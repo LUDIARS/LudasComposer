@@ -1,0 +1,15 @@
+id = "spatial-hash"
+name_ja = "空間ハッシュ"
+name_en = "Spatial Hash"
+summary = "グリッド分割で近傍検索を高速化する。 大量敵 vs 範囲攻撃の照合に必須"
+tags = ["performance", "physics"]
+genres = ["vampire-survivors-like", "shmup", "moba"]
+depends_on = []
+conflicts_with = []
+
+[[parameter]]
+id = "cell_size"
+type = "float"
+default = 8.0
+range = [0.5, 1024.0]
+description_ja = "1 セルの辺長 (units)"

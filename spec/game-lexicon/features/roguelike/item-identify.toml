@@ -1,0 +1,8 @@
+id = "item-identify"
+name_ja = "アイテム鑑定"
+name_en = "Item Identification"
+summary = "未鑑定 = 効果不明、 鑑定後に正体が判明する経典系アイテムシステム"
+tags = ["inventory", "discovery"]
+genres = ["roguelike"]
+depends_on = ["inventory"]
+conflicts_with = []

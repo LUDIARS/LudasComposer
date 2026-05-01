@@ -1,0 +1,10 @@
+id = "platformer"
+name_ja = "プラットフォーマー"
+name_en = "Platformer"
+summary = "ジャンプと足場移動を中心とした 2D / 2.5D アクション"
+tags = ["platformer", "2d", "jump"]
+default_preset = "platformer-basic"
+description = """
+プレイヤーはジャンプ・着地・足場乗り換えを駆使してステージを進む。
+タイル衝突・ジャンプ物理・カメラ追従が中核要素。
+"""

@@ -1,0 +1,10 @@
+id = "puzzle"
+name_ja = "パズル"
+name_en = "Puzzle"
+summary = "盤面操作と論理思考でクリア条件を達成するゲーム全般 (カジュアル系含む)"
+tags = ["puzzle", "casual", "grid"]
+default_preset = "puzzle-basic"
+description = """
+グリッド上のピース操作 (マッチ 3・落ち物・スライド等) でゴールを達成する。
+スマホ向けカジュアルパズルではブースター・ライフ・課金導線も含む。
+"""

@@ -1,0 +1,8 @@
+id = "enemy-intent"
+name_ja = "敵 Intent"
+name_en = "Enemy Intent"
+summary = "次ターン敵が何をするかを事前表示する Slay the Spire 形式"
+tags = ["ai", "ui", "decision"]
+genres = ["deckbuilder"]
+depends_on = []
+conflicts_with = []

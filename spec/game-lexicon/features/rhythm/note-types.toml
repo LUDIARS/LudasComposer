@@ -1,0 +1,8 @@
+id = "note-types"
+name_ja = "ノート種別"
+name_en = "Note Types"
+summary = "Tap / Hold / Slide / Flick 等のノート種別 + それぞれの判定挙動"
+tags = ["rhythm", "data"]
+genres = ["rhythm"]
+depends_on = ["note-chart"]
+conflicts_with = []

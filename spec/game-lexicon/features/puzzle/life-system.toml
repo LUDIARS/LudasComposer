@@ -1,0 +1,22 @@
+id = "life-system"
+name_ja = "ライフシステム"
+name_en = "Life System"
+summary = "失敗で消費する有限ライフ。 一定時間で 1 回復。 課金で即時補充も用意"
+tags = ["retention", "monetization"]
+genres = ["puzzle"]
+depends_on = []
+conflicts_with = []
+
+[[parameter]]
+id = "max_lives"
+type = "int"
+default = 5
+range = [1, 99]
+description_ja = "最大ライフ数"
+
+[[parameter]]
+id = "regen_minutes"
+type = "int"
+default = 30
+range = [1, 1440]
+description_ja = "1 ライフ回復にかかる分数"

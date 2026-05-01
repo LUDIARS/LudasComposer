@@ -1,0 +1,8 @@
+id = "shop"
+name_ja = "ショップ"
+name_en = "Shop"
+summary = "ゴールドでカード / レリック / ポーション購入 + カード除去サービス"
+tags = ["economy"]
+genres = ["deckbuilder", "hack-and-slash", "story-jrpg"]
+depends_on = ["currency"]
+conflicts_with = []

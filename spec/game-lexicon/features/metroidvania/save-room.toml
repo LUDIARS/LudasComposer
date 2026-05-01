@@ -1,0 +1,8 @@
+id = "save-room"
+name_ja = "セーブルーム"
+name_en = "Save Room"
+summary = "特定の部屋でセーブ + 体力全回復するチェックポイント"
+tags = ["progression", "save"]
+genres = ["metroidvania"]
+depends_on = ["save-load", "respawn-system"]
+conflicts_with = []

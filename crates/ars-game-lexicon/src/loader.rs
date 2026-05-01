@@ -384,9 +384,10 @@ mod tests {
         let root = Path::new(manifest).join("../../spec/game-lexicon");
         let lex = load_from_dir(&root).expect("load builtin");
 
-        // 期待: 9 ジャンル / 9 プリセット / Feature 多数 / 用語多数
-        assert_eq!(lex.genres.len(), 9, "9 genres expected");
-        assert_eq!(lex.presets.len(), 9, "9 presets expected");
+        // 期待: 18 ジャンル / 18 プリセット / Feature 多数 / 用語多数
+        // (PR #expand-160 で 9 ジャンル + 160+ Feature を追加)
+        assert_eq!(lex.genres.len(), 18, "18 genres expected");
+        assert_eq!(lex.presets.len(), 18, "18 presets expected");
         assert!(lex.features.len() >= 30, "≥30 features");
         assert!(lex.terms.len() >= 10, "≥10 terms");
 

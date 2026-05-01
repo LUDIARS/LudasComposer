@@ -1,0 +1,11 @@
+id = "metroidvania"
+name_ja = "メトロイドヴァニア"
+name_en = "Metroidvania"
+summary = "相互接続された広大マップを能力解放で再探索する 2D アクション"
+tags = ["platformer", "exploration", "ability"]
+default_preset = "metroidvania-basic"
+description = """
+プラットフォーマーをベースに、 マップ全体が一続きで設計され、
+能力解放 (二段ジャンプ・スライディング等) によって以前は通れなかった経路が開く。
+セーブルーム・隠し要素・ロアコレクションが定型。
+"""

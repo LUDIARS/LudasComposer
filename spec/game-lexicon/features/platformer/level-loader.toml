@@ -1,0 +1,8 @@
+id = "level-loader"
+name_ja = "レベルローダー"
+name_en = "Level Loader"
+summary = "ステージ ID 指定でタイル / 配置 / イベントをロードする"
+tags = ["scene", "tilemap"]
+genres = ["platformer", "metroidvania", "shmup", "puzzle", "roguelike"]
+depends_on = []
+conflicts_with = []

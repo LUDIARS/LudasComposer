@@ -1,0 +1,8 @@
+id = "server-authoritative"
+name_ja = "サーバ権威"
+name_en = "Server Authoritative"
+summary = "ゲームロジックの正解状態をサーバが持ち、 クライアントは表示専念"
+tags = ["netcode", "security"]
+genres = ["fps", "moba"]
+depends_on = []
+conflicts_with = []

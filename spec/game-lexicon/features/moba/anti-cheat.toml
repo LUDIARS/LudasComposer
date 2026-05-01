@@ -1,0 +1,8 @@
+id = "anti-cheat"
+name_ja = "アンチチート"
+name_en = "Anti-Cheat"
+summary = "クライアント / サーバ側両方の不正検出 + 制裁発動の枠組み"
+tags = ["security", "multiplayer"]
+genres = ["moba", "fps"]
+depends_on = []
+conflicts_with = []

@@ -1,0 +1,8 @@
+id = "enemy-pattern"
+name_ja = "敵パターン"
+name_en = "Enemy Pattern"
+summary = "敵 1 体ごとの移動 / 射撃シーケンスをデータ駆動で記述する"
+tags = ["data", "scripting"]
+genres = ["shmup"]
+depends_on = ["bullet-pattern"]
+conflicts_with = []

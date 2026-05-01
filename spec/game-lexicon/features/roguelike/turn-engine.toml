@@ -1,0 +1,8 @@
+id = "turn-engine"
+name_ja = "ターンエンジン"
+name_en = "Turn Engine"
+summary = "プレイヤー行動 → 全アクター行動 を 1 ターンとして進める厳密ターン制"
+tags = ["turn", "control-flow"]
+genres = ["roguelike"]
+depends_on = []
+conflicts_with = []

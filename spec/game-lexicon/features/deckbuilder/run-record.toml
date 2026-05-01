@@ -1,0 +1,8 @@
+id = "run-record"
+name_ja = "ラン記録"
+name_en = "Run Record"
+summary = "クリア時間 / 取得カード / 死亡原因等を保存し履歴を表示する"
+tags = ["telemetry", "history"]
+genres = ["deckbuilder", "roguelike"]
+depends_on = ["save-load"]
+conflicts_with = []

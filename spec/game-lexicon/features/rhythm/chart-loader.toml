@@ -1,0 +1,8 @@
+id = "chart-loader"
+name_ja = "譜面ローダー"
+name_en = "Chart Loader"
+summary = "譜面 (.sm / .osu / .bms 等) のロード + 内部 NoteChart 形式へ変換"
+tags = ["loader", "data"]
+genres = ["rhythm"]
+depends_on = ["note-chart"]
+conflicts_with = []

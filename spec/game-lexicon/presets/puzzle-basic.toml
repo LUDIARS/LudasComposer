@@ -1,0 +1,17 @@
+id = "puzzle-basic"
+name_ja = "パズル (基本)"
+name_en = "Puzzle (basic)"
+genre = "puzzle"
+summary = "match-3 系カジュアルパズル最小構成"
+features = [
+  "grid-puzzle",
+  "match-detect",
+  "cascade-resolve",
+  "booster-piece",
+  "move-counter",
+  "goal-tracker",
+  "stage-loader",
+  "life-system",
+  "score-system",
+  "save-load",
+]

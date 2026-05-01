@@ -1,0 +1,8 @@
+id = "encounter"
+name_ja = "エンカウント"
+name_en = "Encounter"
+summary = "ランダム / シンボルエンカウント + 戦闘シーン遷移"
+tags = ["combat", "control-flow"]
+genres = ["story-jrpg"]
+depends_on = []
+conflicts_with = []

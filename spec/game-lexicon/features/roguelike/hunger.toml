@@ -1,0 +1,15 @@
+id = "hunger"
+name_ja = "空腹"
+name_en = "Hunger"
+summary = "ターン経過で増える空腹度。 限界で HP を減らす"
+tags = ["progression", "stats"]
+genres = ["roguelike"]
+depends_on = ["health-system"]
+conflicts_with = []
+
+[[parameter]]
+id = "hunger_per_turn"
+type = "float"
+default = 0.1
+range = [0.0, 100.0]
+description_ja = "1 ターンの空腹増加量"

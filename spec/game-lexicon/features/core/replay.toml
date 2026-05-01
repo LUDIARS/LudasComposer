@@ -1,0 +1,8 @@
+id = "replay"
+name_ja = "リプレイ"
+name_en = "Replay"
+summary = "入力ログを記録 / 再生して同一試合を再現する"
+tags = ["determinism", "debug", "esports"]
+genres = ["fighting", "moba", "fps", "shmup"]
+depends_on = ["seeded-rng"]
+conflicts_with = []

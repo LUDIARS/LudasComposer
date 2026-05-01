@@ -1,0 +1,8 @@
+id = "stair-descent"
+name_ja = "階段降下"
+name_en = "Stair Descent"
+summary = "階段マス踏破で次階層を生成 + 移動。 階層番号で難易度スケーリング"
+tags = ["progression", "level-design"]
+genres = ["roguelike"]
+depends_on = ["procgen-dungeon"]
+conflicts_with = []

@@ -1,0 +1,8 @@
+id = "fog-of-war"
+name_ja = "戦場の霧"
+name_en = "Fog of War"
+summary = "未踏 / 視界外マスを暗く表示し、 敵情報を隠す"
+tags = ["visibility", "tactics"]
+genres = ["slg", "moba", "roguelike"]
+depends_on = ["hex-grid"]
+conflicts_with = []

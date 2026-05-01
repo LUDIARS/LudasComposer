@@ -1,0 +1,23 @@
+id = "roguelike-basic"
+name_ja = "ローグライク (基本)"
+name_en = "Roguelike (basic)"
+genre = "roguelike"
+summary = "ターン制 + プロシージャル + パーマデスの厳格ローグライク最小構成"
+features = [
+  "turn-engine",
+  "grid-actor",
+  "procgen-dungeon",
+  "fov",
+  "combat-melee",
+  "monster-ai",
+  "trap-system",
+  "stair-descent",
+  "permadeath",
+  "message-log",
+  "inventory",
+  "item-identify",
+  "hunger",
+  "health-system",
+  "save-load",
+  "seeded-rng",
+]

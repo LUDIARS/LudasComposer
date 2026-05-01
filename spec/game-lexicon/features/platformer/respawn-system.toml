@@ -1,0 +1,8 @@
+id = "respawn-system"
+name_ja = "リスポーンシステム"
+name_en = "Respawn System"
+summary = "死亡時にチェックポイントへ復帰させる"
+tags = ["progression"]
+genres = ["platformer", "metroidvania"]
+depends_on = ["health-system"]
+conflicts_with = []

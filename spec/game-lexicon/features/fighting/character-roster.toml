@@ -1,0 +1,8 @@
+id = "character-roster"
+name_ja = "キャラクターロスター"
+name_en = "Character Roster"
+summary = "選択可能なキャラ一覧 + DLC キャラの動的追加管理"
+tags = ["data", "ui"]
+genres = ["fighting"]
+depends_on = []
+conflicts_with = []

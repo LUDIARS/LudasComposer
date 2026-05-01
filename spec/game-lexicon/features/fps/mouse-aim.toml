@@ -1,0 +1,21 @@
+id = "mouse-aim"
+name_ja = "マウスエイム"
+name_en = "Mouse Aim"
+summary = "マウス移動 → カメラ Yaw / Pitch 変換 + 感度カーブ + 反転設定"
+tags = ["input", "camera"]
+genres = ["fps"]
+depends_on = []
+conflicts_with = []
+
+[[parameter]]
+id = "sensitivity"
+type = "float"
+default = 0.5
+range = [0.01, 10.0]
+description_ja = "マウス感度倍率"
+
+[[parameter]]
+id = "invert_y"
+type = "bool"
+default = false
+description_ja = "Y 軸反転"

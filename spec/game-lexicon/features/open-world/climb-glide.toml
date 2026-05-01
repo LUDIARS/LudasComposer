@@ -1,0 +1,8 @@
+id = "climb-glide"
+name_ja = "登攀 / 滑空"
+name_en = "Climb / Glide"
+summary = "壁面登攀 + パラセール等で空中を滑空する移動拡張 (BotW 系)"
+tags = ["movement", "exploration"]
+genres = ["open-world"]
+depends_on = ["stamina-system"]
+conflicts_with = []

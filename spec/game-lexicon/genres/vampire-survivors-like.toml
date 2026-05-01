@@ -1,0 +1,11 @@
+id = "vampire-survivors-like"
+name_ja = "ヴァンサバライク"
+name_en = "Vampire Survivors-Like"
+summary = "大量のザコ敵をオート攻撃で殲滅する見下ろし型 wave サバイバル"
+tags = ["roguelite", "survivor", "auto-attack"]
+default_preset = "vampire-survivors-like-basic"
+description = """
+プレイヤーは移動のみ、 武器はオート発動。 時間経過で敵が増え続け、
+レベルアップごとに武器・パッシブ・進化選択を繰り返してビルドを組む。
+メタ進行と短時間ループが核。
+"""

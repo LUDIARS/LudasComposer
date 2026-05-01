@@ -1,0 +1,8 @@
+id = "ability-system"
+name_ja = "能力解放システム"
+name_en = "Ability System"
+summary = "二段ジャンプ / スライディング等、 解放フラグで使用可能になる移動・戦闘能力"
+tags = ["progression", "exploration"]
+genres = ["metroidvania"]
+depends_on = ["save-load"]
+conflicts_with = []

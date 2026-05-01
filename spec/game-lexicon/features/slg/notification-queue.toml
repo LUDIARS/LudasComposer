@@ -1,0 +1,8 @@
+id = "notification-queue"
+name_ja = "通知キュー"
+name_en = "Notification Queue"
+summary = "ターン進行中に発生したイベント / 戦闘結果を順次表示する待ち行列"
+tags = ["ui", "narrative"]
+genres = ["slg"]
+depends_on = []
+conflicts_with = []

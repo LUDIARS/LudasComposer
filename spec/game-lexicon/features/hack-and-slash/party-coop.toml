@@ -1,0 +1,8 @@
+id = "party-coop"
+name_ja = "パーティ協力プレイ"
+name_en = "Party Co-op"
+summary = "数人で同じインスタンスを共有して進行する協力モード"
+tags = ["multiplayer", "coop"]
+genres = ["hack-and-slash", "story-jrpg"]
+depends_on = []
+conflicts_with = []

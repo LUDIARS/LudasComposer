@@ -1,0 +1,15 @@
+id = "energy"
+name_ja = "エナジー"
+name_en = "Energy"
+summary = "毎ターン補充されカードプレイで消費する resource"
+tags = ["card", "economy"]
+genres = ["deckbuilder"]
+depends_on = []
+conflicts_with = []
+
+[[parameter]]
+id = "starting_max"
+type = "int"
+default = 3
+range = [0, 99]
+description_ja = "初期最大エナジー"

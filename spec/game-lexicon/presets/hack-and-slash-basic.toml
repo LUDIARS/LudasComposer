@@ -1,0 +1,26 @@
+id = "hack-and-slash-basic"
+name_ja = "ハクスラ (基本)"
+name_en = "Hack and Slash (basic)"
+genre = "hack-and-slash"
+summary = "Diablo 系見下ろし ARPG 最小構成"
+features = [
+  "character-class",
+  "skill-tree",
+  "skill-bar",
+  "loot-table",
+  "item-mods",
+  "item-rarity",
+  "ground-loot",
+  "stash",
+  "procgen-map",
+  "difficulty-tiers",
+  "minimap-system",
+  "inventory",
+  "equipment-slots",
+  "stat-system",
+  "leveling",
+  "health-system",
+  "currency",
+  "shop",
+  "save-load",
+]

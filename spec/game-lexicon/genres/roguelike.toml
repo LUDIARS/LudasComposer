@@ -1,0 +1,11 @@
+id = "roguelike"
+name_ja = "ローグライク"
+name_en = "Roguelike (Berlin)"
+summary = "ターン制 + プロシージャル生成 + パーマデス を満たす厳格ローグライク"
+tags = ["turn-based", "procgen", "permadeath"]
+default_preset = "roguelike-basic"
+description = """
+ベルリン解釈に従う厳密ローグライク。 グリッド・ターン制・プロシージャル
+ダンジョン・パーマデス・アイテム識別・空腹・モンスター AI・トラップ・階層降下
+が定型要素。
+"""

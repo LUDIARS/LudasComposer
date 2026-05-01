@@ -1,0 +1,22 @@
+id = "procgen-dungeon"
+name_ja = "プロシージャルダンジョン"
+name_en = "Procedural Dungeon"
+summary = "シードから部屋 / 通路 / アイテム配置をアルゴリズムで生成する"
+tags = ["procgen", "level-design"]
+genres = ["roguelike"]
+depends_on = ["seeded-rng"]
+conflicts_with = []
+
+[[parameter]]
+id = "rooms_min"
+type = "int"
+default = 5
+range = [1, 200]
+description_ja = "最少部屋数"
+
+[[parameter]]
+id = "rooms_max"
+type = "int"
+default = 12
+range = [1, 200]
+description_ja = "最大部屋数"

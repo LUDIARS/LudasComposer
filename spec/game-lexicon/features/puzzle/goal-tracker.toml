@@ -1,0 +1,8 @@
+id = "goal-tracker"
+name_ja = "ゴール追跡"
+name_en = "Goal Tracker"
+summary = "「特定色ピースを N 個」 「邪魔ブロック全撤去」 等のクリア目標を計測 / 表示"
+tags = ["puzzle", "ui"]
+genres = ["puzzle"]
+depends_on = []
+conflicts_with = []

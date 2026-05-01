@@ -1,0 +1,8 @@
+id = "targeting"
+name_ja = "ターゲット選択"
+name_en = "Targeting"
+summary = "敵単体 / 全敵 / 自分 / 自分以外などカード効果の対象選択 UI"
+tags = ["card", "ui"]
+genres = ["deckbuilder"]
+depends_on = ["card-effect"]
+conflicts_with = []

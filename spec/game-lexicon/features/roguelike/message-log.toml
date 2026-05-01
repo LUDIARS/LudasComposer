@@ -1,0 +1,8 @@
+id = "message-log"
+name_ja = "メッセージログ"
+name_en = "Message Log"
+summary = "戦闘 / イベント / アイテム取得等のテキストを順次記録 + UI 表示"
+tags = ["ui", "narrative"]
+genres = ["roguelike"]
+depends_on = []
+conflicts_with = []

@@ -1,0 +1,8 @@
+id = "stash"
+name_ja = "倉庫"
+name_en = "Stash"
+summary = "拠点に置いた共有 / 個人倉庫。 大量装備の保管"
+tags = ["inventory"]
+genres = ["hack-and-slash"]
+depends_on = ["inventory"]
+conflicts_with = []

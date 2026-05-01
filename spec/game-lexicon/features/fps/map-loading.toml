@@ -1,0 +1,8 @@
+id = "map-loading"
+name_ja = "マップロード"
+name_en = "Map Loading"
+summary = "対戦マップの非同期ロード + ロード画面 + 全プレイヤー同期"
+tags = ["scene", "multiplayer"]
+genres = ["fps"]
+depends_on = []
+conflicts_with = []

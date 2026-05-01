@@ -1,0 +1,8 @@
+id = "city"
+name_ja = "都市"
+name_en = "City"
+summary = "戦略 SLG (4X) における都市。 生産・人口・防衛・建造物を持つ"
+tags = ["strategy", "4x"]
+genres = ["slg"]
+depends_on = ["resource-economy"]
+conflicts_with = []

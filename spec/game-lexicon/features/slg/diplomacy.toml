@@ -1,0 +1,8 @@
+id = "diplomacy"
+name_ja = "外交"
+name_en = "Diplomacy"
+summary = "他勢力との宣戦 / 同盟 / 通商協定 / 賠償の交渉メニュー"
+tags = ["strategy", "4x"]
+genres = ["slg"]
+depends_on = []
+conflicts_with = []

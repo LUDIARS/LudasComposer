@@ -1,0 +1,8 @@
+id = "seed-replay"
+name_ja = "シードリプレイ"
+name_en = "Seed Replay"
+summary = "seeded-rng + 入力ログで完全再現可能なリプレイ。 トップスコア検証用"
+tags = ["esports", "determinism"]
+genres = ["shmup"]
+depends_on = ["seeded-rng", "replay"]
+conflicts_with = []

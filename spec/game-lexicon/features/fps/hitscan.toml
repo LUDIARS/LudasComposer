@@ -1,0 +1,8 @@
+id = "hitscan"
+name_ja = "ヒットスキャン射撃"
+name_en = "Hitscan"
+summary = "撃った瞬間に raycast で命中判定する弾道なし射撃"
+tags = ["combat", "physics"]
+genres = ["fps"]
+depends_on = []
+conflicts_with = []

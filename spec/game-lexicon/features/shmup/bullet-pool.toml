@@ -1,0 +1,8 @@
+id = "bullet-pool"
+name_ja = "弾プール"
+name_en = "Bullet Pool"
+summary = "数千発の弾を再利用するプール。 GC 抑制 + キャッシュ局所性確保"
+tags = ["performance", "memory"]
+genres = ["shmup"]
+depends_on = ["entity-pool"]
+conflicts_with = []

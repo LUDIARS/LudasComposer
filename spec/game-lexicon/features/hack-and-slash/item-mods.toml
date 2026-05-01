@@ -1,0 +1,8 @@
+id = "item-mods"
+name_ja = "アイテム修正子"
+name_en = "Item Mods"
+summary = "Prefix + Suffix で能力値を加算する装備修正子。 Affix とも呼ぶ"
+tags = ["loot", "stats"]
+genres = ["hack-and-slash"]
+depends_on = ["equipment-slots"]
+conflicts_with = []

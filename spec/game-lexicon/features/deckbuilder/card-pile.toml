@@ -1,0 +1,8 @@
+id = "card-pile"
+name_ja = "カードパイル"
+name_en = "Card Pile"
+summary = "山札 / 手札 / 捨札 / 除外の 4 領域を管理する基底"
+tags = ["card", "data-model"]
+genres = ["deckbuilder"]
+depends_on = []
+conflicts_with = []

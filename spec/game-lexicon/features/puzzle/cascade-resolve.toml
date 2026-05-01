@@ -1,0 +1,8 @@
+id = "cascade-resolve"
+name_ja = "連鎖解決"
+name_en = "Cascade Resolve"
+summary = "マッチ消去 → 上から落下 → 再マッチを連鎖的に解決する"
+tags = ["puzzle", "match-3"]
+genres = ["puzzle"]
+depends_on = ["match-detect"]
+conflicts_with = []

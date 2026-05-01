@@ -1,0 +1,8 @@
+id = "unit-ai"
+name_ja = "ユニット AI"
+name_en = "Unit AI"
+summary = "敵ユニットの移動 / 攻撃選択を評価関数で自動決定する"
+tags = ["ai", "tactics"]
+genres = ["slg"]
+depends_on = ["unit-action", "movement-range", "attack-range"]
+conflicts_with = []

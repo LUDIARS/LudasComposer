@@ -1,0 +1,15 @@
+id = "fov"
+name_ja = "視野計算"
+name_en = "Field of View"
+summary = "プレイヤーから見える / 見えないマスを計算する (Shadowcasting 等)"
+tags = ["visibility", "tactics"]
+genres = ["roguelike"]
+depends_on = []
+conflicts_with = []
+
+[[parameter]]
+id = "radius"
+type = "int"
+default = 8
+range = [1, 64]
+description_ja = "視野半径 (マス)"

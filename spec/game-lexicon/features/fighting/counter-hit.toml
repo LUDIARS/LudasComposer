@@ -1,0 +1,8 @@
+id = "counter-hit"
+name_ja = "カウンターヒット"
+name_en = "Counter Hit"
+summary = "相手の発生中に被弾させた場合のダメージ補正 / 追撃時間延長"
+tags = ["combat"]
+genres = ["fighting"]
+depends_on = ["frame-data"]
+conflicts_with = []

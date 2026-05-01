@@ -1,0 +1,8 @@
+id = "draw-shuffle"
+name_ja = "ドロー / シャッフル"
+name_en = "Draw / Shuffle"
+summary = "山札からカードを引く + 山札枯渇時に捨札をシャッフルして補充する"
+tags = ["card", "control-flow"]
+genres = ["deckbuilder"]
+depends_on = ["card-pile", "seeded-rng"]
+conflicts_with = []

@@ -1,0 +1,8 @@
+id = "damage-numbers"
+name_ja = "ダメージ数値ポップ"
+name_en = "Damage Numbers"
+summary = "被ダメージ位置に数値を浮かせる視覚フィードバック"
+tags = ["ui", "feedback"]
+genres = ["vampire-survivors-like", "hack-and-slash", "story-jrpg"]
+depends_on = []
+conflicts_with = []

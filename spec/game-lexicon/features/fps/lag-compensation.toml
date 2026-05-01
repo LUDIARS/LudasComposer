@@ -1,0 +1,8 @@
+id = "lag-compensation"
+name_ja = "ラグ補償"
+name_en = "Lag Compensation"
+summary = "クライアントの撃った瞬間に時間を巻き戻して当たり判定をやり直す"
+tags = ["netcode"]
+genres = ["fps"]
+depends_on = ["server-authoritative"]
+conflicts_with = []

@@ -1,0 +1,8 @@
+id = "victory-defeat"
+name_ja = "勝敗判定"
+name_en = "Victory / Defeat"
+summary = "勝利条件達成 / 敗北条件成立を毎ターン末で判定する"
+tags = ["control-flow"]
+genres = ["slg", "moba", "fps"]
+depends_on = []
+conflicts_with = []

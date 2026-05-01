@@ -1,0 +1,8 @@
+id = "scoreboard"
+name_ja = "スコアボード"
+name_en = "Scoreboard"
+summary = "Tab キー等で表示する全プレイヤーのキル / デス / アシスト一覧"
+tags = ["ui", "multiplayer"]
+genres = ["fps", "moba"]
+depends_on = []
+conflicts_with = []

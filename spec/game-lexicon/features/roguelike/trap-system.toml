@@ -1,0 +1,8 @@
+id = "trap-system"
+name_ja = "トラップ"
+name_en = "Trap System"
+summary = "踏むと発動する罠 (毒 / 移動 / ダメージ等)。 多くは未踏破時不可視"
+tags = ["hazard", "tactics"]
+genres = ["roguelike"]
+depends_on = ["grid-actor"]
+conflicts_with = []

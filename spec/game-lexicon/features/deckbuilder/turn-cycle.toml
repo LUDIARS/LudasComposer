@@ -1,0 +1,8 @@
+id = "turn-cycle"
+name_ja = "ターンサイクル"
+name_en = "Turn Cycle"
+summary = "プレイヤー → 敵 → 状態異常解決 のターン進行を管理する"
+tags = ["card", "control-flow"]
+genres = ["deckbuilder"]
+depends_on = ["energy"]
+conflicts_with = []

@@ -1,0 +1,11 @@
+id = "fps"
+name_ja = "FPS"
+name_en = "First-Person Shooter"
+summary = "一人称視点で撃ち合う、 マウスエイム + マルチプレイ前提のシューター"
+tags = ["shooter", "fps", "multiplayer"]
+default_preset = "fps-basic"
+description = """
+プレイヤーは一人称視点で武器を構えて撃つ。 マウスエイム・ヒットスキャン /
+プロジェクタイル・マップ読込・キルカム・ランキング・サーバ権威・ラグ補償
+が定型要素。
+"""

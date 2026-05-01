@@ -1,0 +1,8 @@
+id = "battle-forecast"
+name_ja = "戦闘予測"
+name_en = "Battle Forecast"
+summary = "攻撃前にダメージ / 命中 / 反撃結果を事前表示する"
+tags = ["ui", "decision"]
+genres = ["slg"]
+depends_on = ["unit-action"]
+conflicts_with = []

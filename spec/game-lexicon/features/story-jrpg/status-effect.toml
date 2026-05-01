@@ -1,0 +1,8 @@
+id = "status-effect"
+name_ja = "状態異常"
+name_en = "Status Effect"
+summary = "毒 / 麻痺 / 睡眠等、 ターン経過で解除 / 継続する効果"
+tags = ["combat", "buff"]
+genres = ["story-jrpg", "deckbuilder"]
+depends_on = []
+conflicts_with = []

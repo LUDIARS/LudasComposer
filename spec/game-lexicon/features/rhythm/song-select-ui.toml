@@ -1,0 +1,8 @@
+id = "song-select-ui"
+name_ja = "楽曲選択 UI"
+name_en = "Song Select UI"
+summary = "リスト / カードで楽曲を選択 + プレビュー再生 + ハイスコア表示"
+tags = ["ui"]
+genres = ["rhythm"]
+depends_on = ["song-database"]
+conflicts_with = []

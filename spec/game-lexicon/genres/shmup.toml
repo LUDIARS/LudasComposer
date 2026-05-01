@@ -1,0 +1,10 @@
+id = "shmup"
+name_ja = "シューティング (シューム)"
+name_en = "Shoot 'em Up"
+summary = "自機を操って弾幕を避けつつ敵を撃破するスクロールシューティング"
+tags = ["shooter", "bullet-hell", "scrolling"]
+default_preset = "shmup-basic"
+description = """
+画面が縦 / 横スクロールし、 敵弾を避けながら攻撃する。 弾幕回避・グレイズ・
+ボム・残機・ボス戦・パターン記憶 (リプレイ) が定型要素。
+"""

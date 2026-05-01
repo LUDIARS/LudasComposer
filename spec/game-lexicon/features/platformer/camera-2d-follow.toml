@@ -1,0 +1,15 @@
+id = "camera-2d-follow"
+name_ja = "2D カメラ追従"
+name_en = "2D Camera Follow"
+summary = "プレイヤーを画面内に保持しつつ先読みする横スクロールカメラ"
+tags = ["camera"]
+genres = ["platformer", "metroidvania"]
+depends_on = []
+conflicts_with = []
+
+[[parameter]]
+id = "lookahead_units"
+type = "float"
+default = 2.0
+range = [0.0, 20.0]
+description_ja = "進行方向への先読み量"

@@ -1,0 +1,8 @@
+id = "push-retention"
+name_ja = "プッシュ通知 (リテンション)"
+name_en = "Push Notification (Retention)"
+summary = "ライフ満タン / イベント開始等で復帰を促す push 配信"
+tags = ["retention", "notification"]
+genres = ["puzzle"]
+depends_on = ["life-system"]
+conflicts_with = []

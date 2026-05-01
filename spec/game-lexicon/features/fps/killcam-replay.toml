@@ -1,0 +1,8 @@
+id = "killcam-replay"
+name_ja = "キルカム"
+name_en = "Killcam Replay"
+summary = "死亡時に殺された側視点で直前数秒を巻き戻し再生する"
+tags = ["esports", "replay"]
+genres = ["fps"]
+depends_on = ["replay"]
+conflicts_with = []
