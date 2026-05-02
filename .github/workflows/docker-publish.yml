@@ -59,12 +59,15 @@ jobs:
       # ── タグ・プラットフォームを計算 ──
       - name: Compute build parameters
         id: params
+        env:
+          INPUT_VERSION: ${{ inputs.version }}
+          INPUT_PLATFORM: ${{ inputs.platform }}
         run: |
           $sha     = "${{ github.sha }}".Substring(0, 7)
           $ref     = "${{ github.ref }}"
           $refName = "${{ github.ref_name }}"
-          $input   = "${{ inputs.version }}"
-          $plat    = "${{ inputs.platform }}"
+          $input   = "$env:INPUT_VERSION"
+          $plat    = "$env:INPUT_PLATFORM"
 
           # Tags
           $tags = [System.Collections.Generic.List[string]]::new()
